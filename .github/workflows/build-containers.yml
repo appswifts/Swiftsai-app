@@ -20,6 +20,9 @@ jobs:
 
   build-containers:
     needs: build-containers-common
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         include:
