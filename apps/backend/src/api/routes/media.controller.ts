@@ -33,7 +33,7 @@ export class MediaController {
   constructor(
     private _mediaService: MediaService,
     private _subscriptionService: SubscriptionService
-  ) {}
+  ) { }
 
   @Delete('/:id')
   deleteMedia(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {

@@ -95,7 +95,6 @@ services:
 
       # === Developer Settings
       NX_ADD_PLUGINS: false
-
       # === Short Link Service Settings (Optional - leave blank if unused)
       # DUB_TOKEN: ""
       # DUB_API_ENDPOINT: "https://api.dub.co"

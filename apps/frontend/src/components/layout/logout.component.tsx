@@ -44,7 +44,7 @@ export const LogoutComponent: FC<{ isIcon?: boolean }> = ({ isIcon }) => {
             data-tooltip-id="tooltip"
             data-tooltip-content={`
             ${t('logout_from', 'Logout from')}${' '}
-            ${isGeneral ? ' Postiz' : ' Gitroom'}
+            ${isGeneral ? ' SwiftsAI' : ' Gitroom'}
             `}
           >
             <path
