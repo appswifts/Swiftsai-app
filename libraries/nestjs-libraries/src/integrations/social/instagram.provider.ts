@@ -316,6 +316,14 @@ export class InstagramProvider
       };
     }
 
+    if (status === 401) {
+      return {
+        type: 'bad-body' as const,
+        value:
+          'An unknown error occurred, please try again later or contact support',
+      };
+    }
+
     return undefined;
   }
 
