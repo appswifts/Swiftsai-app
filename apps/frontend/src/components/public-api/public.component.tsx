@@ -227,20 +227,11 @@ const McpSection = ({
           <div className="text-[13px] text-customColor18 mt-[2px]">
             {t(
               'connect_your_mcp_client_to_swiftsai_to_schedule_your_posts_faster',
-              'Connect Swifts AI MCP server to your client (Http streaming) to schedule your posts faster.'
+              'Connect SwiftsAI MCP server to your client (Http streaming) to schedule your posts faster.'
             )}
           </div>
         </div>
-        <div className="flex gap-[6px] shrink-0 pt-[2px]">
-          <a
-            className="cursor-pointer px-[16px] h-[36px] bg-[#628830] hover:bg-[#4a6624] text-white transition-colors rounded-[8px] text-[13px] font-[600] flex items-center gap-[6px]"
-            href="https://docs.swiftsai.com/mcp/introduction"
-            target="_blank"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-            {t('read_the_docs', 'Docs')}
-          </a>
-        </div>
+
       </div>
       <div className="p-[20px] flex flex-col gap-[16px]">
         <div className="flex flex-col gap-[6px]">
@@ -255,7 +246,7 @@ const McpSection = ({
                 className={clsx(
                   'cursor-pointer px-[14px] h-[36px] text-[13px] font-[500] rounded-[8px] transition-colors',
                   method === m
-                    ? 'bg-[#628830] text-white'
+                    ? 'bg-[#612BD3] text-white'
                     : 'bg-btnSimple text-customColor18 hover:bg-boxHover hover:text-textColor'
                 )}
                 onClick={() => setMethod(m)}
@@ -279,7 +270,7 @@ const McpSection = ({
                 className={clsx(
                   'cursor-pointer px-[14px] h-[36px] text-[13px] font-[500] rounded-[8px] transition-colors',
                   activeClient === client
-                    ? 'bg-[#628830] text-white'
+                    ? 'bg-[#612BD3] text-white'
                     : 'bg-btnSimple text-customColor18 hover:bg-boxHover hover:text-textColor'
                 )}
                 onClick={() => setActiveClient(client)}
@@ -342,10 +333,10 @@ const cliSteps = [
   },
   {
     label: 'Set your API key, copy it to your secret files',
-    code: 'export POSTIZ_API_KEY="{API_KEY}"',
+    code: 'export SWIFTSAI_API_KEY="{API_KEY}"',
   },
   {
-    label: 'Install the Swifts AI skill for your AI agent',
+    label: 'Install the SwiftsAI skill for your AI agent',
     code: 'npx skills add gitroomhq/swiftsai-agent',
   },
 ] as const;
@@ -386,20 +377,11 @@ const CliSection = ({
           <div className="text-[13px] text-customColor18 mt-[2px]">
             {t(
               'cli_description',
-              'Use the Swifts AI CLI to automate posting from your terminal, or install the skill to let your AI agent schedule posts for you.'
+              'Use the SwiftsAI CLI to automate posting from your terminal, or install the skill to let your AI agent schedule posts for you.'
             )}
           </div>
         </div>
-        <div className="flex gap-[6px] shrink-0 pt-[2px]">
-          <a
-            className="cursor-pointer px-[16px] h-[36px] bg-[#628830] hover:bg-[#4a6624] text-white transition-colors rounded-[8px] text-[13px] font-[600] flex items-center gap-[6px]"
-            href="https://docs.swiftsai.com/cli/introduction"
-            target="_blank"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-            {t('read_the_docs', 'Docs')}
-          </a>
-        </div>
+
       </div>
       <div className="p-[20px] flex flex-col gap-[16px]">
         {maskedSteps.map((step, i) => (
@@ -499,7 +481,7 @@ const PublicApiContent = () => {
         <br />
         {t(
           'api_auth_note_line2',
-          'If you are building a product that schedules posts on behalf of other Swifts AI users,'
+          'If you are building a product that schedules posts on behalf of other SwiftsAI users,'
         )}
         <br />
         {t(
@@ -521,28 +503,11 @@ const PublicApiContent = () => {
             <div className="text-[13px] text-customColor18 mt-[2px]">
               {t(
                 'use_swiftsai_api_to_integrate_with_your_tools',
-                'Use Swifts AI API to integrate with your tools.'
+                'Use SwiftsAI API to integrate with your tools.'
               )}
             </div>
           </div>
-          <div className="flex gap-[6px] shrink-0 pt-[2px]">
-            <a
-              className="cursor-pointer px-[16px] h-[36px] bg-[#628830] hover:bg-[#4a6624] text-white transition-colors rounded-[8px] text-[13px] font-[600] flex items-center gap-[6px]"
-              href="https://docs.swiftsai.com/public-api"
-              target="_blank"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-            {t('read_the_docs', 'Docs')}
-            </a>
-            <a
-              className="cursor-pointer px-[16px] h-[36px] bg-[#628830] hover:bg-[#4a6624] text-white transition-colors rounded-[8px] text-[13px] font-[600] flex items-center gap-[6px]"
-              href="https://www.npmjs.com/package/n8n-nodes-swiftsai"
-              target="_blank"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-              {t('n8n_node', 'N8N Node')}
-            </a>
-          </div>
+
         </div>
         <div className="p-[20px] flex flex-col gap-[16px]">
           <div className="bg-newBgColorInner border border-newBorder rounded-[8px] px-[16px] h-[44px] flex items-center overflow-hidden">
@@ -664,7 +629,7 @@ export const PublicComponent = () => {
             className={clsx(
               'cursor-pointer px-[20px] h-[44px] text-[15px] font-[600] rounded-[8px] transition-colors',
               subTab === tab
-                ? 'bg-[#628830] text-white'
+                ? 'bg-[#612BD3] text-white'
                 : 'bg-btnSimple text-customColor18 hover:bg-boxHover hover:text-textColor'
             )}
             onClick={() => setSubTab(tab)}

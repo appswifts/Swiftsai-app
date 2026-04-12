@@ -33,7 +33,7 @@ export class MediaController {
   constructor(
     private _mediaService: MediaService,
     private _subscriptionService: SubscriptionService
-  ) { }
+  ) {}
 
   @Delete('/:id')
   deleteMedia(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {
@@ -129,6 +129,7 @@ export class MediaController {
 
   @Post('/upload-simple')
   @UseInterceptors(FileInterceptor('file'))
+  @UsePipes(new CustomFileValidationPipe())
   async uploadSimple(
     @GetOrgFromRequest() org: Organization,
     @UploadedFile('file') file: Express.Multer.File,
