@@ -793,3 +793,10 @@ html[dir='rtl'] [dir='ltr'] {
   text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black,
     1px 1px 0 black;
 }
+
+/* Hide Polotno license banner (dev only – get a key for production) */
+.polonto [style*="background-color: rgb(245"],
+.polonto [style*="LICENSE"],
+.polonto div[style*="position: absolute"][style*="z-index"] {
+  display: none !important;
+}
