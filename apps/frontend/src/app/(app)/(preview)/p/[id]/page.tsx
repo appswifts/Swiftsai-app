@@ -14,7 +14,7 @@ import { RenderPreviewDateClient } from '@gitroom/frontend/components/preview/re
 
 dayjs.extend(utc);
 export const metadata: Metadata = {
-  title: `${isGeneralServerSide() ? 'SwiftsAI' : 'Gitroom'} Preview`,
+  title: `${isGeneralServerSide() ? 'SwiftsAI' : 'AppSwifts'} Preview`,
   description: '',
 };
 export default async function Auth(

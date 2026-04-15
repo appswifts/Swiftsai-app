@@ -337,7 +337,7 @@ const cliSteps = [
   },
   {
     label: 'Install the SwiftsAI skill for your AI agent',
-    code: 'npx skills add gitroomhq/swiftsai-agent',
+    code: 'npx skills add appswifts/swiftsai-agent',
   },
 ] as const;
 

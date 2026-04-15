@@ -97,7 +97,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <DubAnalytics />
             <FacebookComponent />
             <Plausible
-              domain={!!process.env.IS_GENERAL ? 'appswifts.com' : 'gitroom.com'}
+              domain={!!process.env.IS_GENERAL ? 'appswifts.com' : 'appswifts.com'}
             >
               <PHProvider
                 phkey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
