@@ -103,7 +103,7 @@ export const HomePage = () => {
                 <div>{t('upload_media', 'Upload Media')}</div>
                 <div>→</div>
              </div>
-             {user?.tier !== 'ULTIMATE' && (
+             {user?.tier?.current !== 'ULTIMATE' && (
                <div className="mt-4 p-4 rounded-xl border border-[#AA0FA4] bg-[#AA0FA4]/10 relative overflow-hidden text-center cursor-pointer hover:bg-[#AA0FA4]/20 transition"
                onClick={() => router.push('/billing')}>
                   <div className="font-bold text-[#FC69FF] mb-2">{t('upgrade_tier', 'Upgrade to unlock more')}</div>
