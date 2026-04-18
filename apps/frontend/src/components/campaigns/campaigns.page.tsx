@@ -6,6 +6,8 @@ import { Button } from '@gitroom/react/form/button';
 import useSWR, { useSWRConfig } from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { LoadingComponent } from '@gitroom/frontend/components/layout/loading';
+import { useModals } from '@gitroom/frontend/components/layout/new-modal';
+import { CampaignWizard } from '@gitroom/frontend/components/campaigns/campaign.wizard';
 
 type CampaignStatus =
   | 'DRAFT'
@@ -29,7 +31,7 @@ export const CampaignsPage = () => {
   const t = useT();
   const fetch = useFetch();
   const { mutate } = useSWRConfig();
-  const [isCreating, setIsCreating] = useState(false);
+  const modal = useModals();
 
   const {
     data: campaigns,
@@ -64,23 +66,18 @@ export const CampaignsPage = () => {
     );
   }, [campaigns]);
 
-  const createCampaign = async () => {
-    setIsCreating(true);
-    try {
-      await fetch('/campaigns', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: `Campaign ${new Date().toLocaleDateString()}`,
-          platform: 'meta',
-          type: 'awareness',
-          budget: 100,
-          status: 'DRAFT',
-        }),
-      });
-      await mutate('/campaigns');
-    } finally {
-      setIsCreating(false);
-    }
+  const createCampaign = () => {
+    modal.openModal({
+      title: 'Ad Campaign Wizard',
+      size: '1000px',
+      classNames: { modal: 'bg-[#0a0a0f] text-white p-0 border border-white/10 rounded-2xl overflow-hidden' },
+      children: (
+        <CampaignWizard 
+          onClose={() => modal.closeAll()} 
+          onComplete={() => mutate('/campaigns')} 
+        />
+      ),
+    });
   };
 
   const updateStatus = async (id: string, status: CampaignStatus) => {
@@ -106,7 +103,7 @@ export const CampaignsPage = () => {
             {t('manage_your_ads', 'Manage and track your paid advertising campaigns across platforms.')}
           </p>
         </div>
-        <Button onClick={createCampaign} disabled={isCreating}>
+        <Button onClick={createCampaign}>
           {t('create_campaign', 'Create Campaign')}
         </Button>
       </div>
@@ -181,7 +178,7 @@ export const CampaignsPage = () => {
             <p className="text-gray-400 max-w-md mb-6">
               Connect your ad accounts and launch your first campaign directly from SwiftsAI.
             </p>
-            <Button onClick={createCampaign} disabled={isCreating}>
+            <Button onClick={createCampaign}>
               Create your first campaign
             </Button>
           </div>
