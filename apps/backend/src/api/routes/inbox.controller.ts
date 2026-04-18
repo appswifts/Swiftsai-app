@@ -1,17 +1,21 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
-import { Organization } from '@prisma/client';
+import { Organization, LeadStatus } from '@prisma/client';
 import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permissions.guard';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { InboxService } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.service';
+import { LeadService } from '@gitroom/nestjs-libraries/database/prisma/leads/lead.service';
 
 @ApiTags('Inbox')
 @Controller('/inbox')
 @UseGuards(PoliciesGuard)
 export class InboxController {
-  constructor(private readonly inboxService: InboxService) {}
+  constructor(
+    private readonly inboxService: InboxService,
+    private readonly leadService: LeadService
+  ) {}
 
   @Get()
   @CheckPolicies([AuthorizationActions.Read, Sections.INBOX])
@@ -43,5 +47,16 @@ export class InboxController {
       body.content,
       body.attachmentsJson
     );
+  }
+
+  // ─── Update lead status directly from inbox ──────────────────
+  @Patch('/:id/status')
+  @CheckPolicies([AuthorizationActions.Update, Sections.INBOX])
+  async updateLeadStatus(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string,
+    @Body() body: { status: LeadStatus; name?: string; email?: string; phone?: string }
+  ) {
+    return this.leadService.updateLead(org.id, id, body);
   }
 }

@@ -1,0 +1,4 @@
+
+> postiz-orchestrator@1.0.0 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\orchestrator
+> cross-env NODE_ENV=production nest build
+
