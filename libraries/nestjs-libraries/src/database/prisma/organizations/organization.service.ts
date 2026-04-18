@@ -130,4 +130,8 @@ export class OrganizationService {
       shortlink
     );
   }
+
+  async updateOrganization(orgId: string, data: { polarCustomerId?: string }) {
+    return this._organizationRepository.updateOrganization(orgId, data);
+  }
 }

@@ -5,6 +5,9 @@ import { UsersController } from '@gitroom/backend/api/routes/users.controller';
 import { AuthMiddleware } from '@gitroom/backend/services/auth/auth.middleware';
 import { StripeController } from '@gitroom/backend/api/routes/stripe.controller';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
+import { PolarService } from '@gitroom/nestjs-libraries/services/polar.service';
+import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billing.mapping.service';
+import { PolarWebhookController } from '@gitroom/backend/api/routes/polar-webhook.controller';
 import { AnalyticsController } from '@gitroom/backend/api/routes/analytics.controller';
 import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permissions.guard';
 import { PermissionsService } from '@gitroom/backend/services/auth/permissions/permissions.service';
@@ -44,6 +47,10 @@ import { FarcasterProvider } from '@gitroom/backend/services/auth/providers/farc
 import { WalletProvider } from '@gitroom/backend/services/auth/providers/wallet.provider';
 import { OauthProvider } from '@gitroom/backend/services/auth/providers/oauth.provider';
 
+import { CampaignsController } from '@gitroom/backend/api/routes/campaigns.controller';
+import { InboxController } from '@gitroom/backend/api/routes/inbox.controller';
+import { LeadsController } from '@gitroom/backend/api/routes/leads.controller';
+
 const authenticatedController = [
   UsersController,
   AnalyticsController,
@@ -63,11 +70,15 @@ const authenticatedController = [
   ApprovedAppsController,
   OAuthAuthorizedController,
   AnnouncementsController,
+  InboxController,
+  CampaignsController,
+  LeadsController,
 ];
 @Module({
   imports: [UploadModule],
   controllers: [
     RootController,
+    PolarWebhookController,
     StripeController,
     AuthController,
     PublicController,
@@ -80,6 +91,8 @@ const authenticatedController = [
   providers: [
     AuthService,
     StripeService,
+    PolarService,
+    BillingMappingService,
     OpenaiService,
     ExtractContentService,
     AuthMiddleware,

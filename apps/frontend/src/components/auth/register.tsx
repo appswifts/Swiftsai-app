@@ -147,22 +147,26 @@ export function RegisterAfter({
   };
   return (
     <FormProvider {...form}>
-      <form className="flex-1 flex" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex flex-col flex-1">
-          <div>
+      <form
+        suppressHydrationWarning
+        className="flex-1 flex"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <div suppressHydrationWarning className="flex flex-col flex-1">
+          <div suppressHydrationWarning>
             <h1 className="text-[40px] font-[500] -tracking-[0.8px] text-start cursor-pointer">
               {t('sign_up', 'Sign Up')}
             </h1>
           </div>
-          <div className="text-[14px] mt-[32px] mb-[12px]">
+          <div suppressHydrationWarning className="text-[14px] mt-[32px] mb-[12px]">
             {t('continue_with', 'Continue With')}
           </div>
-          <div className="flex flex-col">
+          <div suppressHydrationWarning className="flex flex-col">
             {!isAfterProvider &&
               (!isGeneral ? (
                 <GithubProvider />
               ) : (
-                <div className="gap-[8px] flex">
+                <div suppressHydrationWarning className="gap-[8px] flex">
                   {genericOauth && isGeneral ? (
                     <OauthProvider />
                   ) : (
@@ -173,17 +177,18 @@ export function RegisterAfter({
                 </div>
               ))}
             {!isAfterProvider && (
-              <div className="h-[20px] mb-[24px] mt-[24px] relative">
-                <div className="absolute w-full h-[1px] bg-fifth top-[50%] -translate-y-[50%]" />
+              <div suppressHydrationWarning className="h-[20px] mb-[24px] mt-[24px] relative">
+                <div suppressHydrationWarning className="absolute w-full h-[1px] bg-fifth top-[50%] -translate-y-[50%]" />
                 <div
+                  suppressHydrationWarning
                   className={`absolute z-[1] justify-center items-center w-full start-0 -top-[4px] flex`}
                 >
-                  <div className="px-[16px]">{t('or', 'or')}</div>
+                  <div suppressHydrationWarning className="px-[16px]">{t('or', 'or')}</div>
                 </div>
               </div>
             )}
-            <div className="flex flex-col gap-[12px]">
-              <div className="text-textColor">
+            <div suppressHydrationWarning className="flex flex-col gap-[12px]">
+              <div suppressHydrationWarning className="text-textColor">
                 {!isAfterProvider && (
                   <>
                     <Input

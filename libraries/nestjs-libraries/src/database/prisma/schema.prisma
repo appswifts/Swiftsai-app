@@ -14,6 +14,7 @@ model Organization {
   description         String?
   apiKey              String?
   paymentId           String?
+  polarCustomerId     String?
   streakSince         DateTime?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -43,6 +44,8 @@ model Organization {
   webhooks            Webhooks[]
   oauthApp            OAuthApp[]
   oauthAuthorizations OAuthAuthorization[]
+  campaigns           Campaign[]
+  leads               Lead[]
 
   @@index([apiKey])
   @@index([streakSince])
@@ -285,6 +288,7 @@ model Subscription {
   organizationId   String           @unique
   subscriptionTier SubscriptionTier
   identifier       String?
+  polarSubscriptionId String?
   cancelAt         DateTime?
   period           Period
   totalChannels    Int
@@ -956,4 +960,158 @@ model Announcement {
   description String
   color       AnnouncementColor @default(INFO)
   createdAt   DateTime          @default(now())
+}
+
+// ─── Lead System ────────────────────────────────────────────
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  WON
+  LOST
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Lead {
+  id             String         @id @default(uuid())
+  organizationId String
+  name           String
+  email          String?
+  phone          String?
+  status         LeadStatus     @default(NEW)
+  ownerUserId    String?
+  source         String?        // e.g., "facebook", "instagram", "whatsapp", "manual"
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  identities     LeadIdentity[]
+  messages       LeadMessage[]
+
+  @@index([organizationId, status, updatedAt])
+  @@index([organizationId, deletedAt])
+  @@index([ownerUserId])
+}
+
+model LeadIdentity {
+  id             String        @id @default(uuid())
+  leadId         String
+  organizationId String
+  channel        String        // "facebook", "instagram", "whatsapp"
+  externalId     String        // Platform-specific user/thread ID
+  username       String?
+  displayName    String?
+  avatarUrl      String?
+  integrationId  String?       // Links to the Integration used for this channel
+  lastSeenAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lead           Lead          @relation(fields: [leadId], references: [id])
+  messages       LeadMessage[]
+
+  @@unique([organizationId, channel, externalId])
+  @@index([leadId])
+  @@index([integrationId])
+}
+
+model LeadMessage {
+  id                String           @id @default(uuid())
+  organizationId    String
+  leadId            String
+  leadIdentityId    String
+  direction         MessageDirection
+  providerMessageId String?          // External message ID for dedup/tracking
+  content           String?
+  attachmentsJson   String?          // JSON array of attachment URLs/metadata
+  status            MessageStatus    @default(QUEUED)
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  errorReason       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  lead              Lead             @relation(fields: [leadId], references: [id])
+  leadIdentity      LeadIdentity     @relation(fields: [leadIdentityId], references: [id])
+
+  @@index([leadId, createdAt(sort: Desc)])
+  @@index([organizationId])
+  @@index([providerMessageId])
+  @@index([status])
+}
+
+// ─── Campaigns ─────────────────────────────────────────────
+
+enum CampaignStatus {
+  DRAFT
+  REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ERROR
+}
+
+model Campaign {
+  id               String           @id @default(uuid())
+  organizationId   String
+  name             String
+  platform         String           // "meta", "whatsapp", etc.
+  type             String           // "awareness", "traffic", "conversions", "broadcast"
+  status           CampaignStatus   @default(DRAFT)
+  budget           Float?
+  dailyBudgetCap   Float?
+  monthlyBudgetCap Float?
+  config           String?          // JSON: platform-specific validated config
+  creative         String?          // JSON: ad creatives / template content
+  targeting        String?          // JSON: audience targeting rules
+  metrics          String?          // JSON: latest metrics snapshot
+  externalId       String?          // External campaign ID on provider platform
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+  organization     Organization     @relation(fields: [organizationId], references: [id])
+  auditLogs        CampaignAudit[]
+
+  @@index([organizationId])
+  @@index([deletedAt])
+  @@index([status])
+  @@index([externalId])
+}
+
+model CampaignAudit {
+  id         String   @id @default(uuid())
+  campaignId String
+  userId     String?  // Who made the change
+  action     String   // "status_change", "budget_update", "targeting_update", etc.
+  oldValue   String?  // JSON of previous state
+  newValue   String?  // JSON of new state
+  createdAt  DateTime @default(now())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId, createdAt(sort: Desc)])
+}
+
+// ─── Webhook Idempotency ───────────────────────────────────
+
+model ProcessedWebhook {
+  id        String   @id @default(uuid())
+  provider  String   // "polar", "stripe", "meta", etc.
+  eventId   String   // The provider's unique event ID
+  eventType String?  // e.g., "subscription.created"
+  createdAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([createdAt])
 }

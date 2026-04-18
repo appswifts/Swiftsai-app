@@ -419,4 +419,11 @@ export class OrganizationRepository {
       },
     });
   }
+
+  updateOrganization(orgId: string, data: { polarCustomerId?: string }) {
+    return this._organization.model.organization.update({
+      where: { id: orgId },
+      data,
+    });
+  }
 }

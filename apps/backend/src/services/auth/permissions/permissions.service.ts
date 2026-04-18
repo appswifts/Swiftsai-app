@@ -161,6 +161,18 @@ export class PermissionsService {
       ) {
         can(action, section);
       }
+
+      if (section === Sections.INBOX && options.inbox) {
+        can(action, section);
+      }
+
+      if (section === Sections.CAMPAIGNS && options.campaigns) {
+        can(action, section);
+      }
+
+      if (section === Sections.LEADS && options.leads) {
+        can(action, section);
+      }
     }
 
     return build({

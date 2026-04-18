@@ -40,6 +40,15 @@ import { OAuthRepository } from '@gitroom/nestjs-libraries/database/prisma/oauth
 import { OAuthService } from '@gitroom/nestjs-libraries/database/prisma/oauth/oauth.service';
 import { AnnouncementsRepository } from '@gitroom/nestjs-libraries/database/prisma/announcements/announcements.repository';
 import { AnnouncementsService } from '@gitroom/nestjs-libraries/database/prisma/announcements/announcements.service';
+import { LeadRepository } from '@gitroom/nestjs-libraries/database/prisma/leads/lead.repository';
+import { LeadMessageRepository } from '@gitroom/nestjs-libraries/database/prisma/leads/lead-message.repository';
+import { LeadService } from '@gitroom/nestjs-libraries/database/prisma/leads/lead.service';
+import { LeadMessagingService } from '@gitroom/nestjs-libraries/database/prisma/leads/lead-messaging.service';
+import { ProcessedWebhookRepository } from '@gitroom/nestjs-libraries/database/prisma/webhooks/processed-webhook.repository';
+import { InboxRepository } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.repository';
+import { InboxService } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.service';
+import { CampaignRepository } from '@gitroom/nestjs-libraries/database/prisma/campaigns/campaign.repository';
+import { CampaignService } from '@gitroom/nestjs-libraries/database/prisma/campaigns/campaign.service';
 
 @Global()
 @Module({
@@ -89,6 +98,15 @@ import { AnnouncementsService } from '@gitroom/nestjs-libraries/database/prisma/
     VideoManager,
     AnnouncementsRepository,
     AnnouncementsService,
+    LeadRepository,
+    LeadMessageRepository,
+    LeadService,
+    LeadMessagingService,
+    ProcessedWebhookRepository,
+    InboxRepository,
+    InboxService,
+    CampaignRepository,
+    CampaignService,
   ],
   get exports() {
     return this.providers;

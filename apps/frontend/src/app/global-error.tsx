@@ -29,8 +29,8 @@ export default function GlobalError({
 
   }, [error]);
   return (
-    <html>
-      <body>
+    <html suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <NextError statusCode={0} />
       </body>
     </html>

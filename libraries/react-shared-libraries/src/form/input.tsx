@@ -50,7 +50,7 @@ export const Input: FC<
     }
   }, [watch]);
   return (
-    <div className="flex flex-col gap-[6px]">
+    <div suppressHydrationWarning className="flex flex-col gap-[6px]">
       {!!label && (
         <div className={`text-[14px]`}>
           <TranslatedLabel
@@ -61,6 +61,7 @@ export const Input: FC<
         </div>
       )}
       <div
+        suppressHydrationWarning
         className={clsx(
           'bg-newBgColorInner h-[42px] border-newTableBorder border rounded-[8px] text-textColor placeholder-textColor flex items-center justify-center',
           className
@@ -68,6 +69,7 @@ export const Input: FC<
       >
         {icon && <div className="ps-[16px]">{icon}</div>}
         <input
+          suppressHydrationWarning
           className={clsx(
             'h-full bg-transparent outline-none flex-1 text-[14px] text-textColor',
             icon ? 'pl-[8px] pe-[16px]' : 'px-[16px]'

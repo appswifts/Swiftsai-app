@@ -179,4 +179,10 @@ export interface SocialProvider
     accessToken: string,
     data: any
   ): Promise<FetchPageInformationResult>;
+  sendDirectMessage?(
+    integration: Integration,
+    recipientExternalId: string,
+    content: string,
+    attachmentsJson?: string
+  ): Promise<{ providerMessageId?: string }>;
 }

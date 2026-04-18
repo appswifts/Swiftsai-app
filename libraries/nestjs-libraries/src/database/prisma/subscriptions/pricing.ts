@@ -15,6 +15,9 @@ export interface PricingInnerInterface {
   public_api: boolean;
   webhooks: number;
   autoPost: boolean;
+  inbox: boolean;
+  campaigns: boolean;
+  leads: boolean;
 }
 export interface PricingInterface {
   [key: string]: PricingInnerInterface;
@@ -37,6 +40,9 @@ export const pricing: PricingInterface = {
     webhooks: 0,
     autoPost: false,
     generate_videos: 0,
+    inbox: false,
+    campaigns: false,
+    leads: false,
   },
   STANDARD: {
     current: 'STANDARD',
@@ -55,6 +61,9 @@ export const pricing: PricingInterface = {
     webhooks: 2,
     autoPost: false,
     generate_videos: 3,
+    inbox: true,
+    campaigns: false,
+    leads: true,
   },
   TEAM: {
     current: 'TEAM',
@@ -73,6 +82,9 @@ export const pricing: PricingInterface = {
     webhooks: 10,
     autoPost: true,
     generate_videos: 10,
+    inbox: true,
+    campaigns: true,
+    leads: true,
   },
   PRO: {
     current: 'PRO',
@@ -91,6 +103,9 @@ export const pricing: PricingInterface = {
     webhooks: 30,
     autoPost: true,
     generate_videos: 30,
+    inbox: true,
+    campaigns: true,
+    leads: true,
   },
   ULTIMATE: {
     current: 'ULTIMATE',
@@ -109,5 +124,8 @@ export const pricing: PricingInterface = {
     webhooks: 10000,
     autoPost: true,
     generate_videos: 60,
+    inbox: true,
+    campaigns: true,
+    leads: true,
   },
 };

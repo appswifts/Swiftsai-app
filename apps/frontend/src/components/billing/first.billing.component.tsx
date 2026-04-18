@@ -106,6 +106,12 @@ export const FirstBillingComponent = () => {
     }
   );
 
+  useEffect(() => {
+    if (data?.polarUrl) {
+      window.location.href = data.polarUrl;
+    }
+  }, [data]);
+
   const price = useMemo(
     () => Object.entries(pricing).filter(([key, value]) => key !== 'FREE'),
     []
@@ -205,7 +211,12 @@ export const FirstBillingComponent = () => {
           <div className="block tablet:hidden">
             <JoinOver />
           </div>
-          {!isLoading && data && stripe ? (
+          {data?.polarUrl ? (
+            <div className="flex flex-col items-center justify-center p-10">
+              <LoadingComponent />
+              <div className="mt-4 text-xl">Redirecting to checkout...</div>
+            </div>
+          ) : !isLoading && data && stripe ? (
             <EmbeddedBilling
               stripe={stripe}
               secret={data.client_secret}

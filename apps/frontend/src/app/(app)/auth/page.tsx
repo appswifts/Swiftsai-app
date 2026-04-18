@@ -1,11 +1,11 @@
 import { internalFetch } from '@gitroom/helpers/utils/internal.fetch';
 export const dynamic = 'force-dynamic';
-import { Register } from '@gitroom/frontend/components/auth/register';
 import { Metadata } from 'next';
 import { isGeneralServerSide } from '@gitroom/helpers/utils/is.general.server.side';
 import Link from 'next/link';
 import { getT } from '@gitroom/react/translation/get.translation.service.backend';
 import { LoginWithOidc } from '@gitroom/frontend/components/auth/login.with.oidc';
+import { RegisterClientWrapper } from '@gitroom/frontend/components/auth/register.client.wrapper';
 export const metadata: Metadata = {
   title: `${isGeneralServerSide() ? 'SwiftsAI' : 'AppSwifts'} Register`,
   description: '',
@@ -31,5 +31,5 @@ export default async function Auth(params: {searchParams: Promise<{provider: str
       );
     }
   }
-  return <Register />;
+  return <RegisterClientWrapper />;
 }

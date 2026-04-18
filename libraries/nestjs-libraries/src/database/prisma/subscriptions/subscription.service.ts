@@ -179,7 +179,8 @@ export class SubscriptionService {
     period: 'MONTHLY' | 'YEARLY',
     cancelAt: number | null,
     code?: string,
-    org?: string
+    org?: string,
+    polarSubscriptionId?: string
   ) {
     if (!code) {
       try {
@@ -204,7 +205,8 @@ export class SubscriptionService {
       period,
       cancelAt,
       code,
-      org ? { id: org } : undefined
+      org ? { id: org } : undefined,
+      polarSubscriptionId
     );
   }
 

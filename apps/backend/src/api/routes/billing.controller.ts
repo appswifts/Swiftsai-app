@@ -10,6 +10,8 @@ import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/n
 import { Request } from 'express';
 import { Nowpayments } from '@gitroom/nestjs-libraries/crypto/nowpayments';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
+import { PolarService } from '@gitroom/nestjs-libraries/services/polar.service';
+import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billing.mapping.service';
 
 @ApiTags('Billing')
 @Controller('/billing')
@@ -17,6 +19,8 @@ export class BillingController {
   constructor(
     private _subscriptionService: SubscriptionService,
     private _stripeService: StripeService,
+    private _polarService: PolarService,
+    private _billingMapping: BillingMappingService,
     private _notificationService: NotificationService,
     private _nowpayments: Nowpayments
   ) {}
@@ -63,12 +67,21 @@ export class BillingController {
   }
 
   @Post('/embedded')
-  embedded(
+  async embedded(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
     @Body() body: BillingSubscribeDto,
     @Req() req: Request
   ) {
+    if (this._polarService.isEnabled) {
+      // Map body.billing (STANDARD, TEAM, PRO, etc) to a polar product ID.
+      // For now we map tier to Product ID which we will set via env vars or fixed maps
+      // in production.
+      const productId = this._billingMapping.getProductId(body.billing, body.period);
+      const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+      return { polarUrl: checkout.url };
+    }
+
     const uniqueId = req?.cookies?.track;
     return this._stripeService.embedded(
       uniqueId,
@@ -80,12 +93,18 @@ export class BillingController {
   }
 
   @Post('/subscribe')
-  subscribe(
+  async subscribe(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
     @Body() body: BillingSubscribeDto,
     @Req() req: Request
   ) {
+    if (this._polarService.isEnabled) {
+      const productId = this._billingMapping.getProductId(body.billing, body.period);
+      const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+      return { url: checkout.url };
+    }
+
     const uniqueId = req?.cookies?.track;
     return this._stripeService.subscribe(
       uniqueId,
@@ -98,6 +117,11 @@ export class BillingController {
 
   @Get('/portal')
   async modifyPayment(@GetOrgFromRequest() org: Organization) {
+    if (this._polarService.isEnabled) {
+      const portal = await this._polarService.getCustomerPortal(org.id);
+      if (portal.url) return { portal: portal.url };
+    }
+
     const customer = await this._stripeService.getCustomerByOrganizationId(
       org.id
     );

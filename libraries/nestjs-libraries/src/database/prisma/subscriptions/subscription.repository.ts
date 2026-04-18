@@ -144,7 +144,8 @@ export class SubscriptionRepository {
     period: 'MONTHLY' | 'YEARLY',
     cancelAt: number | null,
     code?: string,
-    org?: { id: string }
+    org?: { id: string },
+    polarSubscriptionId?: string
   ) {
     const findOrg =
       org || (await this.getOrganizationByCustomerId(customerId))!;
@@ -169,6 +170,7 @@ export class SubscriptionRepository {
         totalChannels,
         period,
         identifier,
+        polarSubscriptionId,
         isLifetime: !!code,
         cancelAt: cancelAt ? new Date(cancelAt * 1000) : null,
         deletedAt: null,
@@ -181,6 +183,7 @@ export class SubscriptionRepository {
         period,
         cancelAt: cancelAt ? new Date(cancelAt * 1000) : null,
         identifier,
+        polarSubscriptionId,
         deletedAt: null,
       },
     });
@@ -222,6 +225,9 @@ export class SubscriptionRepository {
       where: {
         organizationId,
         deletedAt: null,
+      },
+      include: {
+        organization: true,
       },
     });
   }
