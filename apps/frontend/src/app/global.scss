@@ -74,24 +74,24 @@ body * {
 }
 
 .swal2-modal {
-  @apply bg-primary #{!important};
+  @apply bg-primary !important;
   @apply border-b-[2px] border-b-sixth;
 }
 
 .swal2-modal * {
-  @apply text-textColor #{!important};
+  @apply text-textColor !important;
 }
 
 .swal2-icon {
-  @apply text-textColor bg-primary #{!important};
+  @apply text-textColor bg-primary !important;
 }
 
 .swal2-cancel {
-  @apply text-white #{!important};
+  @apply text-white !important;
 }
 .swal2-confirm {
-  @apply bg-customColor50 #{!important};
-  @apply text-white #{!important};
+  @apply bg-customColor50 !important;
+  @apply text-white !important;
 }
 
 .w-md-editor-text {
@@ -278,7 +278,7 @@ body * {
 /*    display: none;*/
 /*}*/
 .w-md-editor {
-  @apply bg-input #{!important};
+  @apply bg-input !important;
   border: 0 !important;
   box-shadow: none !important;
   border-radius: 8px !important;
@@ -287,7 +287,7 @@ body * {
 }
 
 .w-md-editor-toolbar {
-  @apply bg-input border-fifth #{!important};
+  @apply bg-input border-fifth !important;
   height: 40px !important;
   min-height: 40px !important;
   padding: 0 8px !important;
@@ -334,7 +334,7 @@ body * {
 //}
 
 //.copilotKitWindow {
-//  @apply bg-customColor3 #{!important};
+//  @apply bg-customColor3 !important;
 //}
 
 //.copilotKitButtonIconOpen svg {
