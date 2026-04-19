@@ -50,6 +50,7 @@ import { OauthProvider } from '@gitroom/backend/services/auth/providers/oauth.pr
 import { CampaignsController } from '@gitroom/backend/api/routes/campaigns.controller';
 import { InboxController } from '@gitroom/backend/api/routes/inbox.controller';
 import { LeadsController } from '@gitroom/backend/api/routes/leads.controller';
+import { MetaWebhooksController } from '@gitroom/backend/api/routes/meta-webhooks.controller';
 
 const authenticatedController = [
   UsersController,
@@ -80,6 +81,7 @@ const authenticatedController = [
     RootController,
     PolarWebhookController,
     StripeController,
+    MetaWebhooksController,
     AuthController,
     PublicController,
     MonitorController,
