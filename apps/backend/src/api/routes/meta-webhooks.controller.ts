@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Query, HttpCode, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpCode, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { InboxService } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.service';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @ApiTags('MetaWebhooks')
 @Controller('/webhooks/meta')
@@ -14,13 +14,14 @@ export class MetaWebhooksController {
   verifyWebhook(
     @Query('hub.mode') mode: string, 
     @Query('hub.challenge') challenge: string, 
-    @Query('hub.verify_token') token: string
+    @Query('hub.verify_token') token: string,
+    @Res() res: Response
   ) {
     // You should set META_VERIFY_TOKEN in your .env equal to whatever string you put in the Meta dashboard.
     if (mode === 'subscribe' && token === process.env.META_VERIFY_TOKEN) {
-      return challenge;
+      return res.status(200).send(challenge);
     }
-    return '';
+    return res.status(403).send('Verification failed');
   }
 
   // 2. Receiving Inbound Messages
