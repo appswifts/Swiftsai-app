@@ -927,4 +927,42 @@ export class InstagramProvider
       return [];
     }
   }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Send a Direct Message via Instagram Messaging API
+  //    Uses the linked Facebook Page's access token.
+  //    POST /{PAGE_ID}/messages  (same Send API as Messenger)
+  //    Docs: https://developers.facebook.com/docs/instagram-messaging
+  // ──────────────────────────────────────────────────────────────────────
+  async sendDirectMessage(
+    integration: Integration,
+    recipientExternalId: string,
+    content: string
+  ): Promise<{ providerMessageId?: string }> {
+    if (!integration?.internalId) {
+      throw new Error('Missing Instagram account ID on integration');
+    }
+    if (!integration?.token) {
+      throw new Error('Missing Instagram/Page access token');
+    }
+
+    // Instagram messaging uses the linked Page token, same Send API endpoint
+    const response = await (
+      await this.fetch(
+        `https://graph.facebook.com/v20.0/${integration.internalId}/messages?access_token=${integration.token}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient: { id: recipientExternalId },
+            messaging_type: 'RESPONSE',
+            message: { text: content },
+          }),
+        },
+        'instagram-send-direct'
+      )
+    ).json();
+
+    return { providerMessageId: response.message_id };
+  }
 }

@@ -323,6 +323,21 @@ export class IntegrationService {
       profile: getIntegrationInformation.username,
     });
 
+    // Auto-subscribe Facebook Pages to webhooks so Meta forwards messages to our endpoint
+    if (
+      getIntegration.providerIdentifier === 'facebook' &&
+      (provider as any).subscribePageToWebhooks
+    ) {
+      try {
+        await (provider as any).subscribePageToWebhooks(
+          String(getIntegrationInformation.id),
+          getIntegrationInformation.access_token
+        );
+      } catch (err) {
+        console.error('Auto webhook subscription failed:', err);
+      }
+    }
+
     return { success: true };
   }
 

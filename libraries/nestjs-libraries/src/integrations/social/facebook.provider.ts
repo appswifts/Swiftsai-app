@@ -655,4 +655,60 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
       return [];
     }
   }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Send a Direct Message via the Messenger Send API
+  //    POST /{PAGE_ID}/messages with page access token
+  //    Docs: https://developers.facebook.com/docs/messenger-platform/send-messages
+  // ──────────────────────────────────────────────────────────────────────
+  async sendDirectMessage(
+    integration: Integration,
+    recipientExternalId: string,
+    content: string
+  ): Promise<{ providerMessageId?: string }> {
+    if (!integration?.internalId) {
+      throw new Error('Missing Facebook Page ID on integration');
+    }
+    if (!integration?.token) {
+      throw new Error('Missing Facebook Page access token');
+    }
+
+    const response = await (
+      await this.fetch(
+        `https://graph.facebook.com/v20.0/${integration.internalId}/messages?access_token=${integration.token}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient: { id: recipientExternalId },
+            messaging_type: 'RESPONSE',
+            message: { text: content },
+          }),
+        },
+        'facebook-send-direct'
+      )
+    ).json();
+
+    return { providerMessageId: response.message_id };
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Subscribe a Page to receive webhook notifications (messages field)
+  //    Must be called after saving a Page integration.
+  //    POST /{PAGE_ID}/subscribed_apps?subscribed_fields=messages
+  // ──────────────────────────────────────────────────────────────────────
+  async subscribePageToWebhooks(pageId: string, pageAccessToken: string) {
+    try {
+      const response = await (
+        await fetch(
+          `https://graph.facebook.com/v20.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,message_deliveries,message_reads&access_token=${pageAccessToken}`,
+          { method: 'POST' }
+        )
+      ).json();
+      return response;
+    } catch (err) {
+      console.error('Failed to subscribe page to webhooks:', err);
+      return { success: false };
+    }
+  }
 }
