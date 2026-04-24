@@ -9,10 +9,13 @@ import React, {
   useState,
 } from 'react';
 import { CopilotChat, CopilotKitCSSProperties } from '@copilotkit/react-ui';
+import clsx from 'clsx';
 import {
   InputProps,
   UserMessageProps,
-} from '@copilotkit/react-ui/dist/components/chat/props';
+  AssistantMessageProps,
+} from '@copilotkit/react-ui';
+import { Loader2, Zap, CheckCircle2, Search, Video, Image as ImageIcon } from 'lucide-react';
 import { Input } from '@gitroom/frontend/components/agents/agent.input';
 import { useModals } from '@gitroom/frontend/components/layout/new-modal';
 import {
@@ -79,6 +82,7 @@ You can also use me as an MCP Server, check Settings >> Public API
 `),
             }}
             UserMessage={Message}
+            AssistantMessage={AssistantMessage}
             Input={NewInput}
           />
         </div>
@@ -134,10 +138,77 @@ const Message: FC<UserMessageProps> = (props) => {
       );
   }, [props.message?.content]);
   return (
-    <div
-      className="copilotKitMessage copilotKitUserMessage min-w-[300px]"
-      dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
-    />
+    <div className="agent-message-container">
+      <div
+        className="agent-bubble agent-bubble-user"
+        dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
+      />
+    </div>
+  );
+};
+
+const AssistantMessage: FC<AssistantMessageProps> = (props) => {
+  const t = useT();
+  const convertContentToImagesAndVideo = useMemo(() => {
+    return (props.message?.content || '')
+      .replace(/Video: (http.*mp4\n)/g, (match, p1) => {
+        return `<video controls class="h-[150px] w-[150px] rounded-[8px] mb-[10px]"><source src="${p1.trim()}" type="video/mp4">Your browser does not support the video tag.</video>`;
+      })
+      .replace(/Image: (http.*\n)/g, (match, p1) => {
+        return `<img src="${p1.trim()}" class="h-[150px] w-[150px] max-w-full border border-newBgColorInner" />`;
+      })
+      .replace(/\[\-\-Media\-\-\](.*)\[\-\-Media\-\-\]/g, (match, p1) => {
+        return `<div class="flex justify-center mt-[20px]">${p1}</div>`;
+      });
+  }, [props.message?.content]);
+
+  const actions: Array<{ name: string; description?: string; status: string }> = (props.message as any)?.actions || [];
+
+  return (
+    <div className="agent-message-container">
+      {actions.map((action, i) => (
+        <div 
+          key={i} 
+          className={clsx(
+            "agent-action-indicator",
+            action.status === 'executing' && "executing"
+          )}
+        >
+          {action.status === 'executing' ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <CheckCircle2 className="w-3 h-3 text-new-btn-primary" />
+          )}
+          <span>
+            {action.description || action.name}
+            {action.status === 'executing' && (
+              <span className="thinking-dots ml-1 inline-flex">
+                <span className="thinking-dot" />
+                <span className="thinking-dot" />
+                <span className="thinking-dot" />
+              </span>
+            )}
+          </span>
+        </div>
+      ))}
+      
+      {props.message?.content && (
+        <div
+          className="agent-bubble agent-bubble-assistant"
+          dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
+        />
+      )}
+      
+      {props.isLoading && !props.message?.content && actions.length === 0 && (
+        <div className="agent-bubble agent-bubble-assistant opacity-70">
+          <div className="thinking-dots">
+            <span className="thinking-dot" />
+            <span className="thinking-dot" />
+            <span className="thinking-dot" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 const NewInput: FC<InputProps> = (props) => {

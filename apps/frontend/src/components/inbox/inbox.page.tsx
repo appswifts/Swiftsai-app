@@ -33,9 +33,18 @@ interface InboxConversation {
   updatedAt: string;
 }
 
+interface InboxAttachment {
+  type: string;
+  mediaId?: string;
+  mimeType?: string;
+  url?: string;
+  filename?: string;
+}
+
 interface InboxMessage {
   id: string;
   content?: string;
+  attachmentsJson?: string;
   direction: 'INBOUND' | 'OUTBOUND';
   status: string;
   createdAt: string;
@@ -103,6 +112,80 @@ const PlatformBadge: React.FC<{ channel: string; size?: number }> = ({ channel, 
   );
 };
 
+// ─── Media Attachment Renderer ─────────────────────────────
+const AttachmentRenderer: React.FC<{ attachmentsJson?: string }> = ({ attachmentsJson }) => {
+  if (!attachmentsJson) return null;
+  let attachments: InboxAttachment[] = [];
+  try {
+    attachments = JSON.parse(attachmentsJson);
+  } catch {
+    return null;
+  }
+  if (!attachments.length) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 mt-1">
+      {attachments.map((att, idx) => {
+        if (att.type === 'image' || att.type === 'sticker') {
+          return att.url ? (
+            <img
+              key={idx}
+              src={att.url}
+              alt="Attachment"
+              className="max-w-[240px] rounded-lg border border-white/10"
+              loading="lazy"
+            />
+          ) : (
+            <div key={idx} className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              Image (media unavailable)
+            </div>
+          );
+        }
+        if (att.type === 'video') {
+          return att.url ? (
+            <video key={idx} src={att.url} controls className="max-w-[280px] rounded-lg border border-white/10" />
+          ) : (
+            <div key={idx} className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+              Video (media unavailable)
+            </div>
+          );
+        }
+        if (att.type === 'audio') {
+          return att.url ? (
+            <audio key={idx} src={att.url} controls className="max-w-[280px]" />
+          ) : (
+            <div key={idx} className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 rounded-lg px-3 py-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              Voice message
+            </div>
+          );
+        }
+        if (att.type === 'document') {
+          return (
+            <a
+              key={idx}
+              href={att.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs bg-white/5 rounded-lg px-3 py-2 border border-white/10 hover:bg-white/10 transition text-gray-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              {att.filename || 'Document'}
+            </a>
+          );
+        }
+        return (
+          <div key={idx} className="text-xs text-gray-500 bg-white/5 rounded-lg px-3 py-2">
+            [{att.type || 'Attachment'}]
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // ─── Avatar Component ──────────────────────────────────────
 const Avatar: React.FC<{ name: string; url?: string; size?: number }> = ({
   name,
@@ -148,6 +231,19 @@ export const InboxPage = () => {
   const [isSending, setIsSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+
+  // Mark messages as read when selecting a conversation
+  const selectConversation = useCallback(
+    async (id: string) => {
+      setSelectedConversationId(id);
+      try {
+        await fetch(`/inbox/${id}/read`, { method: 'POST' });
+      } catch {
+        // Non-critical
+      }
+    },
+    [fetch]
+  );
 
   // ─── Data Fetching ──────────────────────────────────────
   const { data: conversations, isLoading, mutate: mutateConversations } = useSWR<InboxConversation[]>(
@@ -368,7 +464,7 @@ export const InboxPage = () => {
                 return (
                   <div
                     key={conversation.id}
-                    onClick={() => setSelectedConversationId(conversation.id)}
+                    onClick={() => selectConversation(conversation.id)}
                     className={`flex items-start gap-3 px-3 py-3 cursor-pointer border-b border-white/5 transition-colors ${
                       selectedConversationId === conversation.id
                         ? 'bg-[#AA0FA4]/15 border-l-[3px] border-l-[#FC69FF]'
@@ -517,6 +613,7 @@ export const InboxPage = () => {
                             >
                               {msg.content || t('empty_message', '[Empty message]')}
                             </div>
+                            <AttachmentRenderer attachmentsJson={msg.attachmentsJson} />
                             <div
                               className={`text-[10px] text-gray-500 mt-1 flex items-center gap-1 ${
                                 isOutbound ? 'justify-end' : ''

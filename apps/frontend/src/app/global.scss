@@ -690,11 +690,33 @@ html[dir='rtl'] [dir='ltr'] {
 
 .agent {
   .copilotKitInputContainer {
-    padding: 0 24px !important;
+    @apply px-6 pb-6 pt-2 !important;
   }
 
   .copilotKitInput {
+    @apply rounded-2xl border transition-all duration-200 !important;
     width: 100% !important;
+    background: var(--new-bgColorInner) !important;
+    border-color: var(--new-bgLineColor) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    
+    &:focus-within {
+      border-color: var(--new-btn-primary) !important;
+      box-shadow: 0 10px 40px rgba(98, 136, 48, 0.15);
+    }
+  }
+  
+  .copilotKitInputControlButton {
+    @apply transition-colors duration-200 !important;
+    color: var(--new-textItemBlur) !important;
+    
+    &:hover:not(:disabled) {
+      color: var(--new-btn-primary) !important;
+    }
+    
+    &:disabled {
+      @apply opacity-30 !important;
+    }
   }
 }
 .rm-bg .b2 {
@@ -711,6 +733,71 @@ html[dir='rtl'] [dir='ltr'] {
 
 .copilotKitMessage a {
   color: var(--new-btn-text) !important;
+}
+
+.agent-message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.agent-bubble {
+  padding: 16px 16px 12px 16px;
+  border-radius: 1rem;
+  max-width: 85%;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  background: var(--new-bgColorInner);
+  border: 1px solid var(--new-bgLineColor);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.agent-bubble-user {
+  @apply self-end rounded-br-none;
+  background: var(--new-btn-primary);
+  color: white;
+  border: none;
+}
+
+.agent-bubble-assistant {
+  @apply self-start rounded-bl-none;
+}
+
+.agent-action-indicator {
+  @apply flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium self-start mb-2 transition-all duration-300;
+  background: var(--new-bgLineColor);
+  color: var(--new-textItemBlur);
+  border: 1px solid var(--new-blockSeparator);
+}
+
+.agent-action-indicator.executing {
+  border-color: var(--new-btn-primary);
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: var(--new-blockSeparator); }
+  50% { border-color: var(--new-btn-primary); }
+  100% { border-color: var(--new-blockSeparator); }
+}
+
+.thinking-dots {
+  @apply flex gap-1 items-center;
+}
+
+.thinking-dot {
+  @apply w-1 h-1 rounded-full bg-current;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+.thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
 }
 
 @keyframes marquee-up {

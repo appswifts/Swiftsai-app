@@ -49,7 +49,27 @@ export class InboxController {
     );
   }
 
-  // ─── Update lead status directly from inbox ──────────────────
+  // ─── Mark lead messages as read ──────────────────────────
+  @Post('/:id/read')
+  @CheckPolicies([AuthorizationActions.Update, Sections.INBOX])
+  async markAsRead(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string
+  ) {
+    return this.leadService.markMessagesAsRead(id);
+  }
+
+  // ─── Get unread count for a lead ─────────────────────────
+  @Get('/:id/unread')
+  @CheckPolicies([AuthorizationActions.Read, Sections.INBOX])
+  async getUnreadCount(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string
+  ) {
+    return this.leadService.getUnreadCount(id);
+  }
+
+  // ─── Update lead status directly from inbox ──────────────
   @Patch('/:id/status')
   @CheckPolicies([AuthorizationActions.Update, Sections.INBOX])
   async updateLeadStatus(

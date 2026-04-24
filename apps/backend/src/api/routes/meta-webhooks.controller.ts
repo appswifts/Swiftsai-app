@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Query, HttpCode, Res, Logger, RawBodyReque
 import { ApiTags } from '@nestjs/swagger';
 import { InboxService } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.service';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+import { LeadMessagingService } from '@gitroom/nestjs-libraries/database/prisma/leads/lead-messaging.service';
+import { WhatsappProvider } from '@gitroom/nestjs-libraries/integrations/social/whatsapp.provider';
 import { Request, Response } from 'express';
 import * as crypto from 'crypto';
 
@@ -9,10 +11,12 @@ import * as crypto from 'crypto';
 @Controller('/webhooks/meta')
 export class MetaWebhooksController {
   private readonly logger = new Logger(MetaWebhooksController.name);
+  private readonly whatsappProvider = new WhatsappProvider();
 
   constructor(
     private readonly inboxService: InboxService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly leadMessagingService: LeadMessagingService
   ) {}
 
   // ──────────────────────────────────────────────────────────────────────
@@ -95,17 +99,21 @@ export class MetaWebhooksController {
   private async resolveOrganizationId(
     platformInternalId: string,
     providerIdentifier: string
-  ): Promise<{ organizationId: string; token: string } | null> {
+  ): Promise<{ organizationId: string; token: string; integrationId: string } | null> {
     const integration = await this.prisma.integration.findFirst({
       where: {
         internalId: platformInternalId,
         providerIdentifier,
         deletedAt: null,
       },
-      select: { organizationId: true, token: true },
+      select: { id: true, organizationId: true, token: true },
     });
     if (!integration) return null;
-    return { organizationId: integration.organizationId, token: integration.token };
+    return {
+      organizationId: integration.organizationId,
+      token: integration.token,
+      integrationId: integration.id,
+    };
   }
 
   // ──────────────────────────────────────────────────────────────────────
@@ -152,24 +160,94 @@ export class MetaWebhooksController {
         continue;
       }
 
-      // Log delivery status updates (can be expanded to update message status in DB)
+      // ── Handle delivery status updates ──────────────────────
       for (const status of value.statuses || []) {
-        this.logger.debug(`WhatsApp delivery status: ${status.status} for msg ${status.id}`);
+        const statusMap: Record<string, 'delivered' | 'read' | 'failed'> = {
+          delivered: 'delivered',
+          read: 'read',
+          failed: 'failed',
+        };
+
+        const mappedStatus = statusMap[status.status];
+        if (mappedStatus) {
+          try {
+            await this.leadMessagingService.handleDeliveryUpdate({
+              providerMessageId: status.id,
+              status: mappedStatus,
+              errorReason: status.errors?.[0]?.title,
+            });
+            this.logger.debug(
+              `WhatsApp delivery: ${status.status} for msg ${status.id}`
+            );
+          } catch (err) {
+            this.logger.warn(
+              `Failed to process delivery status for ${status.id}: ${(err as Error).message}`
+            );
+          }
+        }
       }
 
+      // ── Handle inbound messages ─────────────────────────────
       for (const msg of value.messages || []) {
         const senderPhone = msg.from;
         const contactName = value.contacts?.[0]?.profile?.name || senderPhone;
+        const providerMessageId = msg.id;
 
         let content = '[Unsupported message type]';
-        if (msg.type === 'text') content = msg.text?.body || '';
-        else if (msg.type === 'image') content = msg.image?.caption || '[Image]';
-        else if (msg.type === 'video') content = msg.video?.caption || '[Video]';
-        else if (msg.type === 'audio') content = '[Voice message]';
-        else if (msg.type === 'document') content = msg.document?.filename || '[Document]';
-        else if (msg.type === 'location') content = `[Location: ${msg.location?.latitude}, ${msg.location?.longitude}]`;
-        else if (msg.type === 'reaction') content = `[Reaction: ${msg.reaction?.emoji || '👍'}]`;
-        else if (msg.type === 'sticker') content = '[Sticker]';
+        let attachments: any[] = [];
+
+        switch (msg.type) {
+          case 'text':
+            content = msg.text?.body || '';
+            break;
+          case 'image':
+            content = msg.image?.caption || '[Image]';
+            attachments = [await this.resolveWhatsAppMedia(msg.image, resolved.token, 'image')];
+            break;
+          case 'video':
+            content = msg.video?.caption || '[Video]';
+            attachments = [await this.resolveWhatsAppMedia(msg.video, resolved.token, 'video')];
+            break;
+          case 'audio':
+            content = '[Voice message]';
+            attachments = [await this.resolveWhatsAppMedia(msg.audio, resolved.token, 'audio')];
+            break;
+          case 'document':
+            content = msg.document?.filename || '[Document]';
+            attachments = [await this.resolveWhatsAppMedia(msg.document, resolved.token, 'document')];
+            break;
+          case 'location':
+            content = `📍 Location: ${msg.location?.latitude}, ${msg.location?.longitude}`;
+            if (msg.location?.name) content = `📍 ${msg.location.name}`;
+            break;
+          case 'reaction':
+            content = `[Reaction: ${msg.reaction?.emoji || '👍'}]`;
+            break;
+          case 'sticker':
+            content = '[Sticker]';
+            attachments = [await this.resolveWhatsAppMedia(msg.sticker, resolved.token, 'sticker')];
+            break;
+          case 'interactive':
+            // User clicked a reply button or selected a list item
+            if (msg.interactive?.type === 'button_reply') {
+              content = msg.interactive.button_reply?.title || '[Button Reply]';
+            } else if (msg.interactive?.type === 'list_reply') {
+              content = msg.interactive.list_reply?.title || '[List Selection]';
+            }
+            break;
+          case 'button':
+            content = msg.button?.text || '[Button]';
+            break;
+          case 'order':
+            content = '[Order received]';
+            break;
+          default:
+            content = `[${msg.type || 'Unknown'} message]`;
+        }
+
+        const attachmentsJson = attachments.length > 0
+          ? JSON.stringify(attachments.filter(Boolean))
+          : undefined;
 
         await this.inboxService.handleIncomingMessage(
           resolved.organizationId,
@@ -177,11 +255,60 @@ export class MetaWebhooksController {
           phoneNumberId,
           senderPhone,
           content,
-          { name: contactName, username: senderPhone }
+          {
+            name: contactName,
+            username: senderPhone,
+            integrationId: resolved.integrationId,
+          },
+          providerMessageId,
+          attachmentsJson
         );
+
+        // Auto-mark as read on WhatsApp side
+        try {
+          await this.whatsappProvider.markAsRead(
+            phoneNumberId,
+            resolved.token,
+            providerMessageId
+          );
+        } catch {
+          // Non-critical — ignore mark-as-read failures
+        }
 
         this.logger.log(`WhatsApp msg from ${senderPhone} → org ${resolved.organizationId.slice(0, 8)}...`);
       }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // WhatsApp Media Resolver — gets download URL from Meta CDN
+  // ──────────────────────────────────────────────────────────────────────
+  private async resolveWhatsAppMedia(
+    mediaObj: any,
+    accessToken: string,
+    type: string
+  ): Promise<{ type: string; mediaId: string; mimeType?: string; url?: string; filename?: string } | null> {
+    if (!mediaObj?.id) return null;
+
+    try {
+      const mediaInfo = await this.whatsappProvider.downloadMedia(
+        mediaObj.id,
+        accessToken
+      );
+      return {
+        type,
+        mediaId: mediaObj.id,
+        mimeType: mediaInfo.mimeType,
+        url: mediaInfo.url,
+        filename: mediaObj.filename,
+      };
+    } catch (err) {
+      this.logger.warn(`Failed to resolve WhatsApp media ${mediaObj.id}: ${(err as Error).message}`);
+      return {
+        type,
+        mediaId: mediaObj.id,
+        mimeType: mediaObj.mime_type,
+      };
     }
   }
 
@@ -235,7 +362,10 @@ export class MetaWebhooksController {
         pageId,
         senderId,
         content,
-        { username: senderId }
+        {
+          username: senderId,
+          integrationId: resolved.integrationId,
+        }
       );
 
       this.logger.log(`FB Messenger msg from ${senderId} → org ${resolved.organizationId.slice(0, 8)}...`);
@@ -277,7 +407,10 @@ export class MetaWebhooksController {
         igAccountId,
         senderId,
         content,
-        { username: senderId }
+        {
+          username: senderId,
+          integrationId: resolved.integrationId,
+        }
       );
 
       this.logger.log(`IG DM from ${senderId} → org ${resolved.organizationId.slice(0, 8)}...`);

@@ -53,13 +53,17 @@ export class InboxService {
     externalId: string,
     senderId: string,
     content: string,
-    metadata?: any
+    metadata?: any,
+    providerMessageId?: string,
+    attachmentsJson?: string
   ) {
     return this.leadService.upsertLeadFromInboundMessage({
       organizationId,
       channel: platform,
       externalId,
       content,
+      providerMessageId,
+      attachmentsJson,
       senderInfo: {
         username: metadata?.username || senderId,
         displayName: metadata?.name,
