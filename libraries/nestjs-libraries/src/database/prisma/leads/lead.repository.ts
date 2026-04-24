@@ -10,6 +10,7 @@ export class LeadRepository {
     organizationId: string,
     filters?: {
       status?: LeadStatus;
+      statuses?: LeadStatus[];
       channel?: string;
       ownerUserId?: string;
       search?: string;
@@ -28,6 +29,10 @@ export class LeadRepository {
 
     if (filters?.status) {
       where.status = filters.status;
+    }
+
+    if (filters?.statuses && filters.statuses.length > 0) {
+      where.status = { in: filters.statuses };
     }
 
     if (filters?.ownerUserId) {

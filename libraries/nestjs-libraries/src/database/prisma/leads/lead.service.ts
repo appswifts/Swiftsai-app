@@ -16,6 +16,7 @@ export class LeadService {
     organizationId: string,
     filters?: {
       status?: LeadStatus;
+      statuses?: LeadStatus[];
       channel?: string;
       ownerUserId?: string;
       search?: string;

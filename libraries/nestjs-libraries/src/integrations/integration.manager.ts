@@ -37,6 +37,7 @@ import { SkoolProvider } from '@gitroom/nestjs-libraries/integrations/social/sko
 import { WhopProvider } from '@gitroom/nestjs-libraries/integrations/social/whop.provider';
 import { MeweProvider } from '@gitroom/nestjs-libraries/integrations/social/mewe.provider';
 import { WhatsappProvider } from '@gitroom/nestjs-libraries/integrations/social/whatsapp.provider';
+import { MetaAdsProvider } from '@gitroom/nestjs-libraries/integrations/social/meta-ads.provider';
 
 export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new XProvider(),
@@ -73,6 +74,7 @@ export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new SkoolProvider(),
   new MeweProvider(),
   new WhatsappProvider(),
+  new MetaAdsProvider(),
   // new MastodonCustomProvider(),
 ];
 

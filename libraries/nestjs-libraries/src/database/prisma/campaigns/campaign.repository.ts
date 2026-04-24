@@ -96,6 +96,31 @@ export class CampaignRepository {
     });
   }
 
+  getByIdSimple(id: string) {
+    return this.prisma.campaign.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        platform: true,
+        type: true,
+        status: true,
+        organizationId: true,
+        config: true,
+        creative: true,
+        targeting: true,
+        metrics: true,
+      },
+    });
+  }
+
+  updateMetrics(id: string, metrics: string) {
+    return this.prisma.campaign.updateMany({
+      where: { id, deletedAt: null },
+      data: { metrics },
+    });
+  }
+
   createAudit(
     campaignId: string,
     data: { userId?: string; action: string; oldValue?: string; newValue?: string }

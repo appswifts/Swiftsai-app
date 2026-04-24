@@ -93,4 +93,24 @@ export class CampaignService {
 
     return { success: true };
   }
+
+  async launchCampaign(organizationId: string, id: string) {
+    return this.updateCampaign(organizationId, id, { status: 'ACTIVE' as CampaignStatus });
+  }
+
+  async pauseCampaign(organizationId: string, id: string) {
+    return this.updateCampaign(organizationId, id, { status: 'PAUSED' as CampaignStatus });
+  }
+
+  async completeCampaign(organizationId: string, id: string) {
+    return this.updateCampaign(organizationId, id, { status: 'COMPLETED' as CampaignStatus });
+  }
+
+  async getCampaignByIdForMetrics(campaignId: string) {
+    return this.campaignRepository.getByIdSimple(campaignId);
+  }
+
+  async updateCampaignMetrics(campaignId: string, metrics: string) {
+    return this.campaignRepository.updateMetrics(campaignId, metrics);
+  }
 }
