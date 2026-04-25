@@ -252,14 +252,12 @@ export const AdminOrganizations = () => {
                   <td className="p-[16px]">
                     <div className="flex flex-col gap-[6px]">
                       <Button
-                        size="sm"
                         onClick={() => handleViewDetails(org.id)}
                         className="!bg-blue-500 hover:!bg-blue-600"
                       >
                         {t('view_details', 'View Details')}
                       </Button>
                       <Button
-                        size="sm"
                         onClick={() => handleManageSubscription(org.id, org.subscription)}
                         className="!bg-green-500 hover:!bg-green-600"
                       >
@@ -284,7 +282,6 @@ export const AdminOrganizations = () => {
             <Button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
-              size="sm"
               className="!bg-menuBg hover:!bg-tableBorder"
             >
               {t('previous', 'Previous')}
@@ -305,12 +302,10 @@ export const AdminOrganizations = () => {
                   <Button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    size="sm"
-                    className={`min-w-[40px] ${
-                      page === pageNum
+                    className={`min-w-[40px] ${page === pageNum
                         ? '!bg-primary text-white'
                         : '!bg-menuBg hover:!bg-tableBorder'
-                    }`}
+                      }`}
                   >
                     {pageNum}
                   </Button>
@@ -320,7 +315,6 @@ export const AdminOrganizations = () => {
             <Button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
-              size="sm"
               className="!bg-menuBg hover:!bg-tableBorder"
             >
               {t('next', 'Next')}

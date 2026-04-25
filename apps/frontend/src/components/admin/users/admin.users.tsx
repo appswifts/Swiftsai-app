@@ -235,21 +235,18 @@ export const AdminUsers = () => {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="p-[16px]">
-                    <div className={`inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-full text-[12px] font-medium ${
-                      user.activated
-                        ? 'bg-green-500/20 text-green-500'
-                        : 'bg-red-500/20 text-red-500'
-                    }`}>
-                      <div className={`w-[6px] h-[6px] rounded-full ${
-                        user.activated ? 'bg-green-500' : 'bg-red-500'
-                      }`} />
+                    <div className={`inline-flex items-center gap-[6px] px-[10px] py-[4px] rounded-full text-[12px] font-medium ${user.activated
+                      ? 'bg-green-500/20 text-green-500'
+                      : 'bg-red-500/20 text-red-500'
+                      }`}>
+                      <div className={`w-[6px] h-[6px] rounded-full ${user.activated ? 'bg-green-500' : 'bg-red-500'
+                        }`} />
                       {user.activated ? t('active', 'Active') : t('suspended', 'Suspended')}
                     </div>
                   </td>
                   <td className="p-[16px]">
                     <div className="flex gap-[8px]">
                       <Button
-                        size="sm"
                         onClick={() => handleImpersonate(user.id)}
                         className="!bg-blue-500 hover:!bg-blue-600"
                       >
@@ -257,7 +254,6 @@ export const AdminUsers = () => {
                       </Button>
                       {user.activated ? (
                         <Button
-                          size="sm"
                           onClick={() => handleSuspendUser(user.id, user.email)}
                           className="!bg-red-500 hover:!bg-red-600"
                         >
@@ -265,7 +261,6 @@ export const AdminUsers = () => {
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
                           onClick={() => handleActivateUser(user.id, user.email)}
                           className="!bg-green-500 hover:!bg-green-600"
                         >
@@ -291,7 +286,6 @@ export const AdminUsers = () => {
             <Button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
-              size="sm"
               className="!bg-menuBg hover:!bg-tableBorder"
             >
               {t('previous', 'Previous')}
@@ -312,12 +306,10 @@ export const AdminUsers = () => {
                   <Button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    size="sm"
-                    className={`min-w-[40px] ${
-                      page === pageNum
-                        ? '!bg-primary text-white'
-                        : '!bg-menuBg hover:!bg-tableBorder'
-                    }`}
+                    className={`min-w-[40px] ${page === pageNum
+                      ? '!bg-primary text-white'
+                      : '!bg-menuBg hover:!bg-tableBorder'
+                      }`}
                   >
                     {pageNum}
                   </Button>
@@ -327,7 +319,6 @@ export const AdminUsers = () => {
             <Button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
-              size="sm"
               className="!bg-menuBg hover:!bg-tableBorder"
             >
               {t('next', 'Next')}

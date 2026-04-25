@@ -1,0 +1,8 @@
+﻿docker : ERROR: error during connect: Head "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/_ping": open 
+//./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+At line:1 char:1
++ docker build -f Dockerfile.dev -t swiftsai-app:test . > docker_build_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: error du...file specified.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
