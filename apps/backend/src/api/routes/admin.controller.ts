@@ -17,7 +17,7 @@ export class AdminController {
     private readonly prisma: PrismaService,
     private readonly subscriptionService: SubscriptionService,
     private readonly organizationRepository: OrganizationRepository
-  ) {}
+  ) { }
 
   @Get('/stats')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
@@ -45,7 +45,7 @@ export class AdminController {
     });
 
     const activeSubscriptions = subscriptions.filter(
-      (s: any) => s.status === 'ACTIVE' || s.status === 'TRIALING'
+      (s: any) => !s.deletedAt && (!s.cancelAt || new Date(s.cancelAt) > now)
     );
 
     // Growth: new users in last 30 days
@@ -63,7 +63,14 @@ export class AdminController {
 
     // Revenue (from Stripe if available, otherwise estimate)
     const monthlyRecurringRevenue = activeSubscriptions.reduce((sum, s: any) => {
-      return sum + (s.price || 0);
+      const priceMap: Record<string, number> = {
+        'STANDARD': 29,
+        'TEAM': 39,
+        'PRO': 49,
+        'ULTIMATE': 99,
+        'FREE': 0
+      };
+      return sum + (priceMap[s.subscriptionTier] || 0);
     }, 0);
 
     return {
@@ -446,6 +453,7 @@ export class AdminController {
   @Get('/subscriptions/overview')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getSubscriptionsOverview() {
+    const now = new Date();
     const subscriptions = await this.prisma.subscription.findMany({
       where: { deletedAt: null },
       include: {
@@ -462,10 +470,14 @@ export class AdminController {
     });
 
     // Count subscriptions by tier
-    subscriptions.forEach(sub => {
+    const activeSubscriptions = subscriptions.filter(
+      (s: any) => !s.deletedAt && (!s.cancelAt || new Date(s.cancelAt) > now)
+    );
+
+    activeSubscriptions.forEach(sub => {
       counts[sub.subscriptionTier].count++;
       // Simple MRR calculation - you might want to use actual pricing
-      const priceMap = {
+      const priceMap: Record<string, number> = {
         'STANDARD': 29,
         'TEAM': 39,
         'PRO': 49,
@@ -488,10 +500,10 @@ export class AdminController {
         tier,
         count: data.count,
         mrr: data.mrr,
-        percentage: subscriptions.length > 0 ? (data.count / (subscriptions.length + freeOrgs)) * 100 : 0
+        percentage: (activeSubscriptions.length + freeOrgs) > 0 ? (data.count / (activeSubscriptions.length + freeOrgs)) * 100 : 0
       })),
-      totalSubscriptions: subscriptions.length,
-      totalOrganizations: subscriptions.length + freeOrgs,
+      totalSubscriptions: activeSubscriptions.length,
+      totalOrganizations: activeSubscriptions.length + freeOrgs,
       totalMRR: Object.values(counts).reduce((sum, data) => sum + data.mrr, 0)
     };
   }

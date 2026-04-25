@@ -6,7 +6,6 @@ import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/o
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
 import { HttpForbiddenException } from '@gitroom/nestjs-libraries/services/exception.filter';
-import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 import { TenantContext } from '@gitroom/nestjs-libraries/tenant-context/tenant.context';
 
 export const removeAuth = (res: Response) => {
@@ -51,34 +50,38 @@ export class AuthMiddleware implements NestMiddleware {
 
       const impersonate = req.cookies.impersonate || req.headers.impersonate;
       if (user?.isSuperAdmin && impersonate) {
-        const loadImpersonate = await this._organizationService.getUserOrg(
-          impersonate
-        );
-
-        if (loadImpersonate) {
-          user = loadImpersonate.user;
-          user.isSuperAdmin = true;
-          delete user.password;
-
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          req.user = user;
-
-          // @ts-ignore
-          loadImpersonate.organization.users =
-            loadImpersonate.organization.users.filter(
-              (f) => f.userId === user.id
-            );
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          req.org = loadImpersonate.organization;
-
-          // Set tenant context for impersonated user
-          this._tenantContext.run(
-            this._tenantContext.createTenantContext(loadImpersonate.organization, user),
-            () => next()
+        try {
+          const loadImpersonate = await this._organizationService.getUserOrg(
+            impersonate
           );
-          return;
+
+          if (loadImpersonate) {
+            user = loadImpersonate.user;
+            user.isSuperAdmin = true;
+            delete user.password;
+
+            // @ts-ignore
+            req.org = loadImpersonate.organization as any;
+            // @ts-ignore
+            req.org.users = [
+              {
+                // @ts-ignore
+                role: loadImpersonate.role,
+              },
+            ];
+
+            // Set tenant context for impersonated user
+            this._tenantContext.run(
+              this._tenantContext.createTenantContext(
+                loadImpersonate.organization as any,
+                user
+              ),
+              () => next()
+            );
+            return;
+          }
+        } catch (err) {
+          console.error('Impersonation error:', err);
         }
       }
 
@@ -86,10 +89,19 @@ export class AuthMiddleware implements NestMiddleware {
       const organization = (
         await this._organizationService.getOrgsByUserId(user.id)
       ).filter((f) => !f.users?.[0]?.disabled);
+
       const setOrg =
         organization.find((org) => org.id === orgHeader) || organization[0];
 
       if (!organization.length || !setOrg) {
+        // If the user is a global superadmin, allow them to enter without an organization
+        if (user.isSuperAdmin) {
+          this._tenantContext.run(
+            this._tenantContext.createSuperAdminContext(user),
+            () => next()
+          );
+          return;
+        }
         throw new HttpForbiddenException();
       }
 
@@ -97,12 +109,7 @@ export class AuthMiddleware implements NestMiddleware {
         await this._organizationService.updateApiKey(setOrg.id);
       }
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      req.user = user;
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
+      // @ts-ignore
       req.org = setOrg;
 
       // Set tenant context for authenticated request
@@ -110,8 +117,8 @@ export class AuthMiddleware implements NestMiddleware {
         this._tenantContext.createTenantContext(setOrg, user),
         () => next()
       );
-      return;
     } catch (err) {
+      console.error('AuthMiddleware error:', err);
       throw new HttpForbiddenException();
     }
   }
