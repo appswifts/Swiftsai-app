@@ -24,6 +24,7 @@ import { HtmlComponent } from '@gitroom/frontend/components/layout/html.componen
 import Script from 'next/script';
 import { ChangeDirClient } from '@gitroom/frontend/components/new-layout/change.dir.client';
 
+
 const jakartaSans = { className: 'font-sans' };
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -44,6 +45,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             strategy="afterInteractive"
           />
         )}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
       </head>
       <ChangeDirClient />
       <body

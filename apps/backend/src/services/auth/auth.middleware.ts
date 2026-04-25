@@ -14,10 +14,10 @@ export const removeAuth = (res: Response) => {
     domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
     ...(!process.env.NOT_SECURED
       ? {
-          secure: true,
-          httpOnly: true,
-          sameSite: 'none',
-        }
+        secure: true,
+        httpOnly: true,
+        sameSite: 'none',
+      }
       : {}),
     expires: new Date(0),
     maxAge: -1,
@@ -31,7 +31,7 @@ export class AuthMiddleware implements NestMiddleware {
     private _organizationService: OrganizationService,
     private _userService: UsersService,
     private _tenantContext: TenantContext
-  ) {}
+  ) { }
   async use(req: Request, res: Response, next: NextFunction) {
     const auth = req.headers.auth || req.cookies.auth;
     if (!auth) {
@@ -85,11 +85,11 @@ export class AuthMiddleware implements NestMiddleware {
       delete user.password;
       const organization = (
         await this._organizationService.getOrgsByUserId(user.id)
-      ).filter((f) => !f.users[0].disabled);
+      ).filter((f) => !f.users?.[0]?.disabled);
       const setOrg =
         organization.find((org) => org.id === orgHeader) || organization[0];
 
-      if (!organization) {
+      if (!organization.length || !setOrg) {
         throw new HttpForbiddenException();
       }
 
