@@ -1,4 +1,3 @@
-```tsx
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -7,7 +6,7 @@ import { useSWRConfig } from 'swr';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { Input } from '@gitroom/react/form/input';
 import { Button } from '@gitroom/react/form/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gitroom/react/form/select';
+import { Select } from '@gitroom/react/form/select';
 
 interface Props {
   orgId: string;
@@ -54,53 +53,48 @@ export const ManageSubscription = ({ orgId, currentSub, mutate, onClose }: Props
     } finally {
       setLoading(false);
     }
-  }, [orgId, tier, period, channels, lifetime, mutate, globalMutate, onClose, fetch, t]);
+  }, [orgId, tier, period, channels, lifetime, mutate, globalMutate, onClose, fetch]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-[20px]">
       <h3 className="text-[20px] font-bold text-newTextColor">{t('manage_subscription', 'Manage Subscription')}</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px]">
-        <div>
-          <label className="block text-newTextColor/60 text-[14px] mb-[8px]">{t('subscription_tier', 'Subscription Tier')}</label>
-          <Select value={tier} onValueChange={(v: SubscriptionTier) => setTier(v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {tiers.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          label={t('subscription_tier', 'Subscription Tier')}
+          name="tier"
+          value={tier}
+          onChange={(e) => setTier(e.target.value as SubscriptionTier)}
+          disableForm={true}
+        >
+          {tiers.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </Select>
 
-        <div>
-          <label className="block text-newTextColor/60 text-[14px] mb-[8px]">{t('billing_period', 'Billing Period')}</label>
-          <Select value={period} onValueChange={(v: Period) => setPeriod(v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periods.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          label={t('billing_period', 'Billing Period')}
+          name="period"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as Period)}
+          disableForm={true}
+        >
+          {periods.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </Select>
       </div>
 
-      <div>
-        <label className="block text-newTextColor/60 text-[14px] mb-[8px]">{t('total_channels', 'Total Channels')}</label>
-        <Input
-          type="number"
-          min={1}
-          value={channels}
-          onChange={(e) => setChannels(parseInt(e.target.value) || 0)}
-          placeholder="5"
-          className="w-full"
-        />
-      </div>
+      <Input
+        label={t('total_channels', 'Total Channels')}
+        name="channels"
+        type="number"
+        min={1}
+        value={channels}
+        onChange={(e) => setChannels(parseInt(e.target.value) || 0)}
+        placeholder="5"
+        disableForm={true}
+      />
 
       <div className="flex items-center space-x-3">
         <input
@@ -116,14 +110,13 @@ export const ManageSubscription = ({ orgId, currentSub, mutate, onClose }: Props
       </div>
 
       <div className="flex gap-[12px] justify-end pt-[20px] border-t border-tableBorder">
-        <Button type="button" onClick={onClose} variant="ghost" className="!bg-menuBg">
+        <Button onClick={onClose} secondary={true}>
           {t('cancel', 'Cancel')}
         </Button>
-        <Button type="submit" disabled={loading} className="!bg-green-500 hover:!bg-green-600">
-          {loading ? t('saving', 'Saving...') : t('save_changes', 'Save Changes')}
+        <Button type="submit" loading={loading}>
+          {t('save_changes', 'Save Changes')}
         </Button>
       </div>
     </form>
   );
 };
-```

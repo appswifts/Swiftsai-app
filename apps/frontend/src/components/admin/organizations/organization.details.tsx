@@ -1,4 +1,3 @@
-```tsx
 'use client';
 
 import React from 'react';
@@ -106,7 +105,7 @@ export const OrganizationDetails = ({ orgId, onClose }: Props) => {
             </div>
           </div>
         </div>
-        <Button size="sm" onClick={onClose} className="!bg-menuBg hover:!bg-tableBorder">
+        <Button onClick={onClose} secondary={true}>
           {t('close', 'Close')}
         </Button>
       </div>
@@ -238,4 +237,3 @@ export const OrganizationDetails = ({ orgId, onClose }: Props) => {
     </div>
   );
 };
-```
