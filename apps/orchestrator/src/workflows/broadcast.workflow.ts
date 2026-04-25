@@ -97,7 +97,7 @@ export async function broadcastWorkflow(args: BroadcastWorkflowArgs): Promise<Br
 
     // Update progress every batch
     if ((i + 1) % BATCH_SIZE === 0 || i === targets.length - 1) {
-      await updateCampaignMetrics(campaignId, {
+      await updateCampaignMetrics(organizationId, campaignId, {
         sent,
         failed,
         totalTargets: targets.length,

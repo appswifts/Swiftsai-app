@@ -1,0 +1,166 @@
+﻿npx : npm warn Unknown project config "ignore-workspace-root-check". This will stop working in the next major version 
+of npm. See `npm help npmrc` for supported config options.
+At line:1 char:48
++ ... size=4096"; npx pnpm --filter ./apps/frontend run build > build_front ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help 
+npmrc` for supported config options.
+npm warn Unknown project config "restrict-manifest-changes". This will stop working in the next major version of npm. 
+See `npm help npmrc` for supported config options.
+npm warn Unknown project config "sync-injected-deps-after-scripts". This will stop working in the next major version 
+of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "inject-workspace-packages". This will stop working in the next major version of npm. 
+See `npm help npmrc` for supported config options.
+.                                        | ΓÇëWARNΓÇë Unsupported engine: wanted: {"node":">=22.12.0 <23.0.0"} (current: {"node":"v23.11.1","pnpm":"10.6.1"})
+
+> postiz-frontend@1.0.0 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\frontend
+> next build
+
+ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\FH\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if 
+it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\pnpm-workspace.yaml
+   * C:\Users\FH\Desktop\pnpm-lock.yaml
+
+Γû▓ Next.js 16.2.1 (Turbopack)
+- Experiments (use with caution):
+  ┬╖ clientTraceMetadata
+  ┬╖ proxyTimeout: 90000
+
+  Creating an optimized production build ...
+Turbopack build encountered 3 warnings:
+[next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting 
+https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&display=swap
+
+Import traces:
+  Client Component Browser:
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css [Client Component Browser]
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.js [Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Client 
+Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Server 
+Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/(site)/layout.tsx [Server Component]
+
+  Client Component SSR:
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css [Client Component SSR]
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.js [Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Client 
+Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Server 
+Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/(site)/layout.tsx [Server Component]
+
+
+[next]/internal/font/google/plus_jakarta_sans_4f13486c.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting 
+https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;1,500;1,600&display=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/plus_jakarta_sans_4f13486c.module.css
+    [next]/internal/font/google/plus_jakarta_sans_4f13486c.js
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(extension)/layout.tsx
+
+
+[next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting 
+https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&display=swap
+
+Import traces:
+  Client Component Browser:
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css [Client Component Browser]
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.js [Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Server Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/admin/layout.tsx [Server Component]
+
+  Client Component SSR:
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css [Client Component SSR]
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.js [Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Server Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/admin/layout.tsx [Server Component]
+
+
+
+> Build error occurred
+Error: Turbopack build failed with 3 errors:
+[next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css
+next/font: error:
+Failed to fetch `Plus Jakarta Sans` from Google Fonts.
+
+Import traces:
+  Client Component Browser:
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css [Client Component Browser]
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.js [Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Client 
+Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Server 
+Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/(site)/layout.tsx [Server Component]
+
+  Client Component SSR:
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.module.css [Client Component SSR]
+    [next]/internal/font/google/plus_jakarta_sans_3310bd0b.js [Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Client 
+Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/new-layout/layout.component.tsx [Server 
+Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/(site)/layout.tsx [Server Component]
+
+
+[next]/internal/font/google/plus_jakarta_sans_4f13486c.module.css
+next/font: error:
+Failed to fetch `Plus Jakarta Sans` from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/plus_jakarta_sans_4f13486c.module.css
+    [next]/internal/font/google/plus_jakarta_sans_4f13486c.js
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(extension)/layout.tsx
+
+
+[next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css
+next/font: error:
+Failed to fetch `Plus Jakarta Sans` from Google Fonts.
+
+Import traces:
+  Client Component Browser:
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css [Client Component Browser]
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.js [Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Client Component Browser]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Server Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/admin/layout.tsx [Server Component]
+
+  Client Component SSR:
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.module.css [Client Component SSR]
+    [next]/internal/font/google/plus_jakarta_sans_f3805d3.js [Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Client Component SSR]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/components/admin/layout/admin.layout.component.tsx 
+[Server Component]
+    ./Desktop/projects/SWIFTSAI/Swiftsai-app/apps/frontend/src/app/(app)/admin/layout.tsx [Server Component]
+
+
+    at ignore-listed frames
+C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\frontend:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë postiz-frontend@1.0.0 build: `next build`
+Exit status 1
+ΓÇëWARNΓÇë  Local package.json exists, but node_modules missing, did you mean to install?

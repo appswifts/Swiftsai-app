@@ -1,0 +1,50 @@
+﻿npx : npm warn Unknown project config "ignore-workspace-root-check". This will stop working in the next major version 
+of npm. See `npm help npmrc` for supported config options.
+At line:1 char:48
++ ... size=4096"; npx pnpm -r --workspace-concurrency=1 run build > full_bu ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help 
+npmrc` for supported config options.
+npm warn Unknown project config "restrict-manifest-changes". This will stop working in the next major version of npm. 
+See `npm help npmrc` for supported config options.
+npm warn Unknown project config "sync-injected-deps-after-scripts". This will stop working in the next major version 
+of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "inject-workspace-packages". This will stop working in the next major version of npm. 
+See `npm help npmrc` for supported config options.
+.                                        | ΓÇëWARNΓÇë Unsupported engine: wanted: {"node":">=22.12.0 <23.0.0"} (current: {"node":"v23.11.1","pnpm":"10.6.1"})
+Scope: 7 of 8 workspace projects
+
+> postiz-backend@1.0.0 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\backend
+> cross-env NODE_ENV=production nest build
+
+[96m../orchestrator/src/workflows/broadcast.workflow.ts[0m:[93m100[0m:[93m13[0m - [91merror[0m[90m TS2554: 
+[0mExpected 3 arguments, but got 2.
+
+[7m100[0m       await updateCampaignMetrics(campaignId, {
+[7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~[0m
+
+  [96m../orchestrator/src/activities/campaign.activity.ts[0m:[93m104[0m:[93m5[0m
+    [7m104[0m     metrics: {
+    [7m   [0m [96m    ~~~~~~~~~~[0m
+    [7m105[0m       sent?: number;
+    [7m   [0m [96m~~~~~~~~~~~~~~~~~~~~[0m
+    [7m...[0m 
+    [7m108[0m       totalTargets?: number;
+    [7m   [0m [96m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [7m109[0m     }
+    [7m   [0m [96m~~~~~[0m
+    An argument for 'metrics' was not provided.
+
+Found 1 error(s).
+
+C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\backend:
+ΓÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILΓÇë postiz-backend@1.0.0 build: `cross-env NODE_ENV=production nest build`
+Exit status 1
+ΓÇëWARNΓÇë  Local package.json exists, but node_modules missing, did you mean to install?
+
+> postiz@2.0.5 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\cli
+> tsup
+
