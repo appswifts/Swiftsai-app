@@ -51,6 +51,7 @@ import { CampaignsController } from '@gitroom/backend/api/routes/campaigns.contr
 import { InboxController } from '@gitroom/backend/api/routes/inbox.controller';
 import { LeadsController } from '@gitroom/backend/api/routes/leads.controller';
 import { MetaWebhooksController } from '@gitroom/backend/api/routes/meta-webhooks.controller';
+import { AdminController } from '@gitroom/backend/api/routes/admin.controller';
 
 const authenticatedController = [
   UsersController,
@@ -74,6 +75,7 @@ const authenticatedController = [
   InboxController,
   CampaignsController,
   LeadsController,
+  AdminController,
 ];
 @Module({
   imports: [UploadModule],

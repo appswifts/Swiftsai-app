@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(pnpm run *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(pnpm build *)",
+      "Bash(grep -E \"\\(index\\\\.ts|/src/[^/]*\\\\.ts$\\)\")",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm eslint *)"
     ]
   }
 }

@@ -7,6 +7,7 @@ import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/us
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
 import { HttpForbiddenException } from '@gitroom/nestjs-libraries/services/exception.filter';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
+import { TenantContext } from '@gitroom/nestjs-libraries/tenant-context/tenant.context';
 
 export const removeAuth = (res: Response) => {
   res.cookie('auth', '', {
@@ -28,7 +29,8 @@ export const removeAuth = (res: Response) => {
 export class AuthMiddleware implements NestMiddleware {
   constructor(
     private _organizationService: OrganizationService,
-    private _userService: UsersService
+    private _userService: UsersService,
+    private _tenantContext: TenantContext
   ) {}
   async use(req: Request, res: Response, next: NextFunction) {
     const auth = req.headers.auth || req.cookies.auth;
@@ -70,7 +72,12 @@ export class AuthMiddleware implements NestMiddleware {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-expect-error
           req.org = loadImpersonate.organization;
-          next();
+
+          // Set tenant context for impersonated user
+          this._tenantContext.run(
+            this._tenantContext.createTenantContext(loadImpersonate.organization, user),
+            () => next()
+          );
           return;
         }
       }
@@ -97,9 +104,15 @@ export class AuthMiddleware implements NestMiddleware {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       req.org = setOrg;
+
+      // Set tenant context for authenticated request
+      this._tenantContext.run(
+        this._tenantContext.createTenantContext(setOrg, user),
+        () => next()
+      );
+      return;
     } catch (err) {
       throw new HttpForbiddenException();
     }
-    next();
   }
 }
