@@ -76,7 +76,7 @@ export const AdminLayoutComponent = ({ children }: { children: ReactNode }) => {
             </div>
           </div>
           <div className="flex-1 ml-[262px] p-[20px]">
-            <Title title="Admin Dashboard" />
+            <Title />
             <div className="mt-[30px]">
               {children}
             </div>
