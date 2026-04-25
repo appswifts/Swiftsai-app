@@ -22,36 +22,27 @@ export const customFetch = (
     const authNonSecuredCookie =
       typeof document === 'undefined'
         ? null
-        : document.cookie
-            .split(';')
-            .find((p) => p.includes('auth='))
-            ?.split('=')[1];
+        : document.cookie.match(/(^| )auth=([^;]+)/)?.[2];
 
     const authNonSecuredOrg =
       typeof document === 'undefined'
         ? null
-        : document.cookie
-            .split(';')
-            .find((p) => p.includes('showorg='))
-            ?.split('=')[1];
+        : document.cookie.match(/(^| )showorg=([^;]+)/)?.[2];
 
     const authNonSecuredImpersonate =
       typeof document === 'undefined'
         ? null
-        : document.cookie
-            .split(';')
-            .find((p) => p.includes('impersonate='))
-            ?.split('=')[1];
+        : document.cookie.match(/(^| )impersonate=([^;]+)/)?.[2];
 
     const fetchRequest = await fetch(params.baseUrl + url, {
-      ...(secured ? { credentials: 'include' } : {}),
+      credentials: 'include',
       ...(newRequestObject || options),
       headers: {
         ...(showorg
           ? { showorg }
           : authNonSecuredOrg
-          ? { showorg: authNonSecuredOrg }
-          : {}),
+            ? { showorg: authNonSecuredOrg }
+            : {}),
         ...(options.body instanceof FormData
           ? {}
           : { 'Content-Type': 'application/json' }),
@@ -61,8 +52,8 @@ export const customFetch = (
         ...(auth
           ? { auth }
           : authNonSecuredCookie
-          ? { auth: authNonSecuredCookie }
-          : {}),
+            ? { auth: authNonSecuredCookie }
+            : {}),
         ...(authNonSecuredImpersonate
           ? { impersonate: authNonSecuredImpersonate }
           : {}),
@@ -81,7 +72,7 @@ export const customFetch = (
     }
 
     // @ts-ignore
-    return new Promise((res) => {}) as Response;
+    return new Promise((res) => { }) as Response;
   };
 };
 

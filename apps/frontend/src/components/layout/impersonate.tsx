@@ -138,13 +138,12 @@ const ChargesModal: FC<{ close: () => void }> = ({ close }) => {
                 >
                   <td className="p-[8px]">
                     <div
-                      className={`w-[20px] h-[20px] rounded-[4px] border-2 flex items-center justify-center ${
-                        charge.refunded
+                      className={`w-[20px] h-[20px] rounded-[4px] border-2 flex items-center justify-center ${charge.refunded
                           ? 'border-newTextColor/20 opacity-40'
                           : selected.has(charge.id)
-                          ? 'bg-forth border-forth'
-                          : 'border-newTextColor/40'
-                      }`}
+                            ? 'bg-forth border-forth'
+                            : 'border-newTextColor/40'
+                        }`}
                     >
                       {(selected.has(charge.id) || charge.refunded) && (
                         <svg
@@ -367,9 +366,8 @@ const AddAnnouncementModal: FC<{ close: () => void }> = ({ close }) => {
             <div
               key={opt.value}
               onClick={() => setColor(opt.value)}
-              className={`flex-1 text-center py-[8px] rounded-[8px] text-white text-[13px] cursor-pointer transition-opacity ${opt.className} ${
-                color === opt.value ? 'opacity-100 ring-2 ring-white' : 'opacity-40'
-              }`}
+              className={`flex-1 text-center py-[8px] rounded-[8px] text-white text-[13px] cursor-pointer transition-opacity ${opt.className} ${color === opt.value ? 'opacity-100 ring-2 ring-white' : 'opacity-40'
+                }`}
             >
               {opt.label}
             </div>
@@ -435,7 +433,7 @@ const ImportDebugPost = () => {
 export const Impersonate = () => {
   const fetch = useFetch();
   const [name, setName] = useState('');
-  const { isSecured, billingEnabled } = useVariables();
+  const { isSecured, billingEnabled, frontEndUrl } = useVariables();
   const user = useUser();
   const load = useCallback(async () => {
     if (!name) {
@@ -446,7 +444,7 @@ export const Impersonate = () => {
   }, [name]);
   const stopImpersonating = useCallback(async () => {
     if (!isSecured) {
-      setCookie('impersonate', '', -10);
+      setCookie('impersonate', '', -10, frontEndUrl);
     } else {
       await fetch(`/user/impersonate`, {
         method: 'POST',

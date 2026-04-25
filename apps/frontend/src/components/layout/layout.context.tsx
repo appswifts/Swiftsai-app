@@ -5,6 +5,7 @@ import { FetchWrapperComponent } from '@gitroom/helpers/utils/custom.fetch';
 import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
 import { useReturnUrl } from '@gitroom/frontend/app/(app)/auth/return.url.component';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
+import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
 export default function LayoutContext(params: { children: ReactNode }) {
   if (params?.children) {
     // eslint-disable-next-line react/no-children-prop
@@ -12,18 +13,19 @@ export default function LayoutContext(params: { children: ReactNode }) {
   }
   return <></>;
 }
-export function setCookie(cname: string, cvalue: string, exdays: number) {
+export function setCookie(cname: string, cvalue: string, exdays: number, frontEndUrl: string) {
   if (typeof document === 'undefined') {
     return;
   }
   const d = new Date();
   d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
   const expires = 'expires=' + d.toUTCString();
-  document.cookie = cname + '=' + cvalue + ';' + expires + ';path=/';
+  const domain = getCookieUrlFromDomain(frontEndUrl);
+  document.cookie = cname + '=' + cvalue + ';' + expires + ';path=/;domain=' + domain + ';';
 }
 function LayoutContextInner(params: { children: ReactNode }) {
   const returnUrl = useReturnUrl();
-  const { backendUrl, isGeneral, isSecured } = useVariables();
+  const { backendUrl, isGeneral, isSecured, frontEndUrl } = useVariables();
   const afterRequest = useCallback(
     async (url: string, options: RequestInit, response: Response) => {
       if (
@@ -42,18 +44,18 @@ function LayoutContextInner(params: { children: ReactNode }) {
       const logout =
         response?.headers?.get('logout') || response?.headers?.get('Logout');
       if (headerAuth) {
-        setCookie('auth', headerAuth, 365);
+        setCookie('auth', headerAuth, 365, frontEndUrl);
       }
       if (showOrg) {
-        setCookie('showorg', showOrg, 365);
+        setCookie('showorg', showOrg, 365, frontEndUrl);
       }
       if (impersonate) {
-        setCookie('impersonate', impersonate, 365);
+        setCookie('impersonate', impersonate, 365, frontEndUrl);
       }
       if (logout && !isSecured) {
-        setCookie('auth', '', -10);
-        setCookie('showorg', '', -10);
-        setCookie('impersonate', '', -10);
+        setCookie('auth', '', -10, frontEndUrl);
+        setCookie('showorg', '', -10, frontEndUrl);
+        setCookie('impersonate', '', -10, frontEndUrl);
         window.location.href = '/';
         return true;
       }
@@ -81,9 +83,9 @@ function LayoutContextInner(params: { children: ReactNode }) {
 
       if (response.status === 401 || response?.headers?.get('logout')) {
         if (!isSecured) {
-          setCookie('auth', '', -10);
-          setCookie('showorg', '', -10);
-          setCookie('impersonate', '', -10);
+          setCookie('auth', '', -10, frontEndUrl);
+          setCookie('showorg', '', -10, frontEndUrl);
+          setCookie('impersonate', '', -10, frontEndUrl);
         }
         window.location.href = '/';
       }
