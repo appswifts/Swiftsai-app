@@ -9,7 +9,9 @@
       "Bash(pnpm eslint *)",
       "Bash(grep -r 'prisma\\\\.$transaction' /c/Users/FH/Desktop/projects/SWIFTSAI/Swiftsai-app/apps/backend/src '--include=*.ts')",
       "Bash(pnpm test *)",
-      "Bash(pnpm *)"
+      "Bash(pnpm *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
