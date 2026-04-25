@@ -5,9 +5,6 @@ import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useSWRConfig } from 'swr';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { Button } from '@gitroom/react/form/button';
-import { Input } from '@gitroom/react/form/input';
-import { Switch } from '@gitroom/react/form/switch';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gitroom/react/ui/card';
 
 export const AdminSettings = () => {
   const fetch = useFetch();
@@ -26,7 +23,6 @@ export const AdminSettings = () => {
   const handleSave = useCallback(async () => {
     setLoading(true);
     try {
-      // Stub: POST /admin/settings
       await fetch('/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,32 +47,37 @@ export const AdminSettings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-[30px]">
         {/* General Settings */}
-        <Card className="bg-menuBg border-tableBorder">
-          <CardHeader>
-            <CardTitle>{t('general', 'General')}</CardTitle>
-            <CardDescription>{t('platform_features', 'Enable/disable platform features')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-[20px]">
+        <div className="bg-menuBg rounded-[12px] border border-tableBorder overflow-hidden">
+          <div className="p-[20px] border-b border-tableBorder">
+            <h3 className="text-[18px] font-bold text-newTextColor">{t('general', 'General')}</h3>
+            <p className="text-newTextColor/60 text-[14px] mt-[4px]">{t('platform_features', 'Enable/disable platform features')}</p>
+          </div>
+          <div className="p-[20px] space-y-[20px]">
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium text-newTextColor">{t('allow_new_signups', 'Allow New Signups')}</div>
                 <div className="text-newTextColor/60 text-[14px]">{t('toggle_new_user_registration', 'Toggle new user registration')}</div>
               </div>
-              <Switch
-                checked={settings.allowNewSignups}
-                onCheckedChange={(v) => setSettings({ ...settings, allowNewSignups: v })}
-              />
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.allowNewSignups}
+                  onChange={(e) => setSettings({ ...settings, allowNewSignups: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500" />
+              </label>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium text-newTextColor">{t('trial_days', 'Trial Days')}</div>
                 <div className="text-newTextColor/60 text-[14px]">Default trial period</div>
               </div>
-              <Input
+              <input
                 type="number"
                 value={settings.trialDays}
                 onChange={(e) => setSettings({ ...settings, trialDays: parseInt(e.target.value) })}
-                className="w-[80px]"
+                className="w-[80px] h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
                 min={0}
               />
             </div>
@@ -85,50 +86,59 @@ export const AdminSettings = () => {
                 <div className="font-medium text-newTextColor">{t('max_channels_free', 'Max Channels (Free)')}</div>
                 <div className="text-newTextColor/60 text-[14px]">Channels allowed on free tier</div>
               </div>
-              <Input
+              <input
                 type="number"
                 value={settings.maxChannelsFree}
                 onChange={(e) => setSettings({ ...settings, maxChannelsFree: parseInt(e.target.value) })}
-                className="w-[80px]"
+                className="w-[80px] h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
                 min={1}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Email Settings */}
-        <Card className="bg-menuBg border-tableBorder">
-          <CardHeader>
-            <CardTitle>{t('email_config', 'Email Configuration')}</CardTitle>
-            <CardDescription>{t('smtp_settings_for_notifications', 'SMTP settings for notifications and emails')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-[20px]">
-            <Input
-              label="SMTP Host"
-              value={settings.smtpHost}
-              onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
-              placeholder="smtp.example.com"
-            />
-            <Input
-              label="SMTP Port"
-              type="number"
-              value={settings.smtpPort}
-              onChange={(e) => setSettings({ ...settings, smtpPort: parseInt(e.target.value) })}
-              placeholder="587"
-            />
-            <Input
-              label="SMTP Username"
-              value={settings.smtpUser}
-              onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
-              placeholder="noreply@yourapp.com"
-            />
-          </CardContent>
-        </Card>
+        <div className="bg-menuBg rounded-[12px] border border-tableBorder overflow-hidden">
+          <div className="p-[20px] border-b border-tableBorder">
+            <h3 className="text-[18px] font-bold text-newTextColor">{t('email_config', 'Email Configuration')}</h3>
+            <p className="text-newTextColor/60 text-[14px] mt-[4px]">{t('smtp_settings_for_notifications', 'SMTP settings for notifications and emails')}</p>
+          </div>
+          <div className="p-[20px] space-y-[20px]">
+            <div className="flex flex-col gap-[6px]">
+              <div className="text-[14px]">SMTP Host</div>
+              <input
+                className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                value={settings.smtpHost}
+                onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
+                placeholder="smtp.example.com"
+              />
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              <div className="text-[14px]">SMTP Port</div>
+              <input
+                type="number"
+                className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                value={settings.smtpPort}
+                onChange={(e) => setSettings({ ...settings, smtpPort: parseInt(e.target.value) })}
+                placeholder="587"
+              />
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              <div className="text-[14px]">SMTP Username</div>
+              <input
+                className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                value={settings.smtpUser}
+                onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
+                placeholder="noreply@yourapp.com"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="pt-[20px] border-t border-tableBorder flex justify-end">
-        <Button onClick={handleSave} disabled={loading} className="!bg-primary hover:!bg-primary/90">
-          {loading ? t('saving', 'Saving...') : t('save_settings', 'Save Settings')}
+        <Button onClick={handleSave} loading={loading} className="!bg-primary hover:!bg-primary/90">
+          {t('save_settings', 'Save Settings')}
         </Button>
       </div>
     </div>

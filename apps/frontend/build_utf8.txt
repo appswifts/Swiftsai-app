@@ -1,0 +1,11 @@
+﻿
+> postiz-frontend@1.0.0 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\frontend
+> next build
+
+Γû▓ Next.js 16.2.1 (Turbopack)
+- Experiments (use with caution):
+  ┬╖ clientTraceMetadata
+  ┬╖ proxyTimeout: 90000
+
+  Creating an optimized production build ...
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 3221225786.

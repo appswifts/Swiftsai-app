@@ -6,9 +6,6 @@ import useSWR from 'swr';
 import { useSWRConfig } from 'swr';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { Button } from '@gitroom/react/form/button';
-import { Input } from '@gitroom/react/form/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gitroom/react/form/select';
-import { useModals } from '@gitroom/frontend/components/layout/new-modal';
 
 interface SubscriptionsOverview {
   tiers: Array<{
@@ -31,13 +28,12 @@ interface ManualSubForm {
 }
 
 const tiers = ['FREE', 'STANDARD', 'TEAM', 'PRO', 'ULTIMATE'] as const;
-type SubscriptionTier = typeof tiers[number];
 
 export const AdminSubscriptions = () => {
   const fetch = useFetch();
   const t = useT();
   const { mutate } = useSWRConfig();
-  const { openModal } = useModals();
+  const [showManualForm, setShowManualForm] = useState(false);
 
   const { data: overview, isLoading, error } = useSWR<SubscriptionsOverview>('/admin/subscriptions/overview', async () => {
     const res = await fetch('/admin/subscriptions/overview');
@@ -45,8 +41,6 @@ export const AdminSubscriptions = () => {
   }, {
     revalidateOnFocus: false,
   });
-
-  const [showManualForm, setShowManualForm] = useState(false);
 
   const handleManualCreate = useCallback(async (form: ManualSubForm) => {
     try {
@@ -62,19 +56,6 @@ export const AdminSubscriptions = () => {
       console.error('Failed to create subscription', err);
     }
   }, [fetch, mutate]);
-
-  const openManualModal = useCallback(() => {
-    openModal({
-      title: t('create_manual_subscription', 'Create Manual Subscription'),
-      children: (close) => (
-        <ManualSubscriptionForm onSubmit={handleManualCreate} onClose={() => {
-          setShowManualForm(false);
-          close();
-        }} />
-      ),
-      size: 'lg',
-    });
-  }, [openModal, handleManualCreate, t]);
 
   if (isLoading) return <div className="flex items-center justify-center h-[400px]"><div className="text-newTextColor/50">Loading subscriptions...</div></div>;
   if (error) return <div className="text-red-500 text-center py-12">Failed to load subscriptions</div>;
@@ -115,7 +96,7 @@ export const AdminSubscriptions = () => {
         <div className="p-[20px] border-b border-tableBorder">
           <div className="flex justify-between items-center">
             <h3 className="text-[18px] font-bold text-newTextColor">Subscription Tiers</h3>
-            <Button onClick={openManualModal} className="!bg-green-500 hover:!bg-green-600">
+            <Button onClick={() => setShowManualForm(!showManualForm)} className="!bg-green-500 hover:!bg-green-600">
               {t('create_manual', '+ Create Manual')}
             </Button>
           </div>
@@ -145,7 +126,7 @@ export const AdminSubscriptions = () => {
                   </td>
                   <td className="p-[16px]">
                     {tier.count > 0 && (
-                      <Button size="sm" variant="destructive" className="!bg-red-500/80 hover:!bg-red-500">
+                      <Button className="!bg-red-500/80 hover:!bg-red-500">
                         Bulk Cancel
                       </Button>
                     )}
@@ -156,6 +137,19 @@ export const AdminSubscriptions = () => {
           </table>
         </div>
       </div>
+
+      {/* Manual Subscription Form (inline) */}
+      {showManualForm && (
+        <div className="bg-menuBg rounded-[12px] border border-tableBorder p-[24px]">
+          <h3 className="text-[18px] font-bold text-newTextColor mb-[20px]">
+            {t('create_manual_subscription', 'Create Manual Subscription')}
+          </h3>
+          <ManualSubscriptionForm
+            onSubmit={handleManualCreate}
+            onClose={() => setShowManualForm(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -180,34 +174,44 @@ const ManualSubscriptionForm = ({ onSubmit, onClose }: { onSubmit: (form: Manual
     setLoading(true);
     try {
       await onSubmit(form);
-    } catch {}
+    } catch { }
     setLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-[20px]">
-      <Input
-        label="Organization ID"
-        value={form.organizationId}
-        onChange={(e) => handleChange('organizationId', e.target.value)}
-        placeholder="org_123"
-        required
-      />
-      <Select value={form.subscriptionTier} onValueChange={(v) => handleChange('subscriptionTier', v)}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {tiers.map((tier) => <SelectItem key={tier} value={tier}>{tier}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Input
-        type="number"
-        label="Total Channels"
-        value={form.totalChannels}
-        onChange={(e) => handleChange('totalChannels', parseInt(e.target.value))}
-        min={1}
-      />
+      <div className="flex flex-col gap-[6px]">
+        <div className="text-[14px]">Organization ID</div>
+        <input
+          className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+          value={form.organizationId}
+          onChange={(e) => handleChange('organizationId', e.target.value)}
+          placeholder="org_123"
+          required
+        />
+      </div>
+      <div className="flex flex-col gap-[6px]">
+        <div className="text-[14px]">Subscription Tier</div>
+        <select
+          className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px]"
+          value={form.subscriptionTier}
+          onChange={(e) => handleChange('subscriptionTier', e.target.value)}
+        >
+          {tiers.map((tier) => (
+            <option key={tier} value={tier}>{tier}</option>
+          ))}
+        </select>
+      </div>
+      <div className="flex flex-col gap-[6px]">
+        <div className="text-[14px]">Total Channels</div>
+        <input
+          type="number"
+          className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+          value={form.totalChannels}
+          onChange={(e) => handleChange('totalChannels', parseInt(e.target.value))}
+          min={1}
+        />
+      </div>
       <label className="flex items-center space-x-2">
         <input
           type="checkbox"
@@ -217,8 +221,8 @@ const ManualSubscriptionForm = ({ onSubmit, onClose }: { onSubmit: (form: Manual
         <span>{t('lifetime', 'Lifetime')}</span>
       </label>
       <div className="flex gap-3 justify-end">
-        <Button type="button" onClick={onClose} variant="ghost">Cancel</Button>
-        <Button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create'}</Button>
+        <Button type="button" onClick={onClose} className="!bg-transparent border border-tableBorder">Cancel</Button>
+        <Button type="submit" loading={loading}>Create</Button>
       </div>
     </form>
   );

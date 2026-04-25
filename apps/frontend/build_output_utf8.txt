@@ -1,0 +1,28 @@
+﻿
+> postiz-frontend@1.0.0 build C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\apps\frontend
+> next build
+
+npx : ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+At line:1 char:1
++ npx pnpm build > build_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá Warning: Ne...not be correct.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ We detected multiple lockfiles and selected the directory of C:\Users\FH\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if 
+it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\FH\Desktop\projects\SWIFTSAI\Swiftsai-app\pnpm-workspace.yaml
+   * C:\Users\FH\Desktop\pnpm-lock.yaml
+
+Γ¿» Another next build process is already running.
+
+  This could be:
+  - A next build still in progress
+  - A previous build that didn't exit cleanly
+
+  Suggestion: Wait for the build to complete.
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
+ΓÇëWARNΓÇë  Local package.json exists, but node_modules missing, did you mean to install?
