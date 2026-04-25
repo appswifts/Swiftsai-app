@@ -96,9 +96,9 @@ export class CampaignRepository {
     });
   }
 
-  getByIdSimple(id: string) {
+  getByIdSimple(organizationId: string, id: string) {
     return this.prisma.campaign.findUnique({
-      where: { id },
+      where: { id, organizationId },
       select: {
         id: true,
         name: true,
@@ -114,9 +114,9 @@ export class CampaignRepository {
     });
   }
 
-  updateMetrics(id: string, metrics: string) {
+  updateMetrics(organizationId: string, id: string, metrics: string) {
     return this.prisma.campaign.updateMany({
-      where: { id, deletedAt: null },
+      where: { id, organizationId, deletedAt: null },
       data: { metrics },
     });
   }

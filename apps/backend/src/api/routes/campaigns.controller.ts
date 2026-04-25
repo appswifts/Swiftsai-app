@@ -83,7 +83,7 @@ export class CampaignsController {
   }
 
   private async startBroadcastWorkflow(orgId: string, campaignId: string) {
-    const campaign = await this.campaignService.getCampaignByIdForMetrics(campaignId);
+    const campaign = await this.campaignService.getCampaignByIdForMetrics(orgId, campaignId);
     if (!campaign) return;
 
     const config = campaign.config ? JSON.parse(campaign.config) : {};

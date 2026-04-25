@@ -106,11 +106,11 @@ export class CampaignService {
     return this.updateCampaign(organizationId, id, { status: 'COMPLETED' as CampaignStatus });
   }
 
-  async getCampaignByIdForMetrics(campaignId: string) {
-    return this.campaignRepository.getByIdSimple(campaignId);
+  async getCampaignByIdForMetrics(organizationId: string, campaignId: string) {
+    return this.campaignRepository.getByIdSimple(organizationId, campaignId);
   }
 
-  async updateCampaignMetrics(campaignId: string, metrics: string) {
-    return this.campaignRepository.updateMetrics(campaignId, metrics);
+  async updateCampaignMetrics(organizationId: string, campaignId: string, metrics: string) {
+    return this.campaignRepository.updateMetrics(organizationId, campaignId, metrics);
   }
 }

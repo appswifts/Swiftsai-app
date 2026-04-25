@@ -99,6 +99,7 @@ export class CampaignActivity {
 
   @ActivityMethod()
   async updateCampaignMetrics(
+    organizationId: string,
     campaignId: string,
     metrics: {
       sent?: number;
@@ -107,7 +108,7 @@ export class CampaignActivity {
       totalTargets?: number;
     }
   ) {
-    const existing = await this._campaignService.getCampaignByIdForMetrics(campaignId);
+    const existing = await this._campaignService.getCampaignByIdForMetrics(organizationId, campaignId);
     if (!existing) return;
 
     const existingMetrics = existing.metrics ? JSON.parse(existing.metrics) : {};
@@ -117,7 +118,7 @@ export class CampaignActivity {
       lastUpdated: new Date().toISOString(),
     };
 
-    await this._campaignService.updateCampaignMetrics(campaignId, JSON.stringify(updated));
+    await this._campaignService.updateCampaignMetrics(organizationId, campaignId, JSON.stringify(updated));
   }
 
   @ActivityMethod()

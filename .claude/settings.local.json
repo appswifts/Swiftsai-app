@@ -6,7 +6,9 @@
       "Bash(pnpm build *)",
       "Bash(grep -E \"\\(index\\\\.ts|/src/[^/]*\\\\.ts$\\)\")",
       "Bash(pnpm lint *)",
-      "Bash(pnpm eslint *)"
+      "Bash(pnpm eslint *)",
+      "Bash(grep -r 'prisma\\\\.$transaction' /c/Users/FH/Desktop/projects/SWIFTSAI/Swiftsai-app/apps/backend/src '--include=*.ts')",
+      "Bash(pnpm test *)"
     ]
   }
 }
