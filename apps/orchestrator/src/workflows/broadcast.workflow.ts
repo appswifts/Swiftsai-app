@@ -46,7 +46,7 @@ export async function broadcastWorkflow(args: BroadcastWorkflowArgs): Promise<Br
   const targets = await getBroadcastTargets(organizationId, campaignId, channel, stageFilter);
 
   if (targets.length === 0) {
-    await updateCampaignMetrics(campaignId, { totalTargets: 0, sent: 0 });
+    await updateCampaignMetrics(organizationId, campaignId, { totalTargets: 0, sent: 0 });
     return [];
   }
 
@@ -111,7 +111,7 @@ export async function broadcastWorkflow(args: BroadcastWorkflowArgs): Promise<Br
   }
 
   // Final metrics update
-  await updateCampaignMetrics(campaignId, {
+  await updateCampaignMetrics(organizationId, campaignId, {
     sent,
     failed,
     totalTargets: targets.length,
