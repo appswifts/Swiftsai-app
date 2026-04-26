@@ -17,7 +17,7 @@ export class PoliciesGuard implements CanActivate {
   constructor(
     private _reflector: Reflector,
     private _authorizationService: PermissionsService
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest();
@@ -42,7 +42,11 @@ export class PoliciesGuard implements CanActivate {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    const { org }: { org: Organization } = request;
+    const { org, user }: { org: Organization, user: any } = request;
+
+    if (user?.isSuperAdmin && !org) {
+      return true;
+    }
 
     const refreshChannelId = typeof request.query?.refresh === 'string' ? request.query.refresh : undefined;
 
