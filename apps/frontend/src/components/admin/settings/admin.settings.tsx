@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useSWRConfig } from 'swr';
+import useSWR from 'swr';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { Button } from '@gitroom/react/form/button';
 
@@ -20,6 +21,20 @@ export const AdminSettings = () => {
     maxChannelsFree: 3,
   });
 
+  // Load settings from backend
+  const fetchSettings = useCallback(async () => {
+    const res = await (await fetch('/admin/settings')).json();
+    return res;
+  }, [fetch]);
+
+  const { data } = useSWR('/admin/settings', fetchSettings);
+
+  useEffect(() => {
+    if (data && typeof data === 'object') {
+      setSettings((prev) => ({ ...prev, ...data }));
+    }
+  }, [data]);
+
   const handleSave = useCallback(async () => {
     setLoading(true);
     try {
@@ -28,6 +43,7 @@ export const AdminSettings = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
+      await mutate('/admin/settings');
       await mutate('/admin/stats');
       alert(t('settings_saved', 'Settings saved!'));
     } catch (error) {

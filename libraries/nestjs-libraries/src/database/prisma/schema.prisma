@@ -116,6 +116,7 @@ model User {
   sendFailureEmails     Boolean              @default(true)
   sendStreakEmails      Boolean              @default(true)
   oauthAuthorizations   OAuthAuthorization[]
+  adminAuditLogs        AdminAuditLog[]
 
   @@unique([email, providerName])
   @@index([lastReadNotifications])
@@ -1113,5 +1114,29 @@ model ProcessedWebhook {
   createdAt DateTime @default(now())
 
   @@unique([provider, eventId])
+  @@index([createdAt])
+}
+
+// ─── Platform Settings (Singleton) ─────────────────────────
+
+model PlatformSettings {
+  id        String   @id @default("singleton")
+  settings  Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Admin Audit Log ───────────────────────────────────────
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String   // e.g. "user.suspend", "subscription.create", "plan.update"
+  targetId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+  admin     User     @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([action])
   @@index([createdAt])
 }
