@@ -748,4 +748,143 @@ export class AdminController {
     await this.logAction(admin.id, 'subscription.cancel', id);
     return result;
   }
+
+  // ─── Integration Health Monitor ───────────────────────────────
+
+  @Get('/integrations')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getIntegrations(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Query('provider') provider?: string
+  ) {
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = { deletedAt: null };
+    if (provider) {
+      where.providerIdentifier = provider;
+    }
+
+    const [integrations, total] = await this.prisma.$transaction([
+      this.prisma.integration.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          organization: {
+            select: { id: true, name: true }
+          },
+          _count: {
+            select: { post: true }
+          }
+        },
+      }),
+      this.prisma.integration.count({ where }),
+    ]);
+
+    return {
+      integrations: integrations.map(int => ({
+        id: int.id,
+        name: int.name,
+        provider: int.providerIdentifier,
+        organizationId: int.organizationId,
+        organizationName: int.organization?.name,
+        createdAt: int.createdAt,
+        disabled: int.disabled,
+        refreshNeeded: int.refreshNeeded,
+        profile: int.profile,
+        postCount: int._count.post,
+      })),
+      total,
+      page: pageNum,
+      limit: limitNum,
+    };
+  }
+
+  @Post('/integrations/:id/disable')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async disableIntegration(
+    @GetUserFromRequest() admin: User,
+    @Param('id') id: string
+  ) {
+    const integration = await this.prisma.integration.update({
+      where: { id },
+      data: { disabled: true }
+    });
+    await this.logAction(admin.id, 'integration.disable', id);
+    return { success: true, id: integration.id };
+  }
+
+  @Post('/integrations/:id/enable')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async enableIntegration(
+    @GetUserFromRequest() admin: User,
+    @Param('id') id: string
+  ) {
+    const integration = await this.prisma.integration.update({
+      where: { id },
+      data: { disabled: false }
+    });
+    await this.logAction(admin.id, 'integration.enable', id);
+    return { success: true, id: integration.id };
+  }
+
+  // ─── Error Dashboard ──────────────────────────────────────────
+
+  @Get('/errors/stats')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getErrorStats() {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      last24h,
+      last7d,
+      total,
+    ] = await Promise.all([
+      this.prisma.errors.count({ where: { createdAt: { gte: twentyFourHoursAgo } } }),
+      this.prisma.errors.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      this.prisma.errors.count(),
+    ]);
+
+    return {
+      last24h,
+      last7d,
+      total,
+    };
+  }
+
+  @Get('/errors')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getErrors(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20'
+  ) {
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [errors, total] = await this.prisma.$transaction([
+      this.prisma.errors.findMany({
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          organization: { select: { name: true } },
+        }
+      }),
+      this.prisma.errors.count(),
+    ]);
+
+    return {
+      errors,
+      total,
+      page: pageNum,
+      limit: limitNum,
+    };
+  }
 }
