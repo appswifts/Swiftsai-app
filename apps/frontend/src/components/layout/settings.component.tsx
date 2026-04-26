@@ -161,8 +161,56 @@ export const SettingsPopup: FC<{
               )}
             >
               {tab === 'global_settings' && (
-                <div>
+                <div className="flex flex-col gap-[20px]">
+                  <h3 className="text-[20px]">{t('profile_settings', 'Profile Settings')}</h3>
+                  <div className="flex flex-col gap-[20px] pb-[20px] border-b border-tableBorder">
+                    <div className="flex gap-[20px] items-start">
+                      <div className="flex flex-col items-center gap-[10px]">
+                        {picture?.path ? (
+                          <img src={picture.path} className="w-[100px] h-[100px] rounded-full object-cover border border-tableBorder" alt="Profile" />
+                        ) : (
+                          <div className="w-[100px] h-[100px] rounded-full border border-tableBorder bg-menuBg flex items-center justify-center">
+                            <span className="text-textColor/50">No Image</span>
+                          </div>
+                        )}
+                        <div className="flex gap-[8px]">
+                          <button type="button" onClick={openMedia} className="text-[12px] px-[12px] py-[6px] bg-primary rounded text-white font-medium hover:bg-primary/90">
+                            Upload
+                          </button>
+                          {picture?.path && (
+                            <button type="button" onClick={remove} className="text-[12px] px-[12px] py-[6px] bg-red-500/20 text-red-500 rounded font-medium hover:bg-red-500/30">
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-[12px] flex-1">
+                        <div className="flex flex-col gap-[6px]">
+                          <label className="text-[13px] text-textColor font-medium">Full Name</label>
+                          <input
+                            {...form.register('fullname')}
+                            className="bg-menuBg border border-tableBorder rounded-[6px] px-[12px] py-[8px] text-[14px] text-textColor outline-none focus:border-primary"
+                            placeholder="Your full name"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-[6px]">
+                          <label className="text-[13px] text-textColor font-medium">Bio</label>
+                          <textarea
+                            {...form.register('bio')}
+                            className="bg-menuBg border border-tableBorder rounded-[6px] px-[12px] py-[8px] text-[14px] text-textColor outline-none focus:border-primary min-h-[80px]"
+                            placeholder="Tell us about yourself..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <GlobalSettings />
+                  <div className="flex justify-end pt-[20px]">
+                    <button type="submit" className="px-[20px] py-[10px] bg-primary text-white rounded font-medium hover:bg-primary/90 transition-colors">
+                      Save All Settings
+                    </button>
+                  </div>
                 </div>
               )}
               {tab === 'teams' && !!user?.tier?.team_members && isGeneral && (
