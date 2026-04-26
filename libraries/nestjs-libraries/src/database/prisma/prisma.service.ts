@@ -68,6 +68,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       let organizationField: string;
       if (['Tags', 'Customer', 'UsedCodes'].includes(model)) {
         organizationField = 'orgId';
+      } else if (model === 'Organization') {
+        organizationField = 'id';
       } else if (model === 'UserOrganization') {
         organizationField = 'organizationId';
       } else if (model === 'Subscription') {
