@@ -42,7 +42,7 @@ export class UsersController {
     private _orgService: OrganizationService,
     private _userService: UsersService,
     private _trackService: TrackService
-  ) {}
+  ) { }
   @Get('/agent-media-sso')
   async getAgentMediaSsoUrl(
     @GetUserFromRequest() user: User,
@@ -66,7 +66,7 @@ export class UsersController {
     @GetOrgFromRequest() organization: Organization,
     @Req() req: Request
   ) {
-    if (!organization) {
+    if (!organization && !user.isSuperAdmin) {
       throw new HttpForbiddenException();
     }
 
@@ -74,13 +74,13 @@ export class UsersController {
     // @ts-ignore
     return {
       ...user,
-      orgId: organization.id,
+      orgId: organization?.id || null,
       // @ts-ignore
       totalChannels: !process.env.STRIPE_PUBLISHABLE_KEY ? 10000 : organization?.subscription?.totalChannels || pricing.FREE.channel,
       // @ts-ignore
       tier: organization?.subscription?.subscriptionTier || (!process.env.STRIPE_PUBLISHABLE_KEY ? 'ULTIMATE' : 'FREE'),
       // @ts-ignore
-      role: organization?.users[0]?.role,
+      role: organization?.users?.[0]?.role || (user.isSuperAdmin ? 'SUPERADMIN' : 'USER'),
       // @ts-ignore
       isLifetime: !!organization?.subscription?.isLifetime,
       admin: !!user.isSuperAdmin,
@@ -89,7 +89,7 @@ export class UsersController {
       allowTrial: organization?.allowTrial,
       streakSince: organization?.streakSince || null,
       // @ts-ignore
-      publicApi: organization?.users[0]?.role === 'SUPERADMIN' || organization?.users[0]?.role === 'ADMIN' ? organization?.apiKey : '',
+      publicApi: organization?.users?.[0]?.role === 'SUPERADMIN' || organization?.users?.[0]?.role === 'ADMIN' ? organization?.apiKey : '',
     };
   }
 
@@ -124,10 +124,10 @@ export class UsersController {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
-            secure: true,
-            httpOnly: true,
-            sameSite: 'none',
-          }
+          secure: true,
+          httpOnly: true,
+          sameSite: 'none',
+        }
         : {}),
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
     });
@@ -208,7 +208,7 @@ export class UsersController {
   @Get('/organizations')
   async getOrgs(@GetUserFromRequest() user: User) {
     return (await this._orgService.getOrgsByUserId(user.id)).filter(
-      (f) => !f.users[0].disabled
+      (f) => !f.users?.[0]?.disabled
     );
   }
 
@@ -221,10 +221,10 @@ export class UsersController {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
-            secure: true,
-            httpOnly: true,
-            sameSite: 'none',
-          }
+          secure: true,
+          httpOnly: true,
+          sameSite: 'none',
+        }
         : {}),
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
     });
@@ -243,10 +243,10 @@ export class UsersController {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
-            secure: true,
-            httpOnly: true,
-            sameSite: 'none',
-          }
+          secure: true,
+          httpOnly: true,
+          sameSite: 'none',
+        }
         : {}),
       maxAge: -1,
       expires: new Date(0),
@@ -256,10 +256,10 @@ export class UsersController {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
-            secure: true,
-            httpOnly: true,
-            sameSite: 'none',
-          }
+          secure: true,
+          httpOnly: true,
+          sameSite: 'none',
+        }
         : {}),
       maxAge: -1,
       expires: new Date(0),
@@ -269,10 +269,10 @@ export class UsersController {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
-            secure: true,
-            httpOnly: true,
-            sameSite: 'none',
-          }
+          secure: true,
+          httpOnly: true,
+          sameSite: 'none',
+        }
         : {}),
       maxAge: -1,
       expires: new Date(0),
@@ -307,10 +307,10 @@ export class UsersController {
         domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
         ...(!process.env.NOT_SECURED
           ? {
-              secure: true,
-              httpOnly: true,
-              sameSite: 'none',
-            }
+            secure: true,
+            httpOnly: true,
+            sameSite: 'none',
+          }
           : {}),
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
       });

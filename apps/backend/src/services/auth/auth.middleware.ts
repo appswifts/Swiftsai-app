@@ -86,6 +86,9 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       delete user.password;
+      // @ts-ignore
+      req.user = user;
+
       const organization = (
         await this._organizationService.getOrgsByUserId(user.id)
       ).filter((f) => !f.users?.[0]?.disabled);
@@ -105,20 +108,16 @@ export class AuthMiddleware implements NestMiddleware {
         throw new HttpForbiddenException();
       }
 
-      if (!setOrg.apiKey) {
-        await this._organizationService.updateApiKey(setOrg.id);
-      }
-
       // @ts-ignore
       req.org = setOrg;
 
-      // Set tenant context for authenticated request
       this._tenantContext.run(
-        this._tenantContext.createTenantContext(setOrg, user),
+        this._tenantContext.createTenantContext(setOrg as any, user),
         () => next()
       );
     } catch (err) {
       console.error('AuthMiddleware error:', err);
+      removeAuth(res);
       throw new HttpForbiddenException();
     }
   }

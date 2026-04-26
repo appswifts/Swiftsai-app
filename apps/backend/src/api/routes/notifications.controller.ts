@@ -8,12 +8,15 @@ import { ApiTags } from '@nestjs/swagger';
 @ApiTags('Notifications')
 @Controller('/notifications')
 export class NotificationsController {
-  constructor(private _notificationsService: NotificationService) {}
+  constructor(private _notificationsService: NotificationService) { }
   @Get('/')
   async mainPageList(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() organization: Organization
   ) {
+    if (!organization) {
+      return [];
+    }
     return this._notificationsService.getMainPageCount(
       organization.id,
       user.id
@@ -25,6 +28,12 @@ export class NotificationsController {
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() organization: Organization
   ) {
+    if (!organization) {
+      return {
+        total: 0,
+        notifications: [],
+      };
+    }
     return this._notificationsService.getNotifications(
       organization.id,
       user.id
