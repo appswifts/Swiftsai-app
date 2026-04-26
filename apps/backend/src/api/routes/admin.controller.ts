@@ -778,7 +778,7 @@ export class AdminController {
             select: { id: true, name: true }
           },
           _count: {
-            select: { post: true }
+            select: { posts: true }
           }
         },
       }),
@@ -786,7 +786,7 @@ export class AdminController {
     ]);
 
     return {
-      integrations: integrations.map(int => ({
+      integrations: integrations.map((int: any) => ({
         id: int.id,
         name: int.name,
         provider: int.providerIdentifier,
@@ -796,7 +796,7 @@ export class AdminController {
         disabled: int.disabled,
         refreshNeeded: int.refreshNeeded,
         profile: int.profile,
-        postCount: int._count.post,
+        postCount: int._count.posts,
       })),
       total,
       page: pageNum,
