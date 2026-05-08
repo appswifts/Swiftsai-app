@@ -9,6 +9,7 @@ import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permis
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 
 @ApiTags('Admin')
 @Controller('/admin')
@@ -139,6 +140,12 @@ export class AdminController {
       update: { settings: body },
     });
     await this.logAction(user.id, 'settings.update', undefined, body);
+
+    // If model changed, invalidate the cached Mastra agent so it picks up the new model
+    if (body.llmModel !== undefined) {
+      MastraService.reset();
+    }
+
     return result.settings;
   }
 

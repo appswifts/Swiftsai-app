@@ -8,6 +8,7 @@ import { LoadToolsService } from '@gitroom/nestjs-libraries/chat/load.tools.serv
 export class MastraService {
   static mastra: Mastra;
   constructor(private _loadToolsService: LoadToolsService) {}
+
   async mastra() {
     MastraService.mastra =
       MastraService.mastra ||
@@ -22,5 +23,13 @@ export class MastraService {
       });
 
     return MastraService.mastra;
+  }
+
+  /**
+   * Invalidate the cached Mastra instance so it gets recreated
+   * with the latest settings (e.g. after model change from admin panel).
+   */
+  static reset() {
+    MastraService.mastra = undefined;
   }
 }

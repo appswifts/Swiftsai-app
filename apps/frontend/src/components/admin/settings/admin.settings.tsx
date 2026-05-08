@@ -19,6 +19,7 @@ export const AdminSettings = () => {
     smtpPort: 587,
     smtpUser: '',
     maxChannelsFree: 3,
+    llmModel: '',
   });
 
   // Load settings from backend
@@ -53,6 +54,27 @@ export const AdminSettings = () => {
       setLoading(false);
     }
   }, [settings, fetch, mutate, t]);
+
+  const modelOptions = [
+    { value: '', label: t('use_env_default', 'Use Environment Default') },
+    { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { value: 'o3', label: 'o3' },
+    { value: 'o3-mini', label: 'o3 Mini' },
+    { value: 'o4-mini', label: 'o4 Mini' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+  ];
+
+  const [customModel, setCustomModel] = useState(false);
+
+  useEffect(() => {
+    if (settings.llmModel && !modelOptions.find(m => m.value === settings.llmModel)) {
+      setCustomModel(true);
+    }
+  }, [settings.llmModel]);
 
   return (
     <div className="space-y-[30px]">
@@ -147,6 +169,66 @@ export const AdminSettings = () => {
                 onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
                 placeholder="noreply@yourapp.com"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* AI Configuration */}
+        <div className="bg-menuBg rounded-[12px] border border-tableBorder overflow-hidden">
+          <div className="p-[20px] border-b border-tableBorder">
+            <h3 className="text-[18px] font-bold text-newTextColor">{t('ai_configuration', 'AI Configuration')}</h3>
+            <p className="text-newTextColor/60 text-[14px] mt-[4px]">{t('ai_model_settings', 'Configure the AI model used by the agent — changes take effect immediately, no restart needed')}</p>
+          </div>
+          <div className="p-[20px] space-y-[20px]">
+            <div className="flex flex-col gap-[6px]">
+              <div className="text-[14px] font-medium text-newTextColor">{t('llm_model', 'LLM Model')}</div>
+              <div className="text-newTextColor/60 text-[12px] mb-[4px]">{t('llm_model_description', 'Select or type the OpenAI model to use for the AI agent')}</div>
+              {!customModel ? (
+                <div className="flex gap-[8px]">
+                  <select
+                    className="flex-1 h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                    value={settings.llmModel}
+                    onChange={(e) => setSettings({ ...settings, llmModel: e.target.value })}
+                  >
+                    {modelOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setCustomModel(true)}
+                    className="h-[42px] px-[12px] bg-newBgColorInner border border-newTableBorder rounded-[8px] text-[12px] text-newTextColor/60 hover:text-newTextColor whitespace-nowrap"
+                  >
+                    {t('custom', 'Custom')}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-[8px]">
+                  <input
+                    className="flex-1 h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                    value={settings.llmModel}
+                    onChange={(e) => setSettings({ ...settings, llmModel: e.target.value })}
+                    placeholder="e.g. gpt-4.1, o3-mini, gpt-4o..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setCustomModel(false); setSettings({ ...settings, llmModel: '' }); }}
+                    className="h-[42px] px-[12px] bg-newBgColorInner border border-newTableBorder rounded-[8px] text-[12px] text-newTextColor/60 hover:text-newTextColor whitespace-nowrap"
+                  >
+                    {t('presets', 'Presets')}
+                  </button>
+                </div>
+              )}
+              {settings.llmModel && (
+                <div className="text-[12px] text-green-500 mt-[2px]">
+                  ✓ {t('active_model', 'Active model')}: <span className="font-mono font-semibold">{settings.llmModel}</span>
+                </div>
+              )}
+              {!settings.llmModel && (
+                <div className="text-[12px] text-newTextColor/40 mt-[2px]">
+                  {t('using_env_fallback', 'Using LLM_MODEL environment variable or default (gpt-4.1)')}
+                </div>
+              )}
             </div>
           </div>
         </div>

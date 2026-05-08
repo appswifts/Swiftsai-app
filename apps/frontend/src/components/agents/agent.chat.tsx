@@ -9,6 +9,59 @@ import React, {
   useState,
 } from 'react';
 import { CopilotChat, CopilotKitCSSProperties } from '@copilotkit/react-ui';
+
+/**
+ * Lightweight Markdown-to-HTML converter for agent chat messages.
+ * Handles: headings, bold, italic, code blocks, inline code, unordered/ordered lists, links, and line breaks.
+ */
+function simpleMarkdownToHtml(md: string): string {
+  let html = md;
+
+  // Fenced code blocks (```lang ... ```)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
+    const escaped = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<pre class="agent-code-block"><code class="language-${lang}">${escaped}</code></pre>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code class="agent-inline-code">$1</code>');
+
+  // Headings (### before ## before #)
+  html = html.replace(/^### (.+)$/gm, '<h4 class="agent-md-h4">$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3 class="agent-md-h3">$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2 class="agent-md-h2">$1</h2>');
+
+  // Bold + Italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+
+  // Unordered list items (- or *)
+  html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li class="agent-md-li">$1</li>');
+  html = html.replace(/((?:<li class="agent-md-li">.*<\/li>\n?)+)/g, '<ul class="agent-md-ul">$1</ul>');
+
+  // Ordered list items
+  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li class="agent-md-oli">$1</li>');
+  html = html.replace(/((?:<li class="agent-md-oli">.*<\/li>\n?)+)/g, '<ol class="agent-md-ol">$1</ol>');
+
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="agent-md-link">$1</a>');
+
+  // Horizontal rules
+  html = html.replace(/^---$/gm, '<hr class="agent-md-hr" />');
+
+  // Line breaks: convert double newlines to paragraph breaks, single newlines to <br>
+  html = html.replace(/\n{2,}/g, '</p><p class="agent-md-p">');
+  html = html.replace(/\n/g, '<br/>');
+  html = `<p class="agent-md-p">${html}</p>`;
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p class="agent-md-p">\s*<\/p>/g, '');
+
+  return html;
+}
 import clsx from 'clsx';
 import {
   InputProps,
@@ -150,16 +203,24 @@ const Message: FC<UserMessageProps> = (props) => {
 const AssistantMessage: FC<AssistantMessageProps> = (props) => {
   const t = useT();
   const convertContentToImagesAndVideo = useMemo(() => {
-    return (props.message?.content || '')
-      .replace(/Video: (http.*mp4\n)/g, (match, p1) => {
+    let content = props.message?.content || '';
+
+    // Extract media first (before markdown conversion)
+    content = content
+      .replace(/Video: (http.*mp4\n)/g, (_match, p1) => {
         return `<video controls class="h-[150px] w-[150px] rounded-[8px] mb-[10px]"><source src="${p1.trim()}" type="video/mp4">Your browser does not support the video tag.</video>`;
       })
-      .replace(/Image: (http.*\n)/g, (match, p1) => {
+      .replace(/Image: (http.*\n)/g, (_match, p1) => {
         return `<img src="${p1.trim()}" class="h-[150px] w-[150px] max-w-full border border-newBgColorInner" />`;
       })
-      .replace(/\[\-\-Media\-\-\](.*)\[\-\-Media\-\-\]/g, (match, p1) => {
+      .replace(/\[\-\-Media\-\-\](.*)\[\-\-Media\-\-\]/g, (_match, p1) => {
         return `<div class="flex justify-center mt-[20px]">${p1}</div>`;
       });
+
+    // Convert markdown to HTML for proper formatting
+    content = simpleMarkdownToHtml(content);
+
+    return content;
   }, [props.message?.content]);
 
   const actions: Array<{ name: string; description?: string; status: string }> = (props.message as any)?.actions || [];
@@ -194,7 +255,7 @@ const AssistantMessage: FC<AssistantMessageProps> = (props) => {
       
       {props.message?.content && (
         <div
-          className="agent-bubble agent-bubble-assistant"
+          className="agent-bubble agent-bubble-assistant agent-md-content"
           dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
         />
       )}

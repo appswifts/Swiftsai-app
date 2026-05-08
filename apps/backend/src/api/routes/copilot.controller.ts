@@ -19,6 +19,7 @@ import { Organization } from '@prisma/client';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { MastraAgent } from '@ag-ui/mastra';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
+import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Request, Response } from 'express';
 import { RequestContext } from '@mastra/core/di';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
@@ -34,10 +35,30 @@ export type ChannelsContext = {
 export class CopilotController {
   constructor(
     private _subscriptionService: SubscriptionService,
-    private _mastraService: MastraService
+    private _mastraService: MastraService,
+    private _prisma: PrismaService
   ) {}
+
+  /**
+   * Resolve the LLM model to use.
+   * Priority: PlatformSettings DB value > LLM_MODEL env var > 'gpt-4.1' default
+   */
+  private async resolveModel(): Promise<string> {
+    try {
+      const record = await this._prisma.platformSettings.findUnique({
+        where: { id: 'singleton' },
+      });
+      const settings = (record?.settings as any) || {};
+      if (settings.llmModel) {
+        return settings.llmModel;
+      }
+    } catch (e) {
+      // DB read failed, fall through to env/default
+    }
+    return process.env.LLM_MODEL || 'gpt-4.1';
+  }
   @Post('/chat')
-  chatAgent(@Req() req: Request, @Res() res: Response) {
+  async chatAgent(@Req() req: Request, @Res() res: Response) {
     if (
       process.env.OPENAI_API_KEY === undefined ||
       process.env.OPENAI_API_KEY === ''
@@ -46,11 +67,13 @@ export class CopilotController {
       return;
     }
 
+    const model = await this.resolveModel();
+
     const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
       endpoint: '/copilot/chat',
       runtime: new CopilotRuntime(),
       serviceAdapter: new OpenAIAdapter({
-        model: 'gpt-4.1',
+        model,
       }),
     });
 
@@ -91,12 +114,14 @@ export class CopilotController {
       agents,
     });
 
+    const model = await this.resolveModel();
+
     const copilotRuntimeHandler = copilotRuntimeNextJSAppRouterEndpoint({
       endpoint: '/copilot/agent',
       runtime,
       // properties: req.body.variables.properties,
       serviceAdapter: new OpenAIAdapter({
-        model: 'gpt-4.1',
+        model,
       }),
     });
 
