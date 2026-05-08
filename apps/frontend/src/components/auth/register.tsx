@@ -224,7 +224,7 @@ export function RegisterAfter({
                 )}
                 &nbsp;
                 <a
-                  href={`https://appswifts.com/terms-of-use/`}
+                  href="/terms-of-service"
                   className="underline hover:font-bold"
                   rel="nofollow"
                 >
@@ -233,7 +233,7 @@ export function RegisterAfter({
                 &nbsp;
                 {t('and', 'and')}&nbsp;
                 <a
-                  href={`https://appswifts.com/privacy-policy/`}
+                  href="/privacy-policy"
                   rel="nofollow"
                   className="underline hover:font-bold"
                 >
