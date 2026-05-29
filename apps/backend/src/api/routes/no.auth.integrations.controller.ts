@@ -239,6 +239,18 @@ export class NoAuthIntegrationsController {
           : undefined
       );
 
+    // Resubscribe Facebook pages to webhooks after reconnection
+    if (refresh && integration === 'facebook' && (integrationProvider as any).subscribePageToWebhooks) {
+      try {
+        await (integrationProvider as any).subscribePageToWebhooks(
+          String(id),
+          accessToken
+        );
+      } catch (err) {
+        console.error('Failed to resubscribe Facebook webhook:', err);
+      }
+    }
+
     this._refreshIntegrationService
       .startRefreshWorkflow(org.id, createUpdate.id, integrationProvider)
       .catch((err) => {
