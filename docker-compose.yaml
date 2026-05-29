@@ -48,6 +48,8 @@ services:
       INSTAGRAM_APP_ID: ''
       INSTAGRAM_APP_SECRET: ''
       FACEBOOK_PIXEL_ACCESS_TOKEN: ''
+      META_VERIFY_TOKEN: 'swiftsai-meta-webhook-verify-token'
+      META_GRAPH_API_VERSION: 'v22.0'
       YOUTUBE_CLIENT_ID: ''
       YOUTUBE_CLIENT_SECRET: ''
       TIKTOK_CLIENT_ID: ''
