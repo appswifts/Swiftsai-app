@@ -11,8 +11,10 @@ import { SocialAbstract } from '@gitroom/nestjs-libraries/integrations/social.ab
 import { FacebookDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/facebook.dto';
 import { DribbbleDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/dribbble.dto';
 import { Integration } from '@prisma/client';
+import { Logger } from '@nestjs/common';
 
 export class FacebookProvider extends SocialAbstract implements SocialProvider {
+  private readonly logger = new Logger(FacebookProvider.name);
   identifier = 'facebook';
   name = 'Facebook Page';
   isBetweenSteps = true;
@@ -706,9 +708,16 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
           { method: 'POST' }
         )
       ).json();
-      return response;
+
+      if (response?.error) {
+        this.logger.error(`Webhook subscription failed for page ${pageId}: ${response.error.message}`);
+        return { success: false };
+      }
+
+      this.logger.log(`Page ${pageId} subscribed to webhooks successfully`);
+      return { success: true };
     } catch (err) {
-      console.error('Failed to subscribe page to webhooks:', err);
+      this.logger.error(`Failed to subscribe page ${pageId} to webhooks: ${err}`);
       return { success: false };
     }
   }
