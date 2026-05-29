@@ -55,7 +55,7 @@ export class CopilotController {
     } catch (e) {
       // DB read failed, fall through to env/default
     }
-    return process.env.LLM_MODEL || 'gpt-4.1';
+    return process.env.LLM_MODEL || 'gpt-4o';
   }
   @Post('/chat')
   async chatAgent(@Req() req: Request, @Res() res: Response) {
@@ -116,16 +116,15 @@ export class CopilotController {
 
     const model = await this.resolveModel();
 
-    const copilotRuntimeHandler = copilotRuntimeNextJSAppRouterEndpoint({
+    const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
       endpoint: '/copilot/agent',
       runtime,
-      // properties: req.body.variables.properties,
       serviceAdapter: new OpenAIAdapter({
         model,
       }),
     });
 
-    return copilotRuntimeHandler.handleRequest(req, res);
+    return copilotRuntimeHandler(req, res);
   }
 
   @Get('/credits')

@@ -21,6 +21,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
     'business_management',
     'pages_manage_posts',
     'pages_manage_engagement',
+    'pages_read_user_content',
     'pages_read_engagement',
     'read_insights',
   ];

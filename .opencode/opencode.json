@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "cloudflare": {
+      "name": "Cloudflare Workers AI",
+      "api": "openai",
+      "options": {
+        "apiKey": "your-cloudflare-api-token",
+        "baseURL": "https://api.cloudflare.com/client/v4/accounts/b7be454fd109d50ddd1831e856896aec/ai/v1/openai/"
+      }
+    }
+  },
+  "mcp": {
+    "swifts-localhost": {
+      "type": "local",
+      "command": ["npx", "-y", "@automattic/mcp-wordpress-remote@latest"],
+      "env": {
+        "WP_API_URL": "http://localhost/swiftspress/muhire/swifts-agent/index.php?rest_route=/mcp/swifts",
+        "WP_API_USERNAME": "appswifts",
+        "WP_API_PASSWORD": "your-wordpress-password"
+      }
+    }
+  }
+}
