@@ -12,6 +12,7 @@ import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.req
 import { sign } from 'jsonwebtoken';
 import { Organization, User } from '@prisma/client';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
+import { AdminService } from '@gitroom/nestjs-libraries/database/prisma/admin/admin.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Response, Request } from 'express';
 import { AuthService } from '@gitroom/backend/services/auth/auth.service';
@@ -39,7 +40,8 @@ export class UsersController {
     private _authService: AuthService,
     private _orgService: OrganizationService,
     private _userService: UsersService,
-    private _trackService: TrackService
+    private _trackService: TrackService,
+    private _adminService: AdminService
   ) { }
   @Get('/agent-media-sso')
   async getAgentMediaSsoUrl(
@@ -70,14 +72,16 @@ export class UsersController {
 
     const impersonate = req.cookies.impersonate || req.headers.impersonate;
     const billingEnabled = !!process.env.POLAR_ACCESS_TOKEN;
+    const settings = await this._adminService.getPlatformSettings() as Record<string, any>;
+    const trialTier = organization?.isTrailing ? (settings.trialTier || 'STANDARD') : null;
     // @ts-ignore
     return {
       ...user,
       orgId: organization?.id || null,
       // @ts-ignore
-      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || (organization?.isTrailing ? pricing.STANDARD.channel : pricing.FREE.channel),
+      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || (trialTier ? pricing[trialTier]?.channel || pricing.STANDARD.channel : pricing.FREE.channel),
       // @ts-ignore
-      tier: organization?.subscription?.subscriptionTier || (!billingEnabled ? 'ULTIMATE' : (organization?.isTrailing ? 'STANDARD' : 'FREE')),
+      tier: organization?.subscription?.subscriptionTier || (!billingEnabled ? 'ULTIMATE' : (trialTier || 'FREE')),
       // @ts-ignore
       role: organization?.users?.[0]?.role || (user.isSuperAdmin ? 'SUPERADMIN' : 'USER'),
       // @ts-ignore

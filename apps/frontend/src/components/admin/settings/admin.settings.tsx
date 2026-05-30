@@ -15,6 +15,7 @@ export const AdminSettings = () => {
   const [settings, setSettings] = useState({
     allowNewSignups: true,
     trialDays: 14,
+    trialTier: 'STANDARD',
     smtpHost: '',
     smtpPort: 587,
     smtpUser: '',
@@ -119,6 +120,22 @@ export const AdminSettings = () => {
                 className="w-[80px] h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
                 min={0}
               />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-newTextColor">{t('trial_tier', 'Trial Tier')}</div>
+                <div className="text-newTextColor/60 text-[14px]">Which tier new trial users get</div>
+              </div>
+              <select
+                value={settings.trialTier}
+                onChange={(e) => setSettings({ ...settings, trialTier: e.target.value })}
+                className="w-[140px] h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+              >
+                <option value="STANDARD">STANDARD (5 ch)</option>
+                <option value="TEAM">TEAM (10 ch)</option>
+                <option value="PRO">PRO (30 ch)</option>
+                <option value="ULTIMATE">ULTIMATE (100 ch)</option>
+              </select>
             </div>
             <div className="flex items-center justify-between">
               <div>

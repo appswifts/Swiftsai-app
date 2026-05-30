@@ -117,6 +117,7 @@ export class AdminService {
     return record?.settings || {
       allowNewSignups: true,
       trialDays: 14,
+      trialTier: 'STANDARD',
       smtpHost: '',
       smtpPort: 587,
       smtpUser: '',
