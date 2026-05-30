@@ -75,9 +75,9 @@ export class UsersController {
       ...user,
       orgId: organization?.id || null,
       // @ts-ignore
-      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || pricing.FREE.channel,
+      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || (organization?.isTrailing ? pricing.STANDARD.channel : pricing.FREE.channel),
       // @ts-ignore
-      tier: organization?.subscription?.subscriptionTier || (!billingEnabled ? 'ULTIMATE' : 'FREE'),
+      tier: organization?.subscription?.subscriptionTier || (!billingEnabled ? 'ULTIMATE' : (organization?.isTrailing ? 'STANDARD' : 'FREE')),
       // @ts-ignore
       role: organization?.users?.[0]?.role || (user.isSuperAdmin ? 'SUPERADMIN' : 'USER'),
       // @ts-ignore
