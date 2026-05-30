@@ -722,4 +722,41 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
       return { success: false };
     }
   }
+
+  async getPagePosts(accessToken: string, data: { pageId?: string }, internalId: string) {
+    const pageId = data?.pageId || internalId;
+    const response = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${pageId}/posts?fields=id,message,created_time,permalink_url,full_picture&access_token=${accessToken}&limit=25`,
+      undefined,
+      'get-page-posts'
+    )).json();
+    return response?.data || [];
+  }
+
+  async getPostComments(accessToken: string, data: { postId: string }) {
+    const response = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.postId}/comments?fields=id,message,from,created_time,like_count,comment_count,attachment&access_token=${accessToken}&limit=100`,
+      undefined,
+      'get-post-comments'
+    )).json();
+    return response?.data || [];
+  }
+
+  async deleteComment(accessToken: string, data: { commentId: string }) {
+    await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.commentId}?access_token=${accessToken}`,
+      { method: 'DELETE' },
+      'delete-comment'
+    );
+    return { success: true };
+  }
+
+  async replyToPost(accessToken: string, data: { postId: string; message: string }) {
+    const body = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.postId}/comments?message=${encodeURIComponent(data.message)}&access_token=${accessToken}`,
+      { method: 'POST' },
+      'reply-to-post'
+    )).json();
+    return { id: body.id, success: true };
+  }
 }

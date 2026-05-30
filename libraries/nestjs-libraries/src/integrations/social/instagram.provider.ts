@@ -967,4 +967,41 @@ export class InstagramProvider
 
     return { providerMessageId: response.message_id };
   }
+
+  async getInstagramMedia(accessToken: string, data: any, internalId: string) {
+    const igUserId = data?.igUserId || internalId;
+    const response = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${igUserId}/media?fields=id,caption,media_type,media_url,permalink,timestamp&access_token=${accessToken}&limit=25`,
+      undefined,
+      'get-instagram-media'
+    )).json();
+    return response?.data || [];
+  }
+
+  async getMediaComments(accessToken: string, data: { mediaId: string }) {
+    const response = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.mediaId}/comments?fields=id,text,timestamp,username,like_count&access_token=${accessToken}&limit=100`,
+      undefined,
+      'get-media-comments'
+    )).json();
+    return response?.data || [];
+  }
+
+  async deleteInstagramComment(accessToken: string, data: { commentId: string }) {
+    await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.commentId}?access_token=${accessToken}`,
+      { method: 'DELETE' },
+      'delete-instagram-comment'
+    );
+    return { success: true };
+  }
+
+  async replyToInstagramPost(accessToken: string, data: { postId: string; message: string }) {
+    const body = await (await this.fetch(
+      `https://graph.facebook.com/v20.0/${data.postId}/comments?message=${encodeURIComponent(data.message)}&access_token=${accessToken}`,
+      { method: 'POST' },
+      'reply-to-instagram-post'
+    )).json();
+    return { id: body.id, success: true };
+  }
 }
