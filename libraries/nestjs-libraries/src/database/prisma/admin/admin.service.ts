@@ -66,7 +66,7 @@ export class AdminService {
     }, 0);
 
     return {
-      users: { total: totalUsers, newLast30Days, newLast7Days },
+      users: { total: totalUsers, newLast30Days: newUsersLast30Days, newLast7Days: newUsersLast7Days },
       organizations: { total: totalOrganizations, newLast30Days: newOrgsLast30Days },
       subscriptions: {
         total: subscriptions.length,

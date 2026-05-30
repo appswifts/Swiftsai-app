@@ -161,6 +161,7 @@ export class AuthService {
         company: body.company,
         email: providerUser.email,
         password: '',
+        name: body.name || body.company,
         provider,
         providerId: providerUser.id,
         datafast_visitor_id: body.datafast_visitor_id,
