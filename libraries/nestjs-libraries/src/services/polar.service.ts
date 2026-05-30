@@ -10,7 +10,7 @@ export class PolarService {
   constructor(private _subscriptionService: SubscriptionService) {
     const accessToken = process.env.POLAR_ACCESS_TOKEN || '';
     // Optional: detect if it's production or sandbox based on your environment
-    const server = process.env.POLAR_SERVER || 'production';
+    const server = (process.env.POLAR_SERVER || 'production') as 'production' | 'sandbox';
     
     this.polar = new Polar({
       accessToken,
