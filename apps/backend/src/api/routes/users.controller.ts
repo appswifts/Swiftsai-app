@@ -212,6 +212,17 @@ export class UsersController {
     );
   }
 
+  @Post('/create-org')
+  async createOrg(
+    @GetUserFromRequest() user: User,
+    @Body('name') name: string
+  ) {
+    if (!name || name.length < 2) {
+      throw new HttpException('Organization name must be at least 2 characters', 400);
+    }
+    return this._orgService.createOrg(name, user.id);
+  }
+
   @Post('/change-org')
   changeOrg(
     @Body('id') id: string,

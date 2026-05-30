@@ -33,6 +33,7 @@ const WalletProvider = dynamic(
 type Inputs = {
   email: string;
   password: string;
+  name: string;
   company: string;
   providerToken: string;
   provider: string;
@@ -208,6 +209,14 @@ export function RegisterAfter({
                     />
                   </>
                 )}
+                <Input
+                  label="Full Name"
+                  translationKey="label_name"
+                  {...form.register('name')}
+                  autoComplete="off"
+                  type="text"
+                  placeholder={t('label_name', 'Your Name')}
+                />
                 <Input
                   label="Company"
                   translationKey="label_company"

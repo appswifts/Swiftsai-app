@@ -164,6 +164,27 @@ export class OrganizationRepository {
     });
   }
 
+  async createOrg(name: string, userId: string) {
+    return this._organization.model.organization.create({
+      data: {
+        name,
+        apiKey: AuthService.fixedEncryption(makeId(20)),
+        allowTrial: false,
+        isTrailing: false,
+        users: {
+          create: {
+            role: Role.SUPERADMIN,
+            userId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+  }
+
   async getOrgsByUserId(userId: string) {
     return this._organization.model.organization.findMany({
       where: {
@@ -279,6 +300,7 @@ export class OrganizationRepository {
                 password: body.password
                   ? AuthService.hashPassword(body.password)
                   : '',
+                name: body.name || null,
                 providerName: body.provider,
                 providerId: body.providerId || '',
                 timezone: 0,

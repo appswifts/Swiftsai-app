@@ -2,112 +2,31 @@ import { Controller, Get, Patch, Param, Query, UseGuards, HttpException, Post, B
 import { ApiTags } from '@nestjs/swagger';
 import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { User, SubscriptionTier, Period } from '@prisma/client';
-import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
-import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
-import { OrganizationRepository } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.repository';
+import { AdminService } from '@gitroom/nestjs-libraries/database/prisma/admin/admin.service';
 import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permissions.guard';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
-import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 
 @ApiTags('Admin')
 @Controller('/admin')
 @UseGuards(PoliciesGuard)
 export class AdminController {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly subscriptionService: SubscriptionService,
-    private readonly organizationRepository: OrganizationRepository
-  ) { }
-
-  // ─── Private Helpers ─────────────────────────────────────────
-
-  private async logAction(adminId: string, action: string, targetId?: string, details?: any) {
-    await this.prisma.adminAuditLog.create({
-      data: {
-        adminId,
-        action,
-        targetId: targetId || null,
-        details: details || null,
-      },
-    });
-  }
+    private readonly adminService: AdminService,
+  ) {}
 
   // ─── Dashboard Stats ─────────────────────────────────────────
 
   @Get('/stats')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
-  async getStats(@GetUserFromRequest() user: User) {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  async getStats() {
+    return this.adminService.getStats();
+  }
 
-    const [
-      totalUsers,
-      totalOrganizations,
-      totalIntegrations,
-      totalPosts,
-    ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.organization.count(),
-      this.prisma.integration.count({ where: { deletedAt: null } }),
-      this.prisma.post.count(),
-    ]);
-
-    const subscriptions = await this.prisma.subscription.findMany({
-      include: { organization: true },
-    });
-
-    const activeSubscriptions = subscriptions.filter(
-      (s: any) => !s.deletedAt && (!s.cancelAt || new Date(s.cancelAt) > now)
-    );
-
-    const newUsersLast30Days = await this.prisma.user.count({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    });
-
-    const newUsersLast7Days = await this.prisma.user.count({
-      where: { createdAt: { gte: sevenDaysAgo } },
-    });
-
-    const newOrgsLast30Days = await this.prisma.organization.count({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    });
-
-    const monthlyRecurringRevenue = activeSubscriptions.reduce((sum, s: any) => {
-      const priceMap: Record<string, number> = {
-        'STANDARD': 29,
-        'TEAM': 39,
-        'PRO': 49,
-        'ULTIMATE': 99,
-        'FREE': 0
-      };
-      return sum + (priceMap[s.subscriptionTier] || 0);
-    }, 0);
-
-    return {
-      users: {
-        total: totalUsers,
-        newLast30Days: newUsersLast30Days,
-        newLast7Days: newUsersLast7Days,
-      },
-      organizations: {
-        total: totalOrganizations,
-        newLast30Days: newOrgsLast30Days,
-      },
-      subscriptions: {
-        total: subscriptions.length,
-        active: activeSubscriptions.length,
-        mrr: monthlyRecurringRevenue,
-      },
-      integrations: {
-        total: totalIntegrations,
-      },
-      posts: {
-        total: totalPosts,
-      },
-    };
+  @Get('/growth')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getGrowthData() {
+    return this.adminService.getGrowthData();
   }
 
   // ─── Platform Settings ────────────────────────────────────────
@@ -115,17 +34,7 @@ export class AdminController {
   @Get('/settings')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getSettings() {
-    const record = await this.prisma.platformSettings.findUnique({
-      where: { id: 'singleton' },
-    });
-    return record?.settings || {
-      allowNewSignups: true,
-      trialDays: 14,
-      smtpHost: '',
-      smtpPort: 587,
-      smtpUser: '',
-      maxChannelsFree: 3,
-    };
+    return this.adminService.getPlatformSettings();
   }
 
   @Post('/settings')
@@ -134,19 +43,7 @@ export class AdminController {
     @GetUserFromRequest() user: User,
     @Body() body: Record<string, any>
   ) {
-    const result = await this.prisma.platformSettings.upsert({
-      where: { id: 'singleton' },
-      create: { id: 'singleton', settings: body },
-      update: { settings: body },
-    });
-    await this.logAction(user.id, 'settings.update', undefined, body);
-
-    // If model changed, invalidate the cached Mastra agent so it picks up the new model
-    if (body.llmModel !== undefined) {
-      MastraService.reset();
-    }
-
-    return result.settings;
+    return this.adminService.updatePlatformSettings(user.id, body);
   }
 
   // ─── Plan & Feature Management ────────────────────────────────
@@ -154,17 +51,7 @@ export class AdminController {
   @Get('/plans')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getPlans() {
-    // Try to load from DB first, fall back to hardcoded
-    const record = await this.prisma.platformSettings.findUnique({
-      where: { id: 'singleton' },
-    });
-    const settings = (record?.settings as any) || {};
-    const customPlans = settings.customPlans || null;
-
-    return {
-      plans: customPlans || pricing,
-      isCustom: !!customPlans,
-    };
+    return this.adminService.getPlans();
   }
 
   @Put('/plans/:tier')
@@ -172,54 +59,13 @@ export class AdminController {
   async updatePlan(
     @GetUserFromRequest() user: User,
     @Param('tier') tier: string,
-    @Body() body: {
-      month_price?: number;
-      year_price?: number;
-      channel?: number;
-      posts_per_month?: number;
-      team_members?: boolean;
-      community_features?: boolean;
-      featured_by_appswifts?: boolean;
-      ai?: boolean;
-      import_from_channels?: boolean;
-      image_generator?: boolean;
-      image_generation_count?: number;
-      generate_videos?: number;
-      public_api?: boolean;
-      webhooks?: number;
-      autoPost?: boolean;
-      inbox?: boolean;
-      campaigns?: boolean;
-      leads?: boolean;
-    }
+    @Body() body: Record<string, any>
   ) {
-    const validTiers = ['FREE', 'STANDARD', 'TEAM', 'PRO', 'ULTIMATE'];
-    if (!validTiers.includes(tier.toUpperCase())) {
-      throw new HttpException('Invalid tier', 400);
+    const result = await this.adminService.updatePlan(user.id, tier, body);
+    if (result && (result as any).error) {
+      throw new HttpException((result as any).error, 400);
     }
-
-    const record = await this.prisma.platformSettings.findUnique({
-      where: { id: 'singleton' },
-    });
-    const settings = (record?.settings as any) || {};
-    const customPlans = settings.customPlans || { ...pricing };
-
-    // Merge updates into the tier
-    customPlans[tier.toUpperCase()] = {
-      ...customPlans[tier.toUpperCase()],
-      ...body,
-      current: tier.toUpperCase(),
-    };
-
-    await this.prisma.platformSettings.upsert({
-      where: { id: 'singleton' },
-      create: { id: 'singleton', settings: { ...settings, customPlans } },
-      update: { settings: { ...settings, customPlans } },
-    });
-
-    await this.logAction(user.id, 'plan.update', tier.toUpperCase(), body);
-
-    return customPlans[tier.toUpperCase()];
+    return result;
   }
 
   // ─── Audit Log ────────────────────────────────────────────────
@@ -231,31 +77,11 @@ export class AdminController {
     @Query('limit') limit: string = '50',
     @Query('action') action?: string
   ) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = Math.min(parseInt(limit) || 50, 100);
-    const skip = (pageNum - 1) * limitNum;
-
-    const where: any = {};
-    if (action) {
-      where.action = { contains: action };
-    }
-
-    const [logs, total] = await this.prisma.$transaction([
-      this.prisma.adminAuditLog.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          admin: {
-            select: { id: true, email: true, name: true },
-          },
-        },
-      }),
-      this.prisma.adminAuditLog.count({ where }),
-    ]);
-
-    return { logs, total, page: pageNum, limit: limitNum };
+    return this.adminService.getAuditLog(
+      parseInt(page) || 1,
+      Math.min(parseInt(limit) || 50, 100),
+      action
+    );
   }
 
   // ─── User Management ──────────────────────────────────────────
@@ -267,95 +93,20 @@ export class AdminController {
     @Query('limit') limit: string = '20',
     @Query('search') search?: string
   ) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 20;
-    const skip = (pageNum - 1) * limitNum;
-
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const [users, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          organizations: {
-            include: {
-              organization: {
-                include: {
-                  subscription: true,
-                  Integration: {
-                    where: { deletedAt: null },
-                    take: 5,
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.user.count({ where }),
-    ]);
-
-    return {
-      users: users.map((user) => ({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt,
-        isSuperAdmin: user.isSuperAdmin,
-        activated: user.activated,
-        lastOnline: user.lastOnline,
-        organizations: user.organizations.map((userOrg: any) => ({
-          id: userOrg.organization.id,
-          name: userOrg.organization.name,
-          subscriptionTier: userOrg.organization.subscription?.subscriptionTier || 'FREE',
-          integrationCount: userOrg.organization.Integration?.length || 0,
-        })),
-      })),
-      total,
-      page: pageNum,
-      limit: limitNum,
-    };
+    return this.adminService.getUsers(
+      parseInt(page) || 1,
+      parseInt(limit) || 20,
+      search
+    );
   }
 
   @Get('/users/:id')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getUserById(@Param('id') id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        organizations: {
-          include: {
-            organization: {
-              include: {
-                subscription: true,
-                Integration: {
-                  where: { deletedAt: null },
-                },
-                post: {
-                  orderBy: { createdAt: 'desc' },
-                  take: 10,
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
+    const user = await this.adminService.getUserById(id);
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-
     return user;
   }
 
@@ -365,12 +116,7 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { activated: false },
-    });
-    await this.logAction(admin.id, 'user.suspend', id);
-    return { success: true };
+    return this.adminService.suspendUser(admin.id, id);
   }
 
   @Patch('/users/:id/activate')
@@ -379,12 +125,7 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    await this.prisma.user.update({
-      where: { id },
-      data: { activated: true },
-    });
-    await this.logAction(admin.id, 'user.activate', id);
-    return { success: true };
+    return this.adminService.activateUser(admin.id, id);
   }
 
   @Patch('/users/:id/toggle-admin')
@@ -393,17 +134,11 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    const target = await this.prisma.user.findUnique({ where: { id } });
-    if (!target) throw new HttpException('User not found', 404);
-
-    const updated = await this.prisma.user.update({
-      where: { id },
-      data: { isSuperAdmin: !target.isSuperAdmin },
-    });
-    await this.logAction(admin.id, 'user.toggle-admin', id, {
-      isSuperAdmin: updated.isSuperAdmin,
-    });
-    return { success: true, isSuperAdmin: updated.isSuperAdmin };
+    const result = await this.adminService.toggleSuperAdmin(admin.id, id);
+    if (result && (result as any).error) {
+      throw new HttpException((result as any).error, 404);
+    }
+    return result;
   }
 
   // ─── Recent Signups ───────────────────────────────────────────
@@ -411,30 +146,7 @@ export class AdminController {
   @Get('/recent-signups')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getRecentSignups(@Query('limit') limit: string = '10') {
-    const limitNum = parseInt(limit) || 10;
-
-    const users = await this.prisma.user.findMany({
-      take: limitNum,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        organizations: {
-          include: {
-            organization: true,
-          },
-          take: 1,
-        },
-      },
-    });
-
-    return {
-      users: users.map((user) => ({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt,
-        organizationName: user.organizations?.[0]?.organization?.name || null,
-      })),
-    };
+    return this.adminService.getRecentSignups(parseInt(limit) || 10);
   }
 
   // ─── Organization Management ──────────────────────────────────
@@ -446,146 +158,22 @@ export class AdminController {
     @Query('limit') limit: string = '20',
     @Query('search') search?: string
   ) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 20;
-    const skip = (pageNum - 1) * limitNum;
-
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        {
-          users: {
-            some: {
-              user: {
-                email: { contains: search, mode: 'insensitive' }
-              }
-            }
-          }
-        }
-      ];
-    }
-
-    const [organizations, total] = await this.prisma.$transaction([
-      this.prisma.organization.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          subscription: true,
-          Integration: {
-            where: { deletedAt: null },
-          },
-          users: {
-            where: { disabled: false },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  name: true,
-                }
-              }
-            }
-          },
-          _count: {
-            select: {
-              post: {
-                where: { deletedAt: null }
-              }
-            }
-          }
-        },
-      }),
-      this.prisma.organization.count({ where }),
-    ]);
-
-    return {
-      organizations: organizations.map((org) => ({
-        id: org.id,
-        name: org.name,
-        description: org.description,
-        createdAt: org.createdAt,
-        isTrailing: org.isTrailing,
-        allowTrial: org.allowTrial,
-        subscription: org.subscription ? {
-          subscriptionTier: org.subscription.subscriptionTier,
-          period: org.subscription.period,
-          totalChannels: org.subscription.totalChannels,
-          isLifetime: org.subscription.isLifetime,
-          cancelAt: org.subscription.cancelAt,
-        } : null,
-        integrationCount: org.Integration.length,
-        postCount: org._count.post,
-        teamMembers: org.users.map((userOrg) => ({
-          id: userOrg.user.id,
-          email: userOrg.user.email,
-          name: userOrg.user.name,
-          role: userOrg.role,
-        })),
-      })),
-      total,
-      page: pageNum,
-      limit: limitNum,
-    };
+    return this.adminService.getOrganizations(
+      parseInt(page) || 1,
+      parseInt(limit) || 20,
+      search
+    );
   }
 
   @Get('/organizations/:id')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getOrganizationById(@Param('id') id: string) {
-    const organization = await this.prisma.organization.findUnique({
-      where: { id },
-      include: {
-        subscription: true,
-        Integration: {
-          where: { deletedAt: null },
-          include: {
-            customer: true,
-          }
-        },
-        users: {
-          where: { disabled: false },
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-              }
-            }
-          }
-        },
-        media: {
-          where: { deletedAt: null },
-          take: 20,
-          orderBy: { createdAt: 'desc' }
-        },
-        post: {
-          where: { deletedAt: null },
-          take: 20,
-          orderBy: { publishDate: 'desc' },
-          include: {
-            integration: {
-              select: {
-                name: true,
-                providerIdentifier: true,
-              }
-            }
-          }
-        }
-      },
-    });
-
-    if (!organization) {
+    const org = await this.adminService.getOrganizationById(id);
+    if (!org) {
       throw new HttpException('Organization not found', 404);
     }
-
-    return organization;
+    return org;
   }
-
-  // ─── Subscription Management ──────────────────────────────────
 
   @Post('/organizations/:id/subscription')
   @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
@@ -599,42 +187,10 @@ export class AdminController {
       isLifetime?: boolean;
     }
   ) {
-    const organization = await this.prisma.organization.findUnique({
-      where: { id },
-      include: { subscription: true }
-    });
-
-    if (!organization) {
-      throw new HttpException('Organization not found', 404);
+    const result = await this.adminService.updateOrganizationSubscription(admin.id, id, body);
+    if (result && (result as any).error) {
+      throw new HttpException((result as any).error, 404);
     }
-
-    let result;
-    if (organization.subscription) {
-      result = await this.prisma.subscription.update({
-        where: { organizationId: id },
-        data: {
-          subscriptionTier: body.subscriptionTier,
-          period: body.period,
-          totalChannels: body.totalChannels,
-          isLifetime: body.isLifetime || false,
-          deletedAt: null,
-          cancelAt: null,
-        }
-      });
-    } else {
-      result = await this.prisma.subscription.create({
-        data: {
-          organizationId: id,
-          subscriptionTier: body.subscriptionTier,
-          period: body.period,
-          totalChannels: body.totalChannels,
-          isLifetime: body.isLifetime || false,
-          identifier: `admin_${Date.now()}`,
-        }
-      });
-    }
-
-    await this.logAction(admin.id, 'subscription.update', id, body);
     return result;
   }
 
@@ -645,69 +201,15 @@ export class AdminController {
     @Param('id') id: string,
     @Body() body: { isTrailing: boolean; allowTrial: boolean }
   ) {
-    const result = await this.prisma.organization.update({
-      where: { id },
-      data: {
-        isTrailing: body.isTrailing,
-        allowTrial: body.allowTrial,
-      }
-    });
-    await this.logAction(admin.id, 'organization.trial', id, body);
-    return result;
+    return this.adminService.setOrganizationTrial(admin.id, id, body);
   }
+
+  // ─── Subscription Management ──────────────────────────────────
 
   @Get('/subscriptions/overview')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getSubscriptionsOverview() {
-    const now = new Date();
-    const subscriptions = await this.prisma.subscription.findMany({
-      where: { deletedAt: null },
-      include: {
-        organization: true,
-      }
-    });
-
-    const tiers = ['FREE', 'STANDARD', 'TEAM', 'PRO', 'ULTIMATE'] as const;
-    const counts: Record<string, { count: number; mrr: number }> = {};
-
-    tiers.forEach(tier => {
-      counts[tier] = { count: 0, mrr: 0 };
-    });
-
-    const activeSubscriptions = subscriptions.filter(
-      (s: any) => !s.deletedAt && (!s.cancelAt || new Date(s.cancelAt) > now)
-    );
-
-    activeSubscriptions.forEach(sub => {
-      counts[sub.subscriptionTier].count++;
-      const priceMap: Record<string, number> = {
-        'STANDARD': 29,
-        'TEAM': 39,
-        'PRO': 49,
-        'ULTIMATE': 99,
-        'FREE': 0
-      };
-      counts[sub.subscriptionTier].mrr += priceMap[sub.subscriptionTier] || 0;
-    });
-
-    const freeOrgs = await this.prisma.organization.count({
-      where: {
-        subscription: null
-      }
-    });
-    counts['FREE'].count = freeOrgs;
-
-    return {
-      tiers: Object.entries(counts).map(([tier, data]) => ({
-        tier,
-        count: data.count,
-        mrr: data.mrr,
-        percentage: (activeSubscriptions.length + freeOrgs) > 0 ? (data.count / (activeSubscriptions.length + freeOrgs)) * 100 : 0
-      })),
-      totalSubscriptions: activeSubscriptions.length,
-      totalOrganizations: activeSubscriptions.length + freeOrgs,
-      totalMRR: Object.values(counts).reduce((sum, data) => sum + data.mrr, 0)
-    };
+    return this.adminService.getSubscriptionsOverview();
   }
 
   @Post('/subscriptions/manual')
@@ -722,13 +224,16 @@ export class AdminController {
       isLifetime?: boolean;
     }
   ) {
-    const result = await this.subscriptionService.addSubscription(
-      body.organizationId,
-      'admin',
-      body.subscriptionTier
-    );
-    await this.logAction(admin.id, 'subscription.create', body.organizationId, body);
-    return result;
+    return this.adminService.createManualSubscription(admin.id, body);
+  }
+
+  @Post('/subscriptions/bulk-cancel/:tier')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async bulkCancelSubscriptions(
+    @GetUserFromRequest() admin: User,
+    @Param('tier') tier: string
+  ) {
+    return this.adminService.bulkCancelSubscriptions(admin.id, tier);
   }
 
   @Patch('/subscriptions/:id/cancel')
@@ -737,22 +242,10 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    const subscription = await this.prisma.subscription.findUnique({
-      where: { organizationId: id }
-    });
-
-    if (!subscription) {
-      throw new HttpException('Subscription not found', 404);
+    const result = await this.adminService.cancelSubscription(admin.id, id);
+    if (result && (result as any).error) {
+      throw new HttpException((result as any).error, 404);
     }
-
-    const result = await this.prisma.subscription.update({
-      where: { organizationId: id },
-      data: {
-        cancelAt: new Date(),
-        deletedAt: new Date(),
-      }
-    });
-    await this.logAction(admin.id, 'subscription.cancel', id);
     return result;
   }
 
@@ -765,50 +258,11 @@ export class AdminController {
     @Query('limit') limit: string = '20',
     @Query('provider') provider?: string
   ) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 20;
-    const skip = (pageNum - 1) * limitNum;
-
-    const where: any = { deletedAt: null };
-    if (provider) {
-      where.providerIdentifier = provider;
-    }
-
-    const [integrations, total] = await this.prisma.$transaction([
-      this.prisma.integration.findMany({
-        where,
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          organization: {
-            select: { id: true, name: true }
-          },
-          _count: {
-            select: { posts: true }
-          }
-        },
-      }),
-      this.prisma.integration.count({ where }),
-    ]);
-
-    return {
-      integrations: integrations.map((int: any) => ({
-        id: int.id,
-        name: int.name,
-        provider: int.providerIdentifier,
-        organizationId: int.organizationId,
-        organizationName: int.organization?.name,
-        createdAt: int.createdAt,
-        disabled: int.disabled,
-        refreshNeeded: int.refreshNeeded,
-        profile: int.profile,
-        postCount: int._count.posts,
-      })),
-      total,
-      page: pageNum,
-      limit: limitNum,
-    };
+    return this.adminService.getIntegrations(
+      parseInt(page) || 1,
+      parseInt(limit) || 20,
+      provider
+    );
   }
 
   @Post('/integrations/:id/disable')
@@ -817,12 +271,7 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    const integration = await this.prisma.integration.update({
-      where: { id },
-      data: { disabled: true }
-    });
-    await this.logAction(admin.id, 'integration.disable', id);
-    return { success: true, id: integration.id };
+    return this.adminService.disableIntegration(admin.id, id);
   }
 
   @Post('/integrations/:id/enable')
@@ -831,12 +280,7 @@ export class AdminController {
     @GetUserFromRequest() admin: User,
     @Param('id') id: string
   ) {
-    const integration = await this.prisma.integration.update({
-      where: { id },
-      data: { disabled: false }
-    });
-    await this.logAction(admin.id, 'integration.enable', id);
-    return { success: true, id: integration.id };
+    return this.adminService.enableIntegration(admin.id, id);
   }
 
   // ─── Error Dashboard ──────────────────────────────────────────
@@ -844,25 +288,7 @@ export class AdminController {
   @Get('/errors/stats')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getErrorStats() {
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const [
-      last24h,
-      last7d,
-      total,
-    ] = await Promise.all([
-      this.prisma.errors.count({ where: { createdAt: { gte: twentyFourHoursAgo } } }),
-      this.prisma.errors.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      this.prisma.errors.count(),
-    ]);
-
-    return {
-      last24h,
-      last7d,
-      total,
-    };
+    return this.adminService.getErrorStats();
   }
 
   @Get('/errors')
@@ -871,27 +297,9 @@ export class AdminController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20'
   ) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 20;
-    const skip = (pageNum - 1) * limitNum;
-
-    const [errors, total] = await this.prisma.$transaction([
-      this.prisma.errors.findMany({
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          organization: { select: { name: true } },
-        }
-      }),
-      this.prisma.errors.count(),
-    ]);
-
-    return {
-      errors,
-      total,
-      page: pageNum,
-      limit: limitNum,
-    };
+    return this.adminService.getErrors(
+      parseInt(page) || 1,
+      parseInt(limit) || 20
+    );
   }
 }

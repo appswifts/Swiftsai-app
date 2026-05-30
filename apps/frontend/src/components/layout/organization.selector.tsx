@@ -1,15 +1,76 @@
 'use client';
 
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import useSWR from 'swr';
+import { useSWRConfig } from 'swr';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
 import clsx from 'clsx';
+
+const CreateOrgForm: FC<{ onClose: () => void; onCreated: () => void }> = ({ onClose, onCreated }) => {
+  const fetch = useFetch();
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleCreate = useCallback(async () => {
+    if (!name || name.length < 2) {
+      setError('Name must be at least 2 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await fetch('/user/create-org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      onCreated();
+      onClose();
+    } catch (e: any) {
+      setError(e.message || 'Failed to create organization');
+    } finally {
+      setLoading(false);
+    }
+  }, [name, fetch, onClose, onCreated]);
+
+  return (
+    <div className="p-[12px] border-t border-tableBorder">
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Organization name"
+        className="w-full h-[36px] bg-newBgColorInner px-[10px] outline-none border-newTableBorder border rounded-[6px] text-[13px] text-textColor mb-[8px]"
+      />
+      {error && <div className="text-red-500 text-[12px] mb-[8px]">{error}</div>}
+      <div className="flex gap-[8px]">
+        <button
+          onClick={handleCreate}
+          disabled={loading}
+          className="flex-1 h-[34px] bg-primary text-white rounded-[6px] text-[13px] font-medium hover:bg-primary/90 disabled:opacity-50"
+        >
+          {loading ? '...' : 'Create'}
+        </button>
+        <button
+          onClick={onClose}
+          className="h-[34px] px-[12px] bg-newBgColorInner border border-newTableBorder rounded-[6px] text-[13px] text-newTextColor/60"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
   asOpenSelect,
 }) => {
   const fetch = useFetch();
+  const { mutate } = useSWRConfig();
   const user = useUser();
+  const [showCreate, setShowCreate] = useState(false);
   const load = useCallback(async () => {
     return await (await fetch('/user/organizations')).json();
   }, []);
@@ -77,6 +138,18 @@ export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
                   {org.name}
                 </div>
               ))}
+              <div
+                onClick={() => setShowCreate(!showCreate)}
+                className="text-primary text-[13px] cursor-pointer hover:opacity-80"
+              >
+                + Create Organization
+              </div>
+              {showCreate && (
+                <CreateOrgForm
+                  onClose={() => setShowCreate(false)}
+                  onCreated={() => mutate('organizations')}
+                />
+              )}
             </div>
           )}
         </div>

@@ -15,6 +15,10 @@ export class OrganizationService {
     private _organizationRepository: OrganizationRepository,
     private _notificationsService: NotificationService
   ) {}
+  async createOrg(name: string, userId: string) {
+    return this._organizationRepository.createOrg(name, userId);
+  }
+
   async createOrgAndUser(
     body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
     ip: string,

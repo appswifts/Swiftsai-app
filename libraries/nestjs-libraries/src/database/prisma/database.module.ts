@@ -49,6 +49,7 @@ import { InboxRepository } from '@gitroom/nestjs-libraries/database/prisma/inbox
 import { InboxService } from '@gitroom/nestjs-libraries/database/prisma/inbox/inbox.service';
 import { CampaignRepository } from '@gitroom/nestjs-libraries/database/prisma/campaigns/campaign.repository';
 import { CampaignService } from '@gitroom/nestjs-libraries/database/prisma/campaigns/campaign.service';
+import { AdminService } from '@gitroom/nestjs-libraries/database/prisma/admin/admin.service';
 
 @Global()
 @Module({
@@ -107,6 +108,7 @@ import { CampaignService } from '@gitroom/nestjs-libraries/database/prisma/campa
     InboxService,
     CampaignRepository,
     CampaignService,
+    AdminService,
   ],
   get exports() {
     return this.providers;

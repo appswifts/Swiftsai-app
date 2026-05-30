@@ -18,6 +18,7 @@ export const AdminSettings = () => {
     smtpHost: '',
     smtpPort: 587,
     smtpUser: '',
+    smtpPassword: '',
     maxChannelsFree: 3,
     llmModel: '',
   });
@@ -168,6 +169,16 @@ export const AdminSettings = () => {
                 value={settings.smtpUser}
                 onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
                 placeholder="noreply@yourapp.com"
+              />
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              <div className="text-[14px]">SMTP Password</div>
+              <input
+                type="password"
+                className="h-[42px] bg-newBgColorInner px-[16px] outline-none border-newTableBorder border rounded-[8px] text-[14px] text-textColor"
+                value={settings.smtpPassword}
+                onChange={(e) => setSettings({ ...settings, smtpPassword: e.target.value })}
+                placeholder="SMTP password"
               />
             </div>
           </div>

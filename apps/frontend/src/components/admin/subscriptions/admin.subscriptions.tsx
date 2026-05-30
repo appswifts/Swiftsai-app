@@ -125,8 +125,17 @@ export const AdminSubscriptions = () => {
                     </div>
                   </td>
                   <td className="p-[16px]">
-                    {tier.count > 0 && (
-                      <Button className="!bg-red-500/80 hover:!bg-red-500">
+                    {tier.count > 0 && tier.tier !== 'FREE' && (
+                      <Button
+                        onClick={async () => {
+                          if (window.confirm(`Cancel all ${tier.tier} subscriptions? This will affect ${tier.count} organizations.`)) {
+                            await fetch(`/admin/subscriptions/bulk-cancel/${tier.tier}`, { method: 'POST' });
+                            await mutate('/admin/subscriptions/overview');
+                            await mutate('/admin/stats');
+                          }
+                        }}
+                        className="!bg-red-500/80 hover:!bg-red-500"
+                      >
                         Bulk Cancel
                       </Button>
                     )}

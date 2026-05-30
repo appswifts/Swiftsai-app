@@ -31,6 +31,12 @@ export class CreateOrgUserDto {
   email: string;
 
   @IsString()
+  @MinLength(2)
+  @MaxLength(128)
+  @IsDefined()
+  name: string;
+
+  @IsString()
   @IsDefined()
   @MinLength(3)
   @MaxLength(128)

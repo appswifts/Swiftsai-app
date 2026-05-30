@@ -28,6 +28,51 @@ interface AdminStats {
   };
 }
 
+interface GrowthPoint {
+  date: string;
+  users: number;
+  organizations: number;
+  revenue: number;
+}
+
+const GrowthChart = ({ data }: { data: GrowthPoint[] }) => {
+  if (!data || data.length === 0) return null;
+
+  const w = 600;
+  const h = 200;
+  const pad = 30;
+
+  const maxUsers = Math.max(...data.map(d => d.users), 1);
+  const maxRevenue = Math.max(...data.map(d => d.revenue), 1);
+  const maxOrg = Math.max(...data.map(d => d.organizations), 1);
+
+  const xScale = (i: number) => pad + (i / (data.length - 1)) * (w - pad * 2);
+  const yScaleUsers = (v: number) => h - pad - (v / maxUsers) * (h - pad * 2);
+  const yScaleRev = (v: number) => h - pad - (v / maxRevenue) * (h - pad * 2);
+  const yScaleOrg = (v: number) => h - pad - (v / maxOrg) * (h - pad * 2);
+
+  const linePath = (scale: (v: number) => number, field: keyof GrowthPoint) =>
+    data.map((d, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${scale(Number(d[field]))}`).join(' ');
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h + 20}`} className="w-full max-h-[220px]">
+      <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="#333" />
+      <line x1={pad} y1={pad} x2={pad} y2={h - pad} stroke="#333" />
+      {data.map((d, i) => (
+        <text key={i} x={xScale(i)} y={h - pad + 14} textAnchor="middle" fill="#888" fontSize="10">
+          {d.date.slice(5)}
+        </text>
+      ))}
+      <path d={linePath(yScaleUsers, 'users')} fill="none" stroke="#3b82f6" strokeWidth="2" />
+      <path d={linePath(yScaleRev, 'revenue')} fill="none" stroke="#a855f7" strokeWidth="2" />
+      <path d={linePath(yScaleOrg, 'organizations')} fill="none" stroke="#f59e0b" strokeWidth="2" />
+      <text x={w - pad} y={pad + 10} fill="#3b82f6" fontSize="11" textAnchor="end">Users</text>
+      <text x={w - pad} y={pad + 22} fill="#a855f7" fontSize="11" textAnchor="end">Revenue</text>
+      <text x={w - pad} y={pad + 34} fill="#f59e0b" fontSize="11" textAnchor="end">Orgs</text>
+    </svg>
+  );
+};
+
 export const AdminDashboard = () => {
   const fetch = useFetch();
   const t = useT();
@@ -36,7 +81,17 @@ export const AdminDashboard = () => {
     return await (await fetch('/admin/stats')).json();
   }, []);
 
+  const loadGrowth = useCallback(async () => {
+    return await (await fetch('/admin/growth')).json();
+  }, []);
+
   const { data: stats, isLoading } = useSWR<AdminStats>('/admin/stats', loadStats, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    refreshWhenOffline: false,
+  });
+
+  const { data: growth } = useSWR<GrowthPoint[]>('/admin/growth', loadGrowth, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     refreshWhenOffline: false,
@@ -191,6 +246,14 @@ export const AdminDashboard = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Growth Chart */}
+      <div className="bg-menuBg rounded-[12px] p-[24px] border border-tableBorder">
+        <h3 className="text-[18px] font-bold text-newTextColor mb-[16px]">
+          {t('growth_trends', 'Growth Trends (12 months)')}
+        </h3>
+        <GrowthChart data={growth || []} />
       </div>
 
       {/* Recent Activity & Quick Actions */}
