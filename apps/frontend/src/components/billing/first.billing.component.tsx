@@ -1,8 +1,7 @@
 'use client';
 
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import useSWR from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { OrganizationSelector } from '@gitroom/frontend/components/layout/organization.selector';
 import { LanguageComponent } from '@gitroom/frontend/components/layout/language.component';
@@ -41,10 +40,15 @@ export const FirstBillingComponent = () => {
   const t = useT();
   const [datafast_visitor_id] = useCookie('datafast_visitor_id', '');
   const [datafast_session_id] = useCookie('datafast_session_id', '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadCheckout = useCallback(async () => {
-    return (
-      await fetch('/billing/embedded', {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/billing/embedded', {
         method: 'POST',
         body: JSON.stringify({
           billing: tier,
@@ -54,9 +58,26 @@ export const FirstBillingComponent = () => {
             : {}),
           ...(dub ? { dub } : {}),
         }),
-      })
-    ).json();
-  }, [tier, period]);
+      });
+
+      if (res.status === 429) {
+        setError('Too many requests. Please wait a moment and try again.');
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.polarUrl) {
+        window.location.href = data.polarUrl;
+      } else {
+        setError('Failed to create checkout. Please try again.');
+        setLoading(false);
+      }
+    } catch {
+      setError('Failed to create checkout. Please try again.');
+      setLoading(false);
+    }
+  }, [tier, period, loading]);
 
   const showYouTube = () => {
     modals.openModal({
@@ -72,24 +93,6 @@ export const FirstBillingComponent = () => {
       ),
     });
   };
-
-  const { data, isLoading } = useSWR(
-    `/billing-${tier}-${period}`,
-    loadCheckout,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-      refreshWhenOffline: false,
-      refreshWhenHidden: false,
-    }
-  );
-
-  useEffect(() => {
-    if (data?.polarUrl) {
-      window.location.href = data.polarUrl;
-    }
-  }, [data]);
 
   const price = useMemo(
     () => Object.entries(pricing).filter(([key, value]) => key !== 'FREE'),
@@ -190,13 +193,17 @@ export const FirstBillingComponent = () => {
           <div className="block tablet:hidden">
             <JoinOver />
           </div>
-          {data?.polarUrl ? (
+          {loading ? (
             <div className="flex flex-col items-center justify-center p-10">
               <LoadingComponent />
               <div className="mt-4 text-xl">Redirecting to checkout...</div>
             </div>
           ) : (
-            <LoadingComponent />
+            <div className="flex flex-col items-center justify-center p-10 text-center text-textItemBlur">
+              <div className="text-[16px]">
+                Select a plan and click Continue to subscribe
+              </div>
+            </div>
           )}
         </div>
         <div className="flex flex-col ps-[40px] tablet:!ps-[0] border-l border-newColColor py-[40px] mobile:!pt-[24px] tablet:border-none tablet:pb-0">
@@ -275,6 +282,22 @@ export const FirstBillingComponent = () => {
                 {t('billing_features', 'Features')}
               </div>
               <BillingFeatures tier={tier} />
+            </div>
+            <div className="mt-[32px]">
+              <button
+                onClick={loadCheckout}
+                disabled={loading}
+                className="w-full h-[48px] bg-[#AA0FA4] hover:bg-[#8a0c84] disabled:opacity-50 text-white rounded-[12px] text-[16px] font-[600] transition-colors"
+              >
+                {loading
+                  ? t('billing_redirecting', 'Redirecting...')
+                  : t('billing_continue_with', `Continue with ${capitalize(tier)}`)}
+              </button>
+              {error && (
+                <div className="mt-[12px] text-red-500 text-[14px] text-center">
+                  {error}
+                </div>
+              )}
             </div>
             <div className="flex flex-col mobile:hidden tablet:hidden">
               {/*<div>asd</div>*/}
