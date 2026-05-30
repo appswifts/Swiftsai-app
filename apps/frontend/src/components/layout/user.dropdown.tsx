@@ -55,7 +55,7 @@ export const UserDropdown = () => {
               {user?.email}
             </div>
           </div>
-          {user?.admin && (
+          {(user as any)?.admin && (
             <button
               onClick={() => { window.location.href = '/admin'; setOpen(false); }}
               className="w-full text-left px-[16px] py-[8px] text-[14px] text-newTextColor hover:bg-tableBorder/30 transition-colors"

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import useSWR from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { OrganizationSelector } from '@gitroom/frontend/components/layout/organization.selector';
