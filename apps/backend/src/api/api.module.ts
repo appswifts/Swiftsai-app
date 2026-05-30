@@ -3,8 +3,6 @@ import { AuthController } from '@gitroom/backend/api/routes/auth.controller';
 import { AuthService } from '@gitroom/backend/services/auth/auth.service';
 import { UsersController } from '@gitroom/backend/api/routes/users.controller';
 import { AuthMiddleware } from '@gitroom/backend/services/auth/auth.middleware';
-import { StripeController } from '@gitroom/backend/api/routes/stripe.controller';
-import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { PolarService } from '@gitroom/nestjs-libraries/services/polar.service';
 import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billing.mapping.service';
 import { PolarWebhookController } from '@gitroom/backend/api/routes/polar-webhook.controller';
@@ -84,7 +82,6 @@ const authenticatedController = [
   controllers: [
     RootController,
     PolarWebhookController,
-    StripeController,
     MetaWebhooksController,
     AuthController,
     PublicController,
@@ -96,7 +93,6 @@ const authenticatedController = [
   ],
   providers: [
     AuthService,
-    StripeService,
     PolarService,
     BillingMappingService,
     OpenaiService,

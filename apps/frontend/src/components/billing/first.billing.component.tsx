@@ -3,23 +3,17 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { useVariables } from '@gitroom/react/helpers/variable.context';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { OrganizationSelector } from '@gitroom/frontend/components/layout/organization.selector';
 import { LanguageComponent } from '@gitroom/frontend/components/layout/language.component';
 import { AttachToFeedbackIcon } from '@gitroom/frontend/components/new-layout/sentry.feedback.component';
 import NotificationComponent from '@gitroom/frontend/components/notifications/notification.component';
-import dynamic from 'next/dynamic';
 import { LogoTextComponent } from '@gitroom/frontend/components/ui/logo-text.component';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { capitalize } from 'lodash';
 import clsx from 'clsx';
 import { LoadingComponent } from '@gitroom/frontend/components/layout/loading';
 import { CheckIconComponent } from '@gitroom/frontend/components/ui/check.icon.component';
-import {
-  FAQComponent,
-  FAQSection,
-} from '@gitroom/frontend/components/billing/faq.component';
+import { FAQComponent } from '@gitroom/frontend/components/billing/faq.component';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
 import { useDubClickId } from '@gitroom/frontend/components/layout/dubAnalytics';
@@ -36,21 +30,9 @@ const ModeComponent = dynamic(
   }
 );
 
-const EmbeddedBilling = dynamic(
-  () =>
-    import('@gitroom/frontend/components/billing/embedded.billing').then(
-      (mod) => mod.EmbeddedBilling
-    ),
-  {
-    ssr: false,
-  }
-);
-
 export const FirstBillingComponent = () => {
-  const { stripeClient } = useVariables();
   const user = useUser();
   const dub = useDubClickId();
-  const [stripe, setStripe] = useState<null | Promise<Stripe>>(null);
   const [tier, setTier] = useState('STANDARD');
   const [period, setPeriod] = useState('MONTHLY');
   const fetch = useFetch();
@@ -58,10 +40,6 @@ export const FirstBillingComponent = () => {
   const t = useT();
   const [datafast_visitor_id] = useCookie('datafast_visitor_id', '');
   const [datafast_session_id] = useCookie('datafast_session_id', '');
-
-  useEffect(() => {
-    setStripe(loadStripe(stripeClient));
-  }, []);
 
   const loadCheckout = useCallback(async () => {
     return (
@@ -216,13 +194,6 @@ export const FirstBillingComponent = () => {
               <LoadingComponent />
               <div className="mt-4 text-xl">Redirecting to checkout...</div>
             </div>
-          ) : !isLoading && data && stripe ? (
-            <EmbeddedBilling
-              stripe={stripe}
-              secret={data.client_secret}
-              showCoupon={period === 'MONTHLY'}
-              autoApplyCoupon={data.auto_apply_coupon}
-            />
           ) : (
             <LoadingComponent />
           )}

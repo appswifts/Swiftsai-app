@@ -199,7 +199,7 @@ export class NoAuthIntegrationsController {
     }
 
     if (
-      process.env.STRIPE_PUBLISHABLE_KEY &&
+      process.env.POLAR_ACCESS_TOKEN &&
       org.isTrailing &&
       (await this._integrationService.checkPreviousConnections(
         org.id,

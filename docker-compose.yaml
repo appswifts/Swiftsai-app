@@ -91,12 +91,19 @@ services:
       NEXT_PUBLIC_POLOTNO: ''
       API_LIMIT: 30
 
-      # === Payment / Stripe Settings
+      # === Payment / Polar Settings
       FEE_AMOUNT: 0.05
-      STRIPE_PUBLISHABLE_KEY: ''
-      STRIPE_SECRET_KEY: ''
-      STRIPE_SIGNING_KEY: ''
-      STRIPE_SIGNING_KEY_CONNECT: ''
+      POLAR_ACCESS_TOKEN: ''
+      POLAR_WEBHOOK_SECRET: ''
+      POLAR_ORGANIZATION_ID: ''
+      POLAR_PRODUCT_STANDARD_MONTHLY_ID: ''
+      POLAR_PRODUCT_STANDARD_YEARLY_ID: ''
+      POLAR_PRODUCT_TEAM_MONTHLY_ID: ''
+      POLAR_PRODUCT_TEAM_YEARLY_ID: ''
+      POLAR_PRODUCT_PRO_MONTHLY_ID: ''
+      POLAR_PRODUCT_PRO_YEARLY_ID: ''
+      POLAR_PRODUCT_ULTIMATE_MONTHLY_ID: ''
+      POLAR_PRODUCT_ULTIMATE_YEARLY_ID: ''
 
       # === Developer Settings
       NX_ADD_PLUGINS: false

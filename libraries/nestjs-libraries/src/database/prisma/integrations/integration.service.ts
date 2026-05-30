@@ -256,7 +256,7 @@ export class IntegrationService {
       await this._integrationRepository.getIntegrationsList(org)
     ).filter((f) => !f.disabled);
     if (
-      !!process.env.STRIPE_PUBLISHABLE_KEY &&
+      !!process.env.POLAR_ACCESS_TOKEN &&
       integrations.length >= totalChannels
     ) {
       throw new Error('You have reached the maximum number of channels');

@@ -1,15 +1,12 @@
-import { Body, Controller, Get, HttpException, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Param, Post } from '@nestjs/common';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
-import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization, User } from '@prisma/client';
 import { BillingSubscribeDto } from '@gitroom/nestjs-libraries/dtos/billing/billing.subscribe.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
-import { Request } from 'express';
 import { Nowpayments } from '@gitroom/nestjs-libraries/crypto/nowpayments';
-import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { PolarService } from '@gitroom/nestjs-libraries/services/polar.service';
 import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billing.mapping.service';
 
@@ -18,7 +15,6 @@ import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billin
 export class BillingController {
   constructor(
     private _subscriptionService: SubscriptionService,
-    private _stripeService: StripeService,
     private _polarService: PolarService,
     private _billingMapping: BillingMappingService,
     private _notificationService: NotificationService,
@@ -31,104 +27,42 @@ export class BillingController {
     @Param('id') body: string
   ) {
     return {
-      status: await this._stripeService.checkSubscription(org.id, body),
-    };
-  }
-
-  @Get('/check-discount')
-  async checkDiscount(@GetOrgFromRequest() org: Organization) {
-    return {
-      offerCoupon: !(await this._stripeService.checkDiscount(org.paymentId))
-        ? false
-        : AuthService.signJWT({ discount: true }),
-    };
-  }
-
-  @Post('/apply-discount')
-  async applyDiscount(@GetOrgFromRequest() org: Organization) {
-    await this._stripeService.applyDiscount(org.paymentId);
-  }
-
-  @Post('/finish-trial')
-  async finishTrial(@GetOrgFromRequest() org: Organization) {
-    try {
-      await this._stripeService.finishTrial(org.paymentId);
-    } catch (err) {}
-    return {
-      finish: true,
+      status: await this._subscriptionService.checkSubscription(org.id, body),
     };
   }
 
   @Get('/is-trial-finished')
   async isTrialFinished(@GetOrgFromRequest() org: Organization) {
-    return {
-      finished: !org.isTrailing,
-    };
+    return { finished: !org.isTrailing };
   }
 
   @Post('/embedded')
   async embedded(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
-    @Body() body: BillingSubscribeDto,
-    @Req() req: Request
+    @Body() body: BillingSubscribeDto
   ) {
-    if (this._polarService.isEnabled) {
-      // Map body.billing (STANDARD, TEAM, PRO, etc) to a polar product ID.
-      // For now we map tier to Product ID which we will set via env vars or fixed maps
-      // in production.
-      const productId = this._billingMapping.getProductId(body.billing, body.period);
-      const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
-      return { polarUrl: checkout.url };
-    }
-
-    const uniqueId = req?.cookies?.track;
-    return this._stripeService.embedded(
-      uniqueId,
-      org.id,
-      user.id,
-      body,
-      org.allowTrial
-    );
+    const productId = this._billingMapping.getProductId(body.billing, body.period);
+    const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+    return { polarUrl: checkout.url };
   }
 
   @Post('/subscribe')
   async subscribe(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
-    @Body() body: BillingSubscribeDto,
-    @Req() req: Request
+    @Body() body: BillingSubscribeDto
   ) {
-    if (this._polarService.isEnabled) {
-      const productId = this._billingMapping.getProductId(body.billing, body.period);
-      const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
-      return { url: checkout.url };
-    }
-
-    const uniqueId = req?.cookies?.track;
-    return this._stripeService.subscribe(
-      uniqueId,
-      org.id,
-      user.id,
-      body,
-      org.allowTrial
-    );
+    const productId = this._billingMapping.getProductId(body.billing, body.period);
+    const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+    return { url: checkout.url };
   }
 
   @Get('/portal')
   async modifyPayment(@GetOrgFromRequest() org: Organization) {
-    if (this._polarService.isEnabled) {
-      const portal = await this._polarService.getCustomerPortal(org.id);
-      if (portal.url) return { portal: portal.url };
-    }
-
-    const customer = await this._stripeService.getCustomerByOrganizationId(
-      org.id
-    );
-    const { url } = await this._stripeService.createBillingPortalLink(customer);
-    return {
-      portal: url,
-    };
+    const portal = await this._polarService.getCustomerPortal(org.id);
+    if (portal.url) return { portal: portal.url };
+    return { portal: null };
   }
 
   @Get('/')
@@ -149,15 +83,8 @@ export class BillingController {
       user.email
     );
 
-    return this._stripeService.setToCancel(org.id);
-  }
-
-  @Post('/prorate')
-  prorate(
-    @GetOrgFromRequest() org: Organization,
-    @Body() body: BillingSubscribeDto
-  ) {
-    return this._stripeService.prorate(org.id, body);
+    await this._subscriptionService.deleteSubscription(org.id);
+    return { success: true };
   }
 
   @Post('/lifetime')
@@ -165,32 +92,11 @@ export class BillingController {
     @GetOrgFromRequest() org: Organization,
     @Body() body: { code: string }
   ) {
-    return this._stripeService.lifetimeDeal(org.id, body.code);
-  }
-
-  @Get('/charges')
-  async getCharges(
-    @GetUserFromRequest() user: User,
-    @GetOrgFromRequest() org: Organization
-  ) {
-    if (!user.isSuperAdmin) {
-      throw new HttpException('Unauthorized', 400);
-    }
-
-    return this._stripeService.getCharges(org.id);
-  }
-
-  @Post('/refund-charges')
-  async refundCharges(
-    @GetUserFromRequest() user: User,
-    @GetOrgFromRequest() org: Organization,
-    @Body() body: { chargeIds: string[] }
-  ) {
-    if (!user.isSuperAdmin) {
-      throw new HttpException('Unauthorized', 400);
-    }
-
-    return this._stripeService.refundCharges(org.id, body.chargeIds);
+    const code = await this._subscriptionService.getCode(body.code);
+    if (!code) throw new HttpException('Invalid code', 404);
+    const subscription = code.code;
+    await this._subscriptionService.lifeTime(org.id, body.code, subscription);
+    return { success: true };
   }
 
   @Post('/cancel-subscription')
@@ -202,7 +108,8 @@ export class BillingController {
       throw new HttpException('Unauthorized', 400);
     }
 
-    return this._stripeService.cancelSubscription(org.id);
+    await this._subscriptionService.deleteSubscription(org.id);
+    return { success: true };
   }
 
   @Post('/add-subscription')
