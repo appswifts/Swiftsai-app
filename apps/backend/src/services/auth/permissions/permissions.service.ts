@@ -4,6 +4,7 @@ import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
+import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import dayjs from 'dayjs';
 import { WebhooksService } from '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service';
 import { AuthorizationActions, Sections } from './permission.exception.class';
@@ -16,7 +17,8 @@ export class PermissionsService {
     private _subscriptionService: SubscriptionService,
     private _postsService: PostsService,
     private _integrationService: IntegrationService,
-    private _webhooksService: WebhooksService
+    private _webhooksService: WebhooksService,
+    private _organizationService: OrganizationService
   ) {}
   async getPackageOptions(orgId: string) {
     const subscription =
@@ -38,6 +40,7 @@ export class PermissionsService {
 
   async check(
     orgId: string,
+    userId: string,
     created_at: Date,
     permission: 'USER' | 'ADMIN' | 'SUPERADMIN',
     requestedPermission: Array<[AuthorizationActions, Sections]>,
@@ -124,6 +127,25 @@ export class PermissionsService {
       if (section === Sections.TEAM_MEMBERS && options.team_members) {
         can(action, section);
         continue;
+      }
+
+      if (section === Sections.ORGANIZATIONS && userId) {
+        const userOrgs = await this._organizationService.getOrgsByUserId(userId);
+        const orgCount = userOrgs?.length || 0;
+        if (orgCount < options.max_organizations) {
+          can(action, section);
+          continue;
+        }
+      }
+
+      if (section === Sections.PLATFORMS) {
+        const totalIntegrations = (
+          await this._integrationService.getIntegrationsList(orgId)
+        ).filter((f: any) => !f.deletedAt).length;
+        if (totalIntegrations < options.max_platforms) {
+          can(action, section);
+          continue;
+        }
       }
 
       if (

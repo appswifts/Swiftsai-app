@@ -284,23 +284,64 @@ model Credits {
   @@index([createdAt])
 }
 
+model Plan {
+  id                      String         @id @default(cuid())
+  name                    String         @unique
+  description             String?
+  monthPrice              Int            @default(0)
+  yearPrice               Int            @default(0)
+  maxChannels             Int            @default(0)
+  maxOrganizations        Int            @default(1)
+  maxPlatforms            Int            @default(0)
+  postsPerMonth           Int            @default(0)
+  teamMembers             Boolean        @default(false)
+  communityFeatures       Boolean        @default(false)
+  featuredByAppswifts     Boolean        @default(false)
+  ai                      Boolean        @default(false)
+  importFromChannels      Boolean        @default(false)
+  imageGenerator          Boolean        @default(false)
+  imageGenerationCount    Int            @default(0)
+  generateVideos          Int            @default(0)
+  publicApi               Boolean        @default(false)
+  webhooks                Int            @default(0)
+  autoPost                Boolean        @default(false)
+  inbox                   Boolean        @default(false)
+  campaigns               Boolean        @default(false)
+  leads                   Boolean        @default(false)
+  isDefault               Boolean        @default(false)
+  isActive                Boolean        @default(true)
+  polarProductMonthlyId   String?
+  polarProductYearlyId    String?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  deletedAt               DateTime?
+  subscriptions           Subscription[]
+
+  @@index([deletedAt])
+}
+
 model Subscription {
   id               String           @id @default(cuid())
   organizationId   String           @unique
+  planId           String?
   subscriptionTier SubscriptionTier
   identifier       String?
   polarSubscriptionId String?
   cancelAt         DateTime?
   period           Period
   totalChannels    Int
+  maxOrganizations Int              @default(1)
+  maxPlatforms     Int              @default(0)
   isLifetime       Boolean          @default(false)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime?
   organization     Organization     @relation(fields: [organizationId], references: [id])
+  plan             Plan?            @relation(fields: [planId], references: [id])
 
   @@index([organizationId])
   @@index([deletedAt])
+  @@index([planId])
 }
 
 model Customer {

@@ -102,6 +102,11 @@ export class PolarWebhookController {
           await this.handleSubscriptionCanceled(payload.data);
           break;
 
+        case 'subscription.active':
+          // Subscription became active (trial ended or payment received)
+          await this.handleSubscriptionActive(payload.data);
+          break;
+
         case 'order.created':
           // Initial payment / order confirmation
           this.logger.log(`Order created: ${payload.data?.id}`);
@@ -164,9 +169,12 @@ export class PolarWebhookController {
       });
     }
 
+    // Determine trial status from Polar
+    const isTrialing = data.status === 'trialing' || !!data.trial_end;
+
     // Create/update the subscription record
     await this.subscriptionService.createOrUpdateSubscription(
-      false, // not trailing
+      isTrialing, // use Polar's trial status
       data.id, // Polar subscription ID as identifier
       customerId || organizationId, // customerId for lookup
       totalChannels,
@@ -179,7 +187,7 @@ export class PolarWebhookController {
     );
 
     this.logger.log(
-      `Subscription created: org=${organizationId}, tier=${tier}, period=${period}`
+      `Subscription created: org=${organizationId}, tier=${tier}, period=${period}, trialing=${isTrialing}`
     );
   }
 
@@ -187,7 +195,6 @@ export class PolarWebhookController {
   private async handleSubscriptionUpdated(data: any) {
     const organizationId = data.metadata?.organizationId;
     if (!organizationId) {
-      // Try reverse lookup from existing subscription
       this.logger.warn(
         'subscription.updated: No organizationId in metadata, skipping'
       );
@@ -212,8 +219,16 @@ export class PolarWebhookController {
       ? new Date(data.current_period_end).getTime() / 1000
       : null;
 
+    // Handle trial status:
+    // "trialing" -> still in trial period
+    // "active" && was trialing -> trial converted to paid
+    // "past_due" -> payment issue
+    // "canceled" -> canceled (handled by handleSubscriptionCanceled)
+    const isTrialing = data.status === 'trialing';
+    const isActive = data.status === 'active';
+
     await this.subscriptionService.createOrUpdateSubscription(
-      data.status !== 'active',
+      isTrialing,
       data.id,
       customerId || organizationId,
       totalChannels,
@@ -225,9 +240,31 @@ export class PolarWebhookController {
       data.id
     );
 
+    if (isActive) {
+      await this.organizationService.updateOrganization(organizationId, {
+        polarCustomerId: customerId || undefined,
+      });
+    }
+
     this.logger.log(
-      `Subscription updated: org=${organizationId}, tier=${tier}, cancelAt=${cancelAt}`
+      `Subscription updated: org=${organizationId}, tier=${tier}, status=${data.status}, trialing=${isTrialing}, cancelAt=${cancelAt}`
     );
+  }
+
+  // ─── Subscription Active (trial ended / payment confirmed) ─────
+  private async handleSubscriptionActive(data: any) {
+    const organizationId = data.metadata?.organizationId;
+    if (!organizationId) {
+      this.logger.warn('subscription.active: No organizationId in metadata, skipping');
+      return;
+    }
+
+    // Trial ended — mark as no longer trailing, ensure org is active
+    await this.organizationService.updateOrganization(organizationId, {
+      polarCustomerId: data.customer?.id || data.customer_id || undefined,
+    });
+
+    this.logger.log(`Subscription active: org=${organizationId} (trial ended / payment confirmed)`);
   }
 
   // ─── Subscription Canceled ──────────────────────────────────────

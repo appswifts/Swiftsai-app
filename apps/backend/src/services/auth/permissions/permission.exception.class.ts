@@ -5,6 +5,8 @@ export enum Sections {
   POSTS_PER_MONTH = 'posts_per_month',
   VIDEOS_PER_MONTH = 'videos_per_month',
   TEAM_MEMBERS = 'team_members',
+  ORGANIZATIONS = 'organizations',
+  PLATFORMS = 'platforms',
   COMMUNITY_FEATURES = 'community_features',
   FEATURED_BY_APPSWIFTS = 'featured_by_appswifts',
   AI = 'ai',

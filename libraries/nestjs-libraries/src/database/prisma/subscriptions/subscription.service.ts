@@ -3,6 +3,7 @@ import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions
 import { SubscriptionRepository } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.repository';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { Organization } from '@prisma/client';
 import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
@@ -12,7 +13,8 @@ export class SubscriptionService {
   constructor(
     private readonly _subscriptionRepository: SubscriptionRepository,
     private readonly _integrationService: IntegrationService,
-    private readonly _organizationService: OrganizationService
+    private readonly _organizationService: OrganizationService,
+    private readonly _planService: PlanService
   ) {}
 
   getSubscriptionByOrganizationId(organizationId: string) {
@@ -196,6 +198,9 @@ export class SubscriptionService {
         return {};
       }
     }
+
+    const plan = await this._planService.getPlanByName(billing);
+
     return this._subscriptionRepository.createOrUpdateSubscription(
       isTrailing,
       identifier,
@@ -206,7 +211,10 @@ export class SubscriptionService {
       cancelAt,
       code,
       org ? { id: org } : undefined,
-      polarSubscriptionId
+      polarSubscriptionId,
+      plan?.id,
+      plan?.maxOrganizations,
+      plan?.maxPlatforms
     );
   }
 

@@ -1,10 +1,13 @@
 export interface PricingInnerInterface {
   current: string;
+  id?: string;
   month_price: number;
   year_price: number;
   channel?: number;
   posts_per_month: number;
   team_members: boolean;
+  max_organizations: number;
+  max_platforms: number;
   community_features: boolean;
   featured_by_appswifts: boolean;
   ai: boolean;
@@ -18,12 +21,15 @@ export interface PricingInnerInterface {
   inbox: boolean;
   campaigns: boolean;
   leads: boolean;
+  isDefault?: boolean;
+  isActive?: boolean;
 }
 export interface PricingInterface {
   [key: string]: PricingInnerInterface;
 }
 export const pricing: PricingInterface = {
   FREE: {
+    id: 'free',
     current: 'FREE',
     month_price: 0,
     year_price: 0,
@@ -31,6 +37,8 @@ export const pricing: PricingInterface = {
     image_generation_count: 0,
     posts_per_month: 0,
     team_members: false,
+    max_organizations: 1,
+    max_platforms: 0,
     community_features: false,
     featured_by_appswifts: false,
     ai: false,
@@ -43,8 +51,11 @@ export const pricing: PricingInterface = {
     inbox: false,
     campaigns: false,
     leads: false,
+    isDefault: true,
+    isActive: true,
   },
   STANDARD: {
+    id: 'standard',
     current: 'STANDARD',
     month_price: 29,
     year_price: 278,
@@ -52,9 +63,11 @@ export const pricing: PricingInterface = {
     posts_per_month: 400,
     image_generation_count: 20,
     team_members: false,
-    ai: true,
+    max_organizations: 1,
+    max_platforms: 5,
     community_features: false,
     featured_by_appswifts: false,
+    ai: true,
     import_from_channels: true,
     image_generator: false,
     public_api: true,
@@ -64,8 +77,11 @@ export const pricing: PricingInterface = {
     inbox: true,
     campaigns: false,
     leads: true,
+    isDefault: false,
+    isActive: true,
   },
   TEAM: {
+    id: 'team',
     current: 'TEAM',
     month_price: 39,
     year_price: 374,
@@ -74,6 +90,8 @@ export const pricing: PricingInterface = {
     image_generation_count: 100,
     community_features: true,
     team_members: true,
+    max_organizations: 3,
+    max_platforms: 10,
     featured_by_appswifts: true,
     ai: true,
     import_from_channels: true,
@@ -85,8 +103,11 @@ export const pricing: PricingInterface = {
     inbox: true,
     campaigns: true,
     leads: true,
+    isDefault: false,
+    isActive: true,
   },
   PRO: {
+    id: 'pro',
     current: 'PRO',
     month_price: 49,
     year_price: 470,
@@ -95,6 +116,8 @@ export const pricing: PricingInterface = {
     image_generation_count: 300,
     community_features: true,
     team_members: true,
+    max_organizations: 5,
+    max_platforms: 30,
     featured_by_appswifts: true,
     ai: true,
     import_from_channels: true,
@@ -106,8 +129,11 @@ export const pricing: PricingInterface = {
     inbox: true,
     campaigns: true,
     leads: true,
+    isDefault: false,
+    isActive: true,
   },
   ULTIMATE: {
+    id: 'ultimate',
     current: 'ULTIMATE',
     month_price: 99,
     year_price: 950,
@@ -116,6 +142,8 @@ export const pricing: PricingInterface = {
     image_generation_count: 500,
     community_features: true,
     team_members: true,
+    max_organizations: 10,
+    max_platforms: 100,
     featured_by_appswifts: true,
     ai: true,
     import_from_channels: true,
@@ -127,5 +155,7 @@ export const pricing: PricingInterface = {
     inbox: true,
     campaigns: true,
     leads: true,
+    isDefault: false,
+    isActive: true,
   },
 };

@@ -10,7 +10,8 @@ export class OrganizationRepository {
   constructor(
     private _organization: PrismaRepository<'organization'>,
     private _userOrg: PrismaRepository<'userOrganization'>,
-    private _user: PrismaRepository<'user'>
+    private _user: PrismaRepository<'user'>,
+    private _subscription: PrismaRepository<'subscription'>
   ) {}
 
   createMaxUser(id: string, name: string, saasName: string, email: string) {
@@ -446,6 +447,37 @@ export class OrganizationRepository {
     return this._organization.model.organization.update({
       where: { id: orgId },
       data,
+    });
+  }
+
+  async createDefaultSubscription(orgId: string, plan: any) {
+    const existing = await this._subscription.model.subscription.findFirst({
+      where: { organizationId: orgId },
+    });
+    if (existing) return existing;
+
+    const tierMap: Record<string, any> = {
+      STANDARD: 'STANDARD',
+      TEAM: 'TEAM',
+      PRO: 'PRO',
+      ULTIMATE: 'ULTIMATE',
+    };
+
+    const tier = tierMap[plan.name];
+    if (!tier) return null;
+
+    return this._subscription.model.subscription.create({
+      data: {
+        organizationId: orgId,
+        planId: plan.id,
+        subscriptionTier: tier,
+        totalChannels: plan.maxChannels || 0,
+        maxOrganizations: plan.maxOrganizations || 1,
+        maxPlatforms: plan.maxPlatforms || 0,
+        period: 'MONTHLY',
+        isLifetime: false,
+        identifier: `signup_${Date.now()}`,
+      },
     });
   }
 }

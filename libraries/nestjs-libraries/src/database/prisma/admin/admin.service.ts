@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { Organization, User, SubscriptionTier, Period } from '@prisma/client';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
@@ -10,6 +11,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly planService: PlanService,
   ) {}
 
   async logAction(adminId: string, action: string, targetId?: string, details?: any) {
@@ -114,6 +116,9 @@ export class AdminService {
     const record = await this.prisma.platformSettings.findUnique({
       where: { id: 'singleton' },
     });
+    const defaultPlan = await this.prisma.plan.findFirst({
+      where: { isDefault: true, deletedAt: null },
+    });
     return record?.settings || {
       allowNewSignups: true,
       trialDays: 14,
@@ -123,6 +128,7 @@ export class AdminService {
       smtpUser: '',
       smtpPassword: '',
       maxChannelsFree: 3,
+      defaultPlanId: defaultPlan?.id || null,
     };
   }
 
@@ -140,43 +146,56 @@ export class AdminService {
   }
 
   async getPlans() {
-    const record = await this.prisma.platformSettings.findUnique({
-      where: { id: 'singleton' },
-    });
-    const settings = (record?.settings as any) || {};
-    const customPlans = settings.customPlans || null;
-    return {
-      plans: customPlans || pricing,
-      isCustom: !!customPlans,
-    };
+    return this.planService.getPlans();
+  }
+
+  async getPlansList() {
+    const dbPlans = await this.planService.getActivePlans();
+    return dbPlans.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      monthPrice: p.monthPrice,
+      yearPrice: p.yearPrice,
+      maxChannels: p.maxChannels,
+      isDefault: p.isDefault,
+      isActive: p.isActive,
+    }));
   }
 
   async updatePlan(adminId: string, tier: string, body: any) {
-    const validTiers = ['FREE', 'STANDARD', 'TEAM', 'PRO', 'ULTIMATE'];
-    if (!validTiers.includes(tier.toUpperCase())) {
-      return { error: 'Invalid tier' };
+    const plan = await this.planService.getPlanById(tier);
+    if (!plan) {
+      const dbPlan = await this.prisma.plan.findFirst({
+        where: { name: tier.toUpperCase(), deletedAt: null },
+      });
+      if (!dbPlan) return { error: 'Invalid tier' };
+
+      const updated = await this.planService.updatePlan(dbPlan.id, body);
+      await this.logAction(adminId, 'plan.update', dbPlan.id, body);
+      return updated;
     }
 
-    const record = await this.prisma.platformSettings.findUnique({
-      where: { id: 'singleton' },
-    });
-    const settings = (record?.settings as any) || {};
-    const customPlans = settings.customPlans || { ...pricing };
+    const updated = await this.planService.updatePlan(tier, body);
+    await this.logAction(adminId, 'plan.update', tier, body);
+    return updated;
+  }
 
-    customPlans[tier.toUpperCase()] = {
-      ...customPlans[tier.toUpperCase()],
-      ...body,
-      current: tier.toUpperCase(),
-    };
+  async createPlan(adminId: string, body: any) {
+    const plan = await this.planService.createPlan(body);
+    await this.logAction(adminId, 'plan.create', plan.id, body);
+    return plan;
+  }
 
-    await this.prisma.platformSettings.upsert({
-      where: { id: 'singleton' },
-      create: { id: 'singleton', settings: { ...settings, customPlans } },
-      update: { settings: { ...settings, customPlans } },
-    });
+  async deletePlan(adminId: string, planId: string) {
+    await this.planService.deletePlan(planId);
+    await this.logAction(adminId, 'plan.delete', planId);
+    return { success: true };
+  }
 
-    await this.logAction(adminId, 'plan.update', tier.toUpperCase(), body);
-    return customPlans[tier.toUpperCase()];
+  async setDefaultPlan(adminId: string, planId: string) {
+    await this.planService.setDefaultPlan(planId);
+    await this.logAction(adminId, 'plan.set_default', planId);
+    return { success: true };
   }
 
   async getAuditLog(page: number, limit: number, action?: string) {

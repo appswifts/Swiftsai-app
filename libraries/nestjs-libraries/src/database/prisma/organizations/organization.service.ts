@@ -8,14 +8,28 @@ import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { Organization, ShortLinkPreference } from '@prisma/client';
 import { AutopostService } from '@gitroom/nestjs-libraries/database/prisma/autopost/autopost.service';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
+import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 
 @Injectable()
 export class OrganizationService {
   constructor(
     private _organizationRepository: OrganizationRepository,
-    private _notificationsService: NotificationService
+    private _notificationsService: NotificationService,
+    private _planService: PlanService,
+    private _prisma: PrismaService
   ) {}
   async createOrg(name: string, userId: string) {
+    const userOrgs = await this._organizationRepository.getOrgsByUserId(userId);
+    const currentCount = userOrgs ? userOrgs.length : 0;
+
+    const userPlan = await this._planService.getEffectivePlanForUser(userId);
+    const maxOrgs = userPlan?.maxOrganizations || 1;
+
+    if (currentCount >= maxOrgs) {
+      throw new Error(`You have reached the maximum of ${maxOrgs} organizations allowed by your plan`);
+    }
+
     return this._organizationRepository.createOrg(name, userId);
   }
 
@@ -24,12 +38,33 @@ export class OrganizationService {
     ip: string,
     userAgent: string
   ) {
-    return this._organizationRepository.createOrgAndUser(
+    const result = await this._organizationRepository.createOrgAndUser(
       body,
       this._notificationsService.hasEmailProvider(),
       ip,
       userAgent
     );
+
+    const orgId = result.id;
+
+    // Check platform settings for default plan override
+    const settings = await this._prisma.platformSettings.findUnique({
+      where: { id: 'singleton' },
+    });
+    const settingsData = (settings?.settings as any) || {};
+
+    let defaultPlan = null;
+    if (settingsData.defaultPlanId) {
+      defaultPlan = await this._planService.getPlanById(settingsData.defaultPlanId);
+    }
+    if (!defaultPlan) {
+      defaultPlan = await this._planService.getDefaultPlan();
+    }
+    if (defaultPlan) {
+      await this._organizationRepository.createDefaultSubscription(orgId, defaultPlan);
+    }
+
+    return result;
   }
 
   async getCount() {

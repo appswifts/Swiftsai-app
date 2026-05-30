@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query, UseGuards, HttpException, Post, Body, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, UseGuards, HttpException, Post, Body, Put, Delete, HttpCode } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { User, SubscriptionTier, Period } from '@prisma/client';
@@ -48,24 +48,59 @@ export class AdminController {
 
   // ─── Plan & Feature Management ────────────────────────────────
 
+  // ─── Plan & Feature Management ────────────────────────────────
+
   @Get('/plans')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
   async getPlans() {
     return this.adminService.getPlans();
   }
 
-  @Put('/plans/:tier')
+  @Get('/plans/list')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getPlansList() {
+    return this.adminService.getPlansList();
+  }
+
+  @Post('/plans')
+  @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
+  async createPlan(
+    @GetUserFromRequest() user: User,
+    @Body() body: Record<string, any>
+  ) {
+    return this.adminService.createPlan(user.id, body);
+  }
+
+  @Put('/plans/:id')
   @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
   async updatePlan(
     @GetUserFromRequest() user: User,
-    @Param('tier') tier: string,
+    @Param('id') id: string,
     @Body() body: Record<string, any>
   ) {
-    const result = await this.adminService.updatePlan(user.id, tier, body);
+    const result = await this.adminService.updatePlan(user.id, id, body);
     if (result && (result as any).error) {
       throw new HttpException((result as any).error, 400);
     }
     return result;
+  }
+
+  @Delete('/plans/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.ADMIN])
+  async deletePlan(
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string
+  ) {
+    return this.adminService.deletePlan(user.id, id);
+  }
+
+  @Post('/plans/:id/default')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async setDefaultPlan(
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string
+  ) {
+    return this.adminService.setDefaultPlan(user.id, id);
   }
 
   // ─── Audit Log ────────────────────────────────────────────────

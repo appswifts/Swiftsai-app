@@ -85,16 +85,40 @@ export const ManageSubscription = ({ orgId, currentSub, mutate, onClose }: Props
         </Select>
       </div>
 
-      <Input
-        label={t('total_channels', 'Total Channels')}
-        name="channels"
-        type="number"
-        min={1}
-        value={channels}
-        onChange={(e) => setChannels(parseInt(e.target.value) || 0)}
-        placeholder="5"
-        disableForm={true}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[20px]">
+        <Input
+          label={t('total_channels', 'Total Channels')}
+          name="channels"
+          type="number"
+          min={1}
+          value={channels}
+          onChange={(e) => setChannels(parseInt(e.target.value) || 0)}
+          placeholder="5"
+          disableForm={true}
+        />
+
+        <Input
+          label={t('max_organizations', 'Max Organizations')}
+          name="organizations"
+          type="number"
+          min={1}
+          value={5}
+          onChange={() => {}}
+          placeholder="5"
+          disableForm={true}
+        />
+
+        <Input
+          label={t('max_platforms', 'Max Platform Types')}
+          name="platforms"
+          type="number"
+          min={0}
+          value={10}
+          onChange={() => {}}
+          placeholder="10"
+          disableForm={true}
+        />
+      </div>
 
       <div className="flex items-center space-x-3">
         <input

@@ -231,7 +231,11 @@ export class UsersController {
     if (!name || name.length < 2) {
       throw new HttpException('Organization name must be at least 2 characters', 400);
     }
-    return this._orgService.createOrg(name, user.id);
+    try {
+      return await this._orgService.createOrg(name, user.id);
+    } catch (err: any) {
+      throw new HttpException(err.message || 'Failed to create organization', 400);
+    }
   }
 
   @Post('/change-org')

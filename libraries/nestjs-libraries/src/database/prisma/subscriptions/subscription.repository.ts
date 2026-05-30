@@ -145,7 +145,10 @@ export class SubscriptionRepository {
     cancelAt: number | null,
     code?: string,
     org?: { id: string },
-    polarSubscriptionId?: string
+    polarSubscriptionId?: string,
+    planId?: string,
+    maxOrganizations?: number,
+    maxPlatforms?: number
   ) {
     const findOrg =
       org || (await this.getOrganizationByCustomerId(customerId))!;
@@ -174,6 +177,7 @@ export class SubscriptionRepository {
         isLifetime: !!code,
         cancelAt: cancelAt ? new Date(cancelAt * 1000) : null,
         deletedAt: null,
+        ...(planId ? { planId, maxOrganizations, maxPlatforms } : {}),
       },
       create: {
         organizationId: findOrg.id,
@@ -185,6 +189,7 @@ export class SubscriptionRepository {
         identifier,
         polarSubscriptionId,
         deletedAt: null,
+        ...(planId ? { planId, maxOrganizations, maxPlatforms } : {}),
       },
     });
 

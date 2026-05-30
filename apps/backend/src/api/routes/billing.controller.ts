@@ -9,6 +9,7 @@ import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/n
 import { Nowpayments } from '@gitroom/nestjs-libraries/crypto/nowpayments';
 import { PolarService } from '@gitroom/nestjs-libraries/services/polar.service';
 import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billing.mapping.service';
+import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 
 @ApiTags('Billing')
 @Controller('/billing')
@@ -18,8 +19,17 @@ export class BillingController {
     private _polarService: PolarService,
     private _billingMapping: BillingMappingService,
     private _notificationService: NotificationService,
-    private _nowpayments: Nowpayments
+    private _nowpayments: Nowpayments,
+    private _prisma: PrismaService
   ) {}
+
+  private async getTrialDays(): Promise<number | undefined> {
+    const settings = await this._prisma.platformSettings.findUnique({
+      where: { id: 'singleton' },
+    });
+    const trialDays = (settings?.settings as any)?.trialDays;
+    return trialDays && trialDays > 0 ? trialDays : undefined;
+  }
 
   @Get('/check/:id')
   async checkId(
@@ -43,7 +53,8 @@ export class BillingController {
     @Body() body: BillingSubscribeDto
   ) {
     const productId = this._billingMapping.getProductId(body.billing, body.period);
-    const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+    const trialDays = await this.getTrialDays();
+    const checkout = await this._polarService.createCheckout(org.id, productId, user.email, trialDays);
     return { polarUrl: checkout.url };
   }
 
@@ -54,7 +65,8 @@ export class BillingController {
     @Body() body: BillingSubscribeDto
   ) {
     const productId = this._billingMapping.getProductId(body.billing, body.period);
-    const checkout = await this._polarService.createCheckout(org.id, productId, user.email);
+    const trialDays = await this.getTrialDays();
+    const checkout = await this._polarService.createCheckout(org.id, productId, user.email, trialDays);
     return { url: checkout.url };
   }
 

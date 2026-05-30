@@ -22,9 +22,9 @@ export class PolarService {
     return !!process.env.POLAR_ACCESS_TOKEN;
   }
 
-  async createCheckout(organizationId: string, productId: string, email?: string) {
+  async createCheckout(organizationId: string, productId: string, email?: string, trialDays?: number) {
     try {
-      const checkout = await this.polar.checkouts.create({
+      const params: any = {
         products: [productId],
         customerEmail: email,
         metadata: {
@@ -32,7 +32,13 @@ export class PolarService {
         },
         successUrl: `${process.env.FRONTEND_URL}/billing/success?checkout_id={CHECKOUT_ID}`,
         returnUrl: `${process.env.FRONTEND_URL}/billing`
-      });
+      };
+
+      if (trialDays && trialDays > 0) {
+        params.subscriptionTrialPeriodDays = trialDays;
+      }
+
+      const checkout = await this.polar.checkouts.create(params);
 
       return { url: checkout.url };
     } catch (error) {
