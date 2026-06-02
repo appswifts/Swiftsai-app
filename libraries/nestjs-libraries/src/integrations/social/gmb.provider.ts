@@ -191,6 +191,7 @@ export class GmbProvider extends SocialAbstract implements SocialProvider {
         },
       });
       const accountsData = await accountsResponse.json();
+      console.log('[GMB DEBUG] Accounts API response:', JSON.stringify(accountsData));
 
       if (accountsData.accounts) {
         allAccounts.push(...accountsData.accounts);
@@ -235,6 +236,7 @@ export class GmbProvider extends SocialAbstract implements SocialProvider {
             }
           );
           const locationsData = await locationsResponse.json();
+          console.log('[GMB DEBUG] Locations API response:', JSON.stringify(locationsData).substring(0, 2000));
 
           if (locationsData.locations) {
             for (const location of locationsData.locations) {
@@ -292,6 +294,7 @@ export class GmbProvider extends SocialAbstract implements SocialProvider {
       }
     }
 
+    console.log('[GMB DEBUG] Total locations found:', allLocations.length);
     return allLocations;
   }
 
