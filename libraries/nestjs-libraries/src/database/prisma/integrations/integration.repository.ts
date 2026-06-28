@@ -193,7 +193,7 @@ export class IntegrationRepository {
     });
   }
 
-  disconnectChannel(org: string, id: string) {
+  markRefreshNeeded(org: string, id: string) {
     return this._integration.model.integration.update({
       where: {
         id,
@@ -331,11 +331,10 @@ export class IntegrationRepository {
     return this._integration.model.integration.findMany({
       where: {
         tokenExpiration: {
-          lte: dayjs().add(1, 'day').toDate(),
+          lte: dayjs().add(7, 'day').toDate(),
         },
         inBetweenSteps: false,
         deletedAt: null,
-        refreshNeeded: false,
       },
     });
   }

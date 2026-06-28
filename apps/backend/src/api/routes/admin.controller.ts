@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { User, SubscriptionTier, Period } from '@prisma/client';
 import { AdminService } from '@gitroom/nestjs-libraries/database/prisma/admin/admin.service';
+import { SystemSettingService } from '@gitroom/nestjs-libraries/database/prisma/system-settings/system-setting.service';
 import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permissions.guard';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
@@ -13,6 +14,7 @@ import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/p
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly systemSettingService: SystemSettingService,
   ) {}
 
   // ─── Dashboard Stats ─────────────────────────────────────────
@@ -46,7 +48,47 @@ export class AdminController {
     return this.adminService.updatePlatformSettings(user.id, body);
   }
 
-  // ─── Plan & Feature Management ────────────────────────────────
+  // ─── System Settings (Key-Value) ─────────────────────────────
+
+  @Get('/system-settings')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getSystemSettings(@Query('group') group?: string) {
+    if (group) {
+      return this.systemSettingService.getGroup(group);
+    }
+    return { settings: {} };
+  }
+
+  @Get('/system-settings/:key')
+  @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
+  async getSystemSetting(@Param('key') key: string) {
+    return this.systemSettingService.get(key);
+  }
+
+  @Post('/system-settings')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async updateSystemSetting(
+    @Body() body: { key: string; value: any; type?: string; group?: string }
+  ) {
+    await this.systemSettingService.set(body.key, body.value, body.type, body.group);
+    return { success: true };
+  }
+
+  @Post('/system-settings/batch')
+  @CheckPolicies([AuthorizationActions.Update, Sections.ADMIN])
+  async updateSystemSettingsBatch(
+    @Body() body: { settings: Record<string, any>; group: string }
+  ) {
+    await this.systemSettingService.setMany(body.settings, body.group);
+    return { success: true };
+  }
+
+  @Delete('/system-settings/:key')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.ADMIN])
+  async deleteSystemSetting(@Param('key') key: string) {
+    await this.systemSettingService.remove(key);
+    return { success: true };
+  }
 
   // ─── Plan & Feature Management ────────────────────────────────
 

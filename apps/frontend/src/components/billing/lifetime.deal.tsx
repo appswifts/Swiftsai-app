@@ -3,7 +3,7 @@
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
 import { useCallback, useMemo, useState } from 'react';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { usePlans } from '@gitroom/frontend/lib/use-plans.hook';
 import { Input } from '@gitroom/react/form/input';
 import { Button } from '@gitroom/react/form/button';
 import { useSWRConfig } from 'swr';
@@ -15,6 +15,7 @@ export const LifetimeDeal = () => {
   const t = useT();
   const fetch = useFetch();
   const user = useUser();
+  const { plans } = usePlans();
   const [code, setCode] = useState('');
   const toast = useToaster();
   const { mutate } = useSWRConfig();
@@ -78,7 +79,7 @@ export const LifetimeDeal = () => {
     if (!user?.tier) {
       return [];
     }
-    const currentPricing = pricing[nextPackage];
+    const currentPricing = (plans || {})[nextPackage];
     const channelsOr = currentPricing.channel;
     const list = [];
     list.push(`${channelsOr} ${channelsOr === 1 ? 'channel' : 'channels'}`);
@@ -96,7 +97,7 @@ export const LifetimeDeal = () => {
       list.push(`AI auto-complete`);
     }
     return list;
-  }, [user, nextPackage]);
+  }, [user, nextPackage, plans]);
   if (!user?.tier) {
     return null;
   }

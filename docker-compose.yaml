@@ -132,6 +132,8 @@ services:
         condition: service_healthy
       postiz-redis:
         condition: service_healthy
+      temporal:
+        condition: service_started
 
   postiz-postgres:
     image: postgres:17-alpine
@@ -213,6 +215,12 @@ services:
     ports:
       - '7233:7233'
     image: temporalio/auto-setup:1.28.1
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "admin", "cluster", "describe"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       - temporal-postgresql
       - temporal-elasticsearch

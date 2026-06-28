@@ -4,7 +4,7 @@ import { BillingMappingService } from '@gitroom/nestjs-libraries/services/billin
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { ProcessedWebhookRepository } from '@gitroom/nestjs-libraries/database/prisma/webhooks/processed-webhook.repository';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 // @ts-ignore
 import { validateEvent } from '@polar-sh/sdk/webhooks';
 
@@ -16,7 +16,8 @@ export class PolarWebhookController {
     private readonly billingMapping: BillingMappingService,
     private readonly subscriptionService: SubscriptionService,
     private readonly organizationService: OrganizationService,
-    private readonly processedWebhookRepo: ProcessedWebhookRepository
+    private readonly processedWebhookRepo: ProcessedWebhookRepository,
+    private readonly planService: PlanService
   ) {}
 
   private getHeaderValue(
@@ -159,7 +160,8 @@ export class PolarWebhookController {
     }
 
     const { tier, period } = mapping;
-    const totalChannels = pricing[tier]?.channel || 5;
+    const plan = await this.planService.getPlanByName(tier);
+    const totalChannels = plan?.maxChannels || 5;
 
     // Persist polarCustomerId on the organization
     const customerId = data.customer?.id || data.customer_id;
@@ -212,7 +214,8 @@ export class PolarWebhookController {
     }
 
     const { tier, period } = mapping;
-    const totalChannels = pricing[tier]?.channel || 5;
+    const plan = await this.planService.getPlanByName(tier);
+    const totalChannels = plan?.maxChannels || 5;
     const customerId = data.customer?.id || data.customer_id;
 
     const cancelAt = data.cancel_at_period_end

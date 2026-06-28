@@ -78,20 +78,10 @@ export class RefreshIntegrationService {
       .catch((err) => false);
 
     if (!refresh || !refresh.accessToken) {
-      await this._integrationService.refreshNeeded(
-        integration.organizationId,
-        integration.id
-      );
-
-      await this._integrationService.informAboutRefreshError(
+      await this._integrationService.markRefreshNeeded(
         integration.organizationId,
         integration,
         cause
-      );
-
-      await this._integrationService.disconnectChannel(
-        integration.organizationId,
-        integration
       );
 
       return false;

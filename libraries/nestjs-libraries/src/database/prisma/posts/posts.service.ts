@@ -105,7 +105,7 @@ export class PostsService {
           await timer(10000);
         }
       } else {
-        await this._integrationService.disconnectChannel(orgId, getIntegration);
+        await this._integrationService.markRefreshNeeded(orgId, getIntegration);
         return [];
       }
     }
@@ -174,7 +174,7 @@ export class PostsService {
           await timer(10000);
         }
       } else {
-        await this._integrationService.disconnectChannel(orgId, getIntegration);
+        await this._integrationService.markRefreshNeeded(orgId, getIntegration);
         return [];
       }
     }

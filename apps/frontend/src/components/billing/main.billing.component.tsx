@@ -11,7 +11,7 @@ import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
 import { useToaster } from '@gitroom/react/toaster/toaster';
 import dayjs from 'dayjs';
 import clsx from 'clsx';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { usePlans } from '@gitroom/frontend/lib/use-plans.hook';
 import { FAQComponent } from '@gitroom/frontend/components/billing/faq.component';
 import { useSWRConfig } from 'swr';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
@@ -80,19 +80,20 @@ export const Features: FC<{
   pack: 'FREE' | 'STANDARD' | 'PRO';
 }> = (props) => {
   const { pack } = props;
+  const { plans } = usePlans();
   const features = useMemo(() => {
-    const currentPricing = pricing[pack];
-    const channelsOr = currentPricing.channel;
+    const currentPricing = (plans || {})[pack];
+    const channelsOr = currentPricing?.channel ?? 0;
     const list = [];
     list.push(`${channelsOr} ${channelsOr === 1 ? 'channel' : 'channels'}`);
     list.push(
       `${
-        currentPricing.posts_per_month > 10000
+        (currentPricing?.posts_per_month ?? 0) > 10000
           ? 'Unlimited'
-          : currentPricing.posts_per_month
+          : (currentPricing?.posts_per_month ?? 0)
       } posts per month`
     );
-    if (currentPricing.team_members) {
+    if (currentPricing?.team_members) {
       list.push(`Unlimited team members`);
     }
     if (currentPricing?.ai) {
@@ -103,14 +104,14 @@ export const Features: FC<{
     list.push(`Advanced Picture Editor`);
     if (currentPricing?.image_generator) {
       list.push(
-        `${currentPricing?.image_generation_count} AI Images per month`
+        `${currentPricing?.image_generation_count ?? 0} AI Images per month`
       );
     }
     if (currentPricing?.generate_videos) {
       list.push(`${currentPricing?.generate_videos} AI Videos per month`);
     }
     return list;
-  }, [pack]);
+  }, [pack, plans]);
   return (
     <div className="flex flex-col gap-[10px] justify-center text-[16px] text-customColor18">
       {features.map((feature) => (
@@ -229,6 +230,7 @@ export const MainBillingComponent: FC<{
     !!queryParams.get('finishTrial')
   );
 
+  const { plans } = usePlans();
   const [subscription, setSubscription] = useState<Subscription | undefined>(
     sub
   );
@@ -298,8 +300,8 @@ export const MainBillingComponent: FC<{
 
         const messages = [];
         if (
-          !pricing[billing].team_members &&
-          pricing[subscription?.subscriptionTier!]?.team_members
+          !(plans || {})[billing]?.team_members &&
+          (plans || {})[subscription?.subscriptionTier!]?.team_members
         ) {
           messages.push(
             `Your team members will be removed from your organization`
@@ -394,7 +396,7 @@ export const MainBillingComponent: FC<{
         if (url) {
           await track(TrackEnum.InitiateCheckout, {
             value:
-              pricing[billing][
+              ((plans || {})[billing] || {})[
                 monthlyOrYearly === 'on' ? 'year_price' : 'month_price'
               ],
           });
@@ -453,7 +455,7 @@ export const MainBillingComponent: FC<{
 
       {finishTrial && <FinishTrial close={() => setFinishTrial(false)} />}
       <div className="flex gap-[16px] [@media(max-width:1024px)]:flex-col [@media(max-width:1024px)]:text-center">
-        {Object.entries(pricing)
+        {Object.entries(plans || {})
           .filter((f) => !isGeneral || f[0] !== 'FREE')
           .map(([name, values]) => (
             <div

@@ -2,8 +2,220 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { PlanRepository } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.repository';
 import { CreatePlanDto } from '@gitroom/nestjs-libraries/dtos/plans/create.plan.dto';
 import { UpdatePlanDto } from '@gitroom/nestjs-libraries/dtos/plans/update.plan.dto';
-import { pricing, PricingInnerInterface } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+
+interface PlanLimits {
+  id?: string;
+  current: string;
+  month_price: number;
+  year_price: number;
+  channel?: number;
+  posts_per_month: number;
+  team_members: boolean;
+  max_organizations: number;
+  max_platforms: number;
+  community_features: boolean;
+  featured_by_appswifts: boolean;
+  ai: boolean;
+  import_from_channels: boolean;
+  image_generator?: boolean;
+  image_generation_count: number;
+  generate_videos: number;
+  public_api: boolean;
+  webhooks: number;
+  autoPost: boolean;
+  inbox: boolean;
+  campaigns: boolean;
+  leads: boolean;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+const FREE_DEFAULTS: PlanLimits = {
+  current: 'FREE',
+  month_price: 0,
+  year_price: 0,
+  channel: 0,
+  image_generation_count: 0,
+  posts_per_month: 0,
+  team_members: false,
+  max_organizations: 1,
+  max_platforms: 0,
+  community_features: false,
+  featured_by_appswifts: false,
+  ai: false,
+  import_from_channels: false,
+  image_generator: false,
+  public_api: false,
+  webhooks: 0,
+  autoPost: false,
+  generate_videos: 0,
+  inbox: false,
+  campaigns: false,
+  leads: false,
+  isDefault: true,
+  isActive: true,
+};
+
+interface SeedPlan {
+  name: string;
+  description: string;
+  monthPrice: number;
+  yearPrice: number;
+  maxChannels: number;
+  maxOrganizations: number;
+  maxPlatforms: number;
+  postsPerMonth: number;
+  teamMembers: boolean;
+  communityFeatures: boolean;
+  featuredByAppswifts: boolean;
+  ai: boolean;
+  importFromChannels: boolean;
+  imageGenerator: boolean;
+  imageGenerationCount: number;
+  generateVideos: number;
+  publicApi: boolean;
+  webhooks: number;
+  autoPost: boolean;
+  inbox: boolean;
+  campaigns: boolean;
+  leads: boolean;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+const SEED_PLANS: SeedPlan[] = [
+  {
+    name: 'FREE',
+    description: 'FREE plan',
+    monthPrice: 0,
+    yearPrice: 0,
+    maxChannels: 0,
+    maxOrganizations: 1,
+    maxPlatforms: 0,
+    postsPerMonth: 0,
+    teamMembers: false,
+    communityFeatures: false,
+    featuredByAppswifts: false,
+    ai: false,
+    importFromChannels: false,
+    imageGenerator: false,
+    imageGenerationCount: 0,
+    generateVideos: 0,
+    publicApi: false,
+    webhooks: 0,
+    autoPost: false,
+    inbox: false,
+    campaigns: false,
+    leads: false,
+    isDefault: false,
+    isActive: true,
+  },
+  {
+    name: 'STANDARD',
+    description: 'STANDARD plan',
+    monthPrice: 29,
+    yearPrice: 278,
+    maxChannels: 5,
+    maxOrganizations: 1,
+    maxPlatforms: 5,
+    postsPerMonth: 400,
+    teamMembers: false,
+    communityFeatures: false,
+    featuredByAppswifts: false,
+    ai: true,
+    importFromChannels: true,
+    imageGenerator: false,
+    imageGenerationCount: 20,
+    generateVideos: 3,
+    publicApi: true,
+    webhooks: 2,
+    autoPost: false,
+    inbox: true,
+    campaigns: false,
+    leads: true,
+    isDefault: true,
+    isActive: true,
+  },
+  {
+    name: 'TEAM',
+    description: 'TEAM plan',
+    monthPrice: 39,
+    yearPrice: 374,
+    maxChannels: 10,
+    maxOrganizations: 3,
+    maxPlatforms: 10,
+    postsPerMonth: 1000000,
+    teamMembers: true,
+    communityFeatures: true,
+    featuredByAppswifts: true,
+    ai: true,
+    importFromChannels: true,
+    imageGenerator: true,
+    imageGenerationCount: 100,
+    generateVideos: 10,
+    publicApi: true,
+    webhooks: 10,
+    autoPost: true,
+    inbox: true,
+    campaigns: true,
+    leads: true,
+    isDefault: false,
+    isActive: true,
+  },
+  {
+    name: 'PRO',
+    description: 'PRO plan',
+    monthPrice: 49,
+    yearPrice: 470,
+    maxChannels: 30,
+    maxOrganizations: 5,
+    maxPlatforms: 30,
+    postsPerMonth: 1000000,
+    teamMembers: true,
+    communityFeatures: true,
+    featuredByAppswifts: true,
+    ai: true,
+    importFromChannels: true,
+    imageGenerator: true,
+    imageGenerationCount: 300,
+    generateVideos: 30,
+    publicApi: true,
+    webhooks: 30,
+    autoPost: true,
+    inbox: true,
+    campaigns: true,
+    leads: true,
+    isDefault: false,
+    isActive: true,
+  },
+  {
+    name: 'ULTIMATE',
+    description: 'ULTIMATE plan',
+    monthPrice: 99,
+    yearPrice: 950,
+    maxChannels: 100,
+    maxOrganizations: 10,
+    maxPlatforms: 100,
+    postsPerMonth: 1000000,
+    teamMembers: true,
+    communityFeatures: true,
+    featuredByAppswifts: true,
+    ai: true,
+    importFromChannels: true,
+    imageGenerator: true,
+    imageGenerationCount: 500,
+    generateVideos: 60,
+    publicApi: true,
+    webhooks: 10000,
+    autoPost: true,
+    inbox: true,
+    campaigns: true,
+    leads: true,
+    isDefault: false,
+    isActive: true,
+  },
+];
 
 @Injectable()
 export class PlanService implements OnApplicationBootstrap {
@@ -18,13 +230,13 @@ export class PlanService implements OnApplicationBootstrap {
 
   async getPlans() {
     const dbPlans = await this._planRepository.getPlans();
-    const plans: Record<string, any> = {};
+    const planMap: Record<string, any> = {};
     for (const plan of dbPlans) {
-      plans[plan.name] = this.planToPricing(plan);
+      planMap[plan.name] = this.planToLimits(plan);
     }
     return {
-      plans: Object.keys(plans).length > 0 ? plans : pricing,
-      isCustom: Object.keys(plans).length > 0,
+      plans: Object.keys(planMap).length > 0 ? planMap : {},
+      isCustom: Object.keys(planMap).length > 0,
     };
   }
 
@@ -38,6 +250,10 @@ export class PlanService implements OnApplicationBootstrap {
 
   getDefaultPlan() {
     return this._planRepository.getDefaultPlan();
+  }
+
+  getPlanByName(name: string) {
+    return this._planRepository.getPlanByName(name);
   }
 
   createPlan(data: CreatePlanDto) {
@@ -54,10 +270,6 @@ export class PlanService implements OnApplicationBootstrap {
 
   setDefaultPlan(id: string) {
     return this._planRepository.setDefaultPlan(id);
-  }
-
-  getPlanByName(name: string) {
-    return this._planRepository.getPlanByName(name);
   }
 
   async getEffectivePlanForUser(userId: string) {
@@ -85,13 +297,13 @@ export class PlanService implements OnApplicationBootstrap {
     return plans[0] || (await this.getDefaultPlan()) || null;
   }
 
-  getPlanLimits(planId?: string | null) {
+  getPlanLimits(planId?: string | null): Promise<PlanLimits> {
     if (!planId) {
-      return pricing.FREE;
+      return Promise.resolve({ ...FREE_DEFAULTS });
     }
     return this._planRepository.getPlanById(planId).then((plan) => {
-      if (!plan) return pricing.FREE;
-      return this.planToPricing(plan);
+      if (!plan) return { ...FREE_DEFAULTS };
+      return this.planToLimits(plan);
     });
   }
 
@@ -99,38 +311,12 @@ export class PlanService implements OnApplicationBootstrap {
     const existing = await this._planRepository.getPlans();
     if (existing.length > 0) return;
 
-    const defaultPlans = Object.entries(pricing);
-    for (const [name, config] of defaultPlans) {
-      await this._planRepository.createPlan({
-        name,
-        description: `${name} plan`,
-        monthPrice: config.month_price,
-        yearPrice: config.year_price,
-        maxChannels: config.channel || 0,
-        maxOrganizations: config.max_organizations,
-        maxPlatforms: config.max_platforms,
-        postsPerMonth: config.posts_per_month,
-        teamMembers: config.team_members,
-        communityFeatures: config.community_features,
-        featuredByAppswifts: config.featured_by_appswifts,
-        ai: config.ai,
-        importFromChannels: config.import_from_channels,
-        imageGenerator: config.image_generator || false,
-        imageGenerationCount: config.image_generation_count,
-        generateVideos: config.generate_videos,
-        publicApi: config.public_api,
-        webhooks: config.webhooks,
-        autoPost: config.autoPost,
-        inbox: config.inbox,
-        campaigns: config.campaigns,
-        leads: config.leads,
-        isDefault: name === 'STANDARD',
-        isActive: true,
-      });
+    for (const plan of SEED_PLANS) {
+      await this._planRepository.createPlan(plan);
     }
   }
 
-  private planToPricing(plan: any): PricingInnerInterface {
+  private planToLimits(plan: any): PlanLimits {
     return {
       id: plan.id,
       current: plan.name,

@@ -22,7 +22,7 @@ import { AgentGraphInsertService } from '@gitroom/nestjs-libraries/agent/agent.g
 import { Nowpayments } from '@gitroom/nestjs-libraries/crypto/nowpayments';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { Readable, pipeline } from 'stream';
 import { promisify } from 'util';
 import { OnlyURL } from '@gitroom/nestjs-libraries/dtos/webhooks/webhooks.dto';
@@ -38,7 +38,8 @@ export class PublicController {
     private _agentGraphInsertService: AgentGraphInsertService,
     private _postsService: PostsService,
     private _nowpayments: Nowpayments,
-    private _subscriptionService: SubscriptionService
+    private _subscriptionService: SubscriptionService,
+    private _planService: PlanService
   ) {}
   @Post('/agent')
   async createAgent(@Body() body: { text: string; apiKey: string }) {
@@ -137,11 +138,16 @@ export class PublicController {
         billing: 'FREE' | 'STANDARD' | 'TEAM' | 'PRO' | 'ULTIMATE';
       };
 
-      if (!load || !load.orgId || !load.billing || !pricing[load.billing]) {
+      if (!load || !load.orgId || !load.billing) {
         return { success: false };
       }
 
-      const totalChannels = pricing[load.billing].channel || 0;
+      const plan = await this._planService.getPlanByName(load.billing);
+      if (!plan) {
+        return { success: false };
+      }
+
+      const totalChannels = plan.maxChannels || 0;
 
       await this._subscriptionService.modifySubscriptionByOrg(
         load.orgId,
@@ -153,6 +159,11 @@ export class PublicController {
     } catch (err) {
       return { success: false };
     }
+  }
+
+  @Get('/plans')
+  async getPlans() {
+    return this._planService.getActivePlans();
   }
 
   @Post('/crypto/:path')

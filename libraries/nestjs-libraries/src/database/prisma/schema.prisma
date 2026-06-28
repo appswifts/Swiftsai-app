@@ -1158,6 +1158,21 @@ model ProcessedWebhook {
   @@index([createdAt])
 }
 
+// ─── System Settings (Key-Value with Groups) ───────────────
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @default("")
+  type      String   @default("string")  // string, boolean, integer, json, encrypted_json
+  group     String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([group])
+  @@index([key])
+}
+
 // ─── Platform Settings (Singleton) ─────────────────────────
 
 model PlatformSettings {

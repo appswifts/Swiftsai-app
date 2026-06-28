@@ -117,7 +117,7 @@ export class IntegrationTriggerTool implements AgentToolInterface {
               );
 
               if (!data) {
-                await this._integrationService.disconnectChannel(
+                await this._integrationService.markRefreshNeeded(
                   organizationId,
                   getIntegration
                 );

@@ -1,6 +1,6 @@
 import { Ability, AbilityBuilder, AbilityClass } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
@@ -18,22 +18,36 @@ export class PermissionsService {
     private _postsService: PostsService,
     private _integrationService: IntegrationService,
     private _webhooksService: WebhooksService,
-    private _organizationService: OrganizationService
+    private _organizationService: OrganizationService,
+    private _planService: PlanService
   ) {}
   async getPackageOptions(orgId: string) {
     const subscription =
       await this._subscriptionService.getSubscriptionByOrganizationId(orgId);
 
-    const tier =
+    const tier: string =
       subscription?.subscriptionTier ||
       (!process.env.POLAR_ACCESS_TOKEN ? 'PRO' : 'FREE');
 
-    const { channel, ...all } = pricing[tier];
+    const plan = await this._planService.getPlanByName(tier);
+    const channel = plan?.maxChannels ?? 0;
+
     return {
       subscription,
       options: {
-        ...all,
-        ...{ channel: tier === 'FREE' ? channel : -10 },
+        posts_per_month: plan?.postsPerMonth ?? 0,
+        team_members: plan?.teamMembers ?? false,
+        max_organizations: plan?.maxOrganizations ?? 1,
+        max_platforms: plan?.maxPlatforms ?? 0,
+        community_features: plan?.communityFeatures ?? false,
+        featured_by_appswifts: plan?.featuredByAppswifts ?? false,
+        ai: plan?.ai ?? false,
+        import_from_channels: plan?.importFromChannels ?? false,
+        inbox: plan?.inbox ?? false,
+        campaigns: plan?.campaigns ?? false,
+        leads: plan?.leads ?? false,
+        webhooks: plan?.webhooks ?? 0,
+        channel: tier === 'FREE' ? channel : -10,
       },
     };
   }

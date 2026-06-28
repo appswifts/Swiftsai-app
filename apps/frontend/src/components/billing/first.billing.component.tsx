@@ -8,7 +8,7 @@ import { LanguageComponent } from '@gitroom/frontend/components/layout/language.
 import { AttachToFeedbackIcon } from '@gitroom/frontend/components/new-layout/sentry.feedback.component';
 import NotificationComponent from '@gitroom/frontend/components/notifications/notification.component';
 import { LogoTextComponent } from '@gitroom/frontend/components/ui/logo-text.component';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { usePlans } from '@gitroom/frontend/lib/use-plans.hook';
 import { capitalize } from 'lodash';
 import clsx from 'clsx';
 import { LoadingComponent } from '@gitroom/frontend/components/layout/loading';
@@ -33,6 +33,7 @@ const ModeComponent = dynamic(
 export const FirstBillingComponent = () => {
   const user = useUser();
   const dub = useDubClickId();
+  const { plans } = usePlans();
   const [tier, setTier] = useState('STANDARD');
   const [period, setPeriod] = useState('MONTHLY');
   const fetch = useFetch();
@@ -95,8 +96,8 @@ export const FirstBillingComponent = () => {
   };
 
   const price = useMemo(
-    () => Object.entries(pricing).filter(([key, value]) => key !== 'FREE'),
-    []
+    () => Object.entries(plans || {}).filter(([key]) => key !== 'FREE'),
+    [plans]
   );
 
   const JoinOver = () => {
@@ -318,8 +319,9 @@ type FeatureItem = {
 
 export const BillingFeatures: FC<{ tier: string }> = ({ tier }) => {
   const t = useT();
+  const { plans } = usePlans();
   const features = useMemo(() => {
-    const currentPricing = pricing[tier];
+    const currentPricing = (plans || {})[tier];
     const channelsOr = currentPricing.channel;
     const list: FeatureItem[] = [];
 
@@ -374,7 +376,7 @@ export const BillingFeatures: FC<{ tier: string }> = ({ tier }) => {
       });
     }
     return list;
-  }, [tier]);
+  }, [tier, plans]);
 
   const renderFeature = (feature: FeatureItem) => {
     const translatedText = t(feature.key, feature.defaultValue);

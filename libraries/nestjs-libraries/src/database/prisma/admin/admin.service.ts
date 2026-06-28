@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { Organization, User, SubscriptionTier, Period } from '@prisma/client';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 
@@ -62,9 +61,10 @@ export class AdminService {
       where: { createdAt: { gte: thirtyDaysAgo } },
     });
 
+    const plans = await this.planService.getPlans();
     const monthlyRecurringRevenue = activeSubscriptions.reduce((sum, s: any) => {
-      const tier = s.subscriptionTier as keyof typeof pricing;
-      return sum + (pricing[tier]?.month_price || 0);
+      const plan = plans.plans[s.subscriptionTier as string];
+      return sum + (plan?.month_price || 0);
     }, 0);
 
     return {
@@ -83,6 +83,7 @@ export class AdminService {
   async getGrowthData() {
     const now = new Date();
     const points: { date: string; users: number; organizations: number; revenue: number }[] = [];
+    const plans = await this.planService.getPlans();
 
     for (let i = 11; i >= 0; i--) {
       const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -97,8 +98,8 @@ export class AdminService {
       ]);
 
       const revenue = subscriptions.reduce((sum, s) => {
-        const tier = s.subscriptionTier as keyof typeof pricing;
-        return sum + (pricing[tier]?.month_price || 0);
+        const plan = plans.plans[s.subscriptionTier as string];
+        return sum + (plan?.month_price || 0);
       }, 0);
 
       points.push({
@@ -517,10 +518,11 @@ export class AdminService {
       (s: any) => !s.deletedAt && (!s.cancelAt || new Date(s.cancelAt) > now)
     );
 
+    const plans = await this.planService.getPlans();
     activeSubscriptions.forEach((sub) => {
       counts[sub.subscriptionTier].count++;
-      const tier = sub.subscriptionTier as keyof typeof pricing;
-      counts[sub.subscriptionTier].mrr += pricing[tier]?.month_price || 0;
+      const plan = plans.plans[sub.subscriptionTier as string];
+      counts[sub.subscriptionTier].mrr += plan?.month_price || 0;
     });
 
     const freeOrgs = await this.prisma.organization.count({

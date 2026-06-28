@@ -180,9 +180,9 @@ export class IntegrationService {
     }
   }
 
-  async disconnectChannel(orgId: string, integration: Integration) {
-    await this._integrationRepository.disconnectChannel(orgId, integration.id);
-    await this.informAboutRefreshError(orgId, integration);
+  async markRefreshNeeded(orgId: string, integration: Integration, cause = '') {
+    await this._integrationRepository.markRefreshNeeded(orgId, integration.id);
+    await this.informAboutRefreshError(orgId, integration, cause);
   }
 
   async informAboutRefreshError(
@@ -226,7 +226,7 @@ export class IntegrationService {
           integration.organizationId,
           integration.id
         );
-        return;
+        continue;
       }
 
       const { refreshToken, accessToken, expiresIn } = data;
@@ -381,7 +381,7 @@ export class IntegrationService {
           await timer(10000);
         }
       } else {
-        await this.disconnectChannel(org.id, getIntegration);
+        await this.markRefreshNeeded(org.id, getIntegration);
         return [];
       }
     }

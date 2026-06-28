@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { SubscriptionRepository } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.repository';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
@@ -36,9 +35,10 @@ export class SubscriptionService {
   }
 
   async deleteSubscription(customerId: string) {
+    const freePlan = await this._planService.getPlanByName('FREE');
     await this.modifySubscription(
       customerId,
-      pricing.FREE.channel || 0,
+      freePlan?.maxChannels ?? 0,
       'FREE'
     );
     return this._subscriptionRepository.deleteSubscriptionByCustomerId(
@@ -74,8 +74,12 @@ export class SubscriptionService {
         organizationId
       ))!;
 
-    const from = pricing[getCurrentSubscription?.subscriptionTier || 'FREE'];
-    const to = pricing[billing];
+    const fromPlan = getCurrentSubscription?.subscriptionTier
+      ? await this._planService.getPlanByName(getCurrentSubscription.subscriptionTier)
+      : null;
+    const toPlan = await this._planService.getPlanByName(billing);
+    const fromTeamMembers = fromPlan?.teamMembers ?? false;
+    const toTeamMembers = toPlan?.teamMembers ?? false;
 
     const currentTotalChannels = (
       await this._integrationService.getIntegrationsList(organizationId)
@@ -88,14 +92,14 @@ export class SubscriptionService {
       );
     }
 
-    if (from.team_members && !to.team_members) {
+    if (fromTeamMembers && !toTeamMembers) {
       await this._organizationService.disableOrEnableNonSuperAdminUsers(
         organizationId,
         true
       );
     }
 
-    if (!from.team_members && to.team_members) {
+    if (!fromTeamMembers && toTeamMembers) {
       await this._organizationService.disableOrEnableNonSuperAdminUsers(
         organizationId,
         false
@@ -135,8 +139,12 @@ export class SubscriptionService {
       return false;
     }
 
-    const from = pricing[getCurrentSubscription?.subscriptionTier || 'FREE'];
-    const to = pricing[billing];
+    const fromPlan = getCurrentSubscription?.subscriptionTier
+      ? await this._planService.getPlanByName(getCurrentSubscription.subscriptionTier)
+      : null;
+    const toPlan = await this._planService.getPlanByName(billing);
+    const fromTeamMembers = fromPlan?.teamMembers ?? false;
+    const toTeamMembers = toPlan?.teamMembers ?? false;
 
     const currentTotalChannels = (
       await this._integrationService.getIntegrationsList(
@@ -151,14 +159,14 @@ export class SubscriptionService {
       );
     }
 
-    if (from.team_members && !to.team_members) {
+    if (fromTeamMembers && !toTeamMembers) {
       await this._organizationService.disableOrEnableNonSuperAdminUsers(
         getOrgByCustomerId?.id!,
         true
       );
     }
 
-    if (!from.team_members && to.team_members) {
+    if (!fromTeamMembers && toTeamMembers) {
       await this._organizationService.disableOrEnableNonSuperAdminUsers(
         getOrgByCustomerId?.id!,
         false
@@ -228,7 +236,7 @@ export class SubscriptionService {
 
   async checkCredits(organization: Organization, checkType = 'ai_images') {
     // @ts-ignore
-    const type = organization?.subscription?.subscriptionTier || 'FREE';
+    const type: string = organization?.subscription?.subscriptionTier || 'FREE';
 
     if (type === 'FREE') {
       return { credits: 0 };
@@ -241,10 +249,11 @@ export class SubscriptionService {
     }
 
     const checkFromMonth = date.subtract(1, 'month');
+    const plan = await this._planService.getPlanByName(type);
     const imageGenerationCount =
       checkType === 'ai_images'
-        ? pricing[type].image_generation_count
-        : pricing[type].generate_videos;
+        ? (plan?.imageGenerationCount ?? 0)
+        : (plan?.generateVideos ?? 0);
 
     const totalUse = await this._subscriptionRepository.getCreditsFrom(
       organization.id,
@@ -258,11 +267,12 @@ export class SubscriptionService {
   }
 
   async lifeTime(orgId: string, identifier: string, subscription: any) {
+    const plan = await this._planService.getPlanByName(subscription);
     return this.createOrUpdateSubscription(
       false,
       identifier,
       identifier,
-      pricing[subscription].channel!,
+      plan?.maxChannels ?? 0,
       subscription,
       'YEARLY',
       null,
@@ -272,12 +282,13 @@ export class SubscriptionService {
   }
 
   async addSubscription(orgId: string, userId: string, subscription: any) {
+    const plan = await this._planService.getPlanByName(subscription);
     await this._subscriptionRepository.setCustomerId(orgId, userId);
     return this.createOrUpdateSubscription(
       false,
       makeId(5),
       userId,
-      pricing[subscription].channel!,
+      plan?.maxChannels ?? 0,
       subscription,
       'MONTHLY',
       null,

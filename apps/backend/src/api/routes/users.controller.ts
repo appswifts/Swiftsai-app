@@ -19,7 +19,7 @@ import { AuthService } from '@gitroom/backend/services/auth/auth.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
-import { pricing, PricingInnerInterface } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
 import { UserDetailDto } from '@gitroom/nestjs-libraries/dtos/users/user.details.dto';
@@ -41,7 +41,8 @@ export class UsersController {
     private _orgService: OrganizationService,
     private _userService: UsersService,
     private _trackService: TrackService,
-    private _adminService: AdminService
+    private _adminService: AdminService,
+    private _planService: PlanService
   ) { }
   @Get('/agent-media-sso')
   async getAgentMediaSsoUrl(
@@ -79,7 +80,7 @@ export class UsersController {
       ...user,
       orgId: organization?.id || null,
       // @ts-ignore
-      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || (trialTier ? pricing[trialTier]?.channel || pricing.STANDARD.channel : pricing.FREE.channel),
+      totalChannels: !billingEnabled ? 10000 : organization?.subscription?.totalChannels || (trialTier ? (await this._planService.getPlanByName(trialTier))?.maxChannels ?? (await this._planService.getPlanByName('STANDARD'))?.maxChannels ?? 5 : (await this._planService.getPlanByName('FREE'))?.maxChannels ?? 0),
       // @ts-ignore
       tier: organization?.subscription?.subscriptionTier || (!billingEnabled ? 'ULTIMATE' : (trialTier || 'FREE')),
       // @ts-ignore
@@ -181,13 +182,14 @@ export class UsersController {
   @Get('/subscription/tiers')
   @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
   async tiers() {
-    return Object.entries(pricing).filter(([key]) => key !== 'FREE').map(([key, value]) => ({
+    const { plans } = await this._planService.getPlans();
+    return Object.entries(plans).filter(([key]) => key !== 'FREE').map(([key, value]) => ({
       id: key.toLowerCase(),
       name: key,
       metadata: { tier: key },
       prices: [
-        { id: `${key.toLowerCase()}_monthly`, currency: 'usd', unit_amount: value.month_price * 100, interval: 'month' },
-        { id: `${key.toLowerCase()}_yearly`, currency: 'usd', unit_amount: value.year_price * 100, interval: 'year' },
+        { id: `${key.toLowerCase()}_monthly`, currency: 'usd', unit_amount: (value as any).month_price * 100, interval: 'month' },
+        { id: `${key.toLowerCase()}_yearly`, currency: 'usd', unit_amount: (value as any).year_price * 100, interval: 'year' },
       ],
     }));
   }

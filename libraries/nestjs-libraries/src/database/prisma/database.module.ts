@@ -51,6 +51,8 @@ import { CampaignService } from '@gitroom/nestjs-libraries/database/prisma/campa
 import { AdminService } from '@gitroom/nestjs-libraries/database/prisma/admin/admin.service';
 import { PlanRepository } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.repository';
 import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
+import { SystemSettingRepository } from '@gitroom/nestjs-libraries/database/prisma/system-settings/system-setting.repository';
+import { SystemSettingService } from '@gitroom/nestjs-libraries/database/prisma/system-settings/system-setting.service';
 
 @Global()
 @Module({
@@ -111,6 +113,8 @@ import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/pla
     AdminService,
     PlanRepository,
     PlanService,
+    SystemSettingRepository,
+    SystemSettingService,
   ],
   get exports() {
     return this.providers;
