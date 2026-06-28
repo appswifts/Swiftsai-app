@@ -390,7 +390,7 @@ export class IntegrationsController {
     return this._integrationService.enableChannel(
       org.id,
       // @ts-ignore
-      org?.subscription?.totalChannels || freePlan?.maxChannels ?? 0,
+      (org?.subscription?.totalChannels ?? freePlan?.maxChannels ?? 0),
       id
     );
   }
