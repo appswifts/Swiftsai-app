@@ -19,7 +19,7 @@ export const HomePage = () => {
     return (await fetch(url)).json();
   });
 
-  const { data: posts, isLoading: postsLoading } = useSWR('/posts?page=1', async (url) => {
+  const { data: posts, isLoading: postsLoading } = useSWR('/posts/list?page=1&limit=5', async (url) => {
     return (await fetch(url)).json();
   });
 
