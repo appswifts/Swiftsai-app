@@ -88,6 +88,25 @@ export class BillingController {
     @GetUserFromRequest() user: User,
     @Body() body: { feedback: string }
   ) {
+    const subscription = await this._subscriptionService.getSubscription(org.id);
+
+    if (subscription?.cancelAt) {
+      const result = await this._polarService.reactivateSubscription(org.id);
+      await this._subscriptionService.setCancelAt(org.id, null);
+      return { success: true, cancel_at: null };
+    }
+
+    const freePlan = await this._prisma.plan.findFirst({ where: { name: 'FREE' } });
+
+    await this._subscriptionService.modifySubscriptionByOrg(
+      org.id,
+      freePlan?.maxChannels ?? 0,
+      'FREE'
+    );
+
+    const result = await this._polarService.cancelSubscription(org.id, body.feedback);
+    await this._subscriptionService.setCancelAt(org.id, new Date(result.cancel_at));
+
     await this._notificationService.sendEmail(
       process.env.EMAIL_FROM_ADDRESS,
       'Subscription Cancelled',
@@ -95,8 +114,7 @@ export class BillingController {
       user.email
     );
 
-    await this._subscriptionService.deleteSubscription(org.id);
-    return { success: true };
+    return { success: true, cancel_at: result.cancel_at };
   }
 
   @Post('/lifetime')

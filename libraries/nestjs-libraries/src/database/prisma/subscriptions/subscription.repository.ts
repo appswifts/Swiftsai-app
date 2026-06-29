@@ -294,4 +294,15 @@ export class SubscriptionRepository {
       },
     });
   }
+
+  setCancelAt(organizationId: string, cancelAt: Date | null) {
+    return this._subscription.model.subscription.updateMany({
+      where: {
+        organizationId,
+      },
+      data: {
+        cancelAt,
+      },
+    });
+  }
 }

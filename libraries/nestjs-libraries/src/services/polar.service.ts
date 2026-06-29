@@ -64,4 +64,69 @@ export class PolarService {
       throw error;
     }
   }
+
+  async cancelSubscription(organizationId: string, feedback?: string) {
+    const subscription = await this._subscriptionService.getSubscription(organizationId);
+    if (!subscription?.polarSubscriptionId) {
+      throw new Error('No Polar subscription found');
+    }
+
+    const body: any = {
+      cancel_at_period_end: true,
+    };
+
+    if (feedback) {
+      body.customer_cancellation_reason = 'other';
+      body.customer_cancellation_comment = feedback;
+    }
+
+    const response = await fetch(
+      `https://api.polar.sh/v1/subscriptions/${subscription.polarSubscriptionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      this.logger.error('Error cancelling polar subscription', error);
+      throw new Error('Failed to cancel subscription at Polar');
+    }
+
+    const data = await response.json();
+    const currentPeriodEnd = new Date(data.current_period_end).getTime();
+    return { cancel_at: currentPeriodEnd };
+  }
+
+  async reactivateSubscription(organizationId: string) {
+    const subscription = await this._subscriptionService.getSubscription(organizationId);
+    if (!subscription?.polarSubscriptionId) {
+      throw new Error('No Polar subscription found');
+    }
+
+    const response = await fetch(
+      `https://api.polar.sh/v1/subscriptions/${subscription.polarSubscriptionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${process.env.POLAR_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cancel_at_period_end: false }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      this.logger.error('Error reactivating polar subscription', error);
+      throw new Error('Failed to reactivate subscription at Polar');
+    }
+
+    return { cancel_at: null };
+  }
 }

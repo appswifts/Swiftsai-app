@@ -296,4 +296,8 @@ export class SubscriptionService {
       orgId
     );
   }
+
+  async setCancelAt(organizationId: string, cancelAt: Date | null) {
+    return this._subscriptionRepository.setCancelAt(organizationId, cancelAt);
+  }
 }
