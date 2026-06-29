@@ -16,6 +16,7 @@ import { AppModule } from './app.module';
 
 import { SubscriptionExceptionFilter } from '@gitroom/backend/services/auth/permissions/subscription.exception';
 import { HttpExceptionFilter } from '@gitroom/nestjs-libraries/services/exception.filter';
+import { PostValidationExceptionFilter } from './api/routes/posts.validation.exception';
 import { ConfigurationChecker } from '@gitroom/helpers/configuration/configuration.checker';
 import { startMcp } from '@gitroom/nestjs-libraries/chat/start.mcp';
 
@@ -23,7 +24,7 @@ async function start() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
     cors: {
-      credentials: true,
+      ...(!process.env.NOT_SECURED ? { credentials: true } : {}),
       allowedHeaders: [
         'Content-Type',
         'Authorization',
@@ -65,6 +66,7 @@ async function start() {
   app.use(compression());
   app.useGlobalFilters(new SubscriptionExceptionFilter());
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new PostValidationExceptionFilter());
 
   loadSwagger(app);
 

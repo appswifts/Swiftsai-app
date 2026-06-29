@@ -4,11 +4,13 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
+import { useVariables } from '@gitroom/react/helpers/variable.context';
 
 export const UserDropdown = () => {
   const user = useUser();
   const fetch = useFetch();
   const t = useT();
+  const { isGeneral, billingEnabled } = useVariables();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,9 +33,7 @@ export const UserDropdown = () => {
     window.location.href = '/auth/login';
   }, [fetch]);
 
-  const handleSettings = useCallback(() => {
-    window.location.href = '/admin/settings';
-  }, []);
+  const showBilling = isGeneral && billingEnabled && user?.tier !== 'FREE';
 
   return (
     <div className="relative group" ref={ref}>
@@ -46,7 +46,7 @@ export const UserDropdown = () => {
         </div>
       </button>
       {open && (
-        <div className="absolute top-[100%] end-0 mt-[8px] w-[200px] bg-third border border-tableBorder rounded-[8px] shadow-lg z-50 py-[8px]">
+        <div className="absolute top-[100%] end-0 mt-[8px] w-[220px] bg-third border border-tableBorder rounded-[8px] shadow-lg z-50 py-[8px]">
           <div className="px-[16px] py-[8px] border-b border-tableBorder">
             <div className="text-[14px] font-medium text-newTextColor truncate">
               {user?.name || 'User'}
@@ -55,6 +55,20 @@ export const UserDropdown = () => {
               {user?.email}
             </div>
           </div>
+          {showBilling && (
+            <div className="px-[16px] py-[6px] border-b border-tableBorder">
+              <div className="text-[11px] text-newTextColor/40 uppercase tracking-wider">Plan</div>
+              <div className="text-[14px] font-medium text-newTextColor">
+                {user?.tier?.current || 'FREE'}
+              </div>
+              <button
+                onClick={() => { window.location.href = '/billing'; setOpen(false); }}
+                className="w-full text-left text-[12px] text-primary hover:text-primary/80 transition-colors mt-[2px]"
+              >
+                {t('manage_billing', 'Manage Billing')} →
+              </button>
+            </div>
+          )}
           {(user as any)?.admin && (
             <button
               onClick={() => { window.location.href = '/admin'; setOpen(false); }}

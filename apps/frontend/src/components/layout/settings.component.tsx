@@ -32,10 +32,11 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { SVGLine } from '@gitroom/frontend/components/launches/launches.component';
 import { GlobalSettings } from '@gitroom/frontend/components/settings/global.settings';
 import { ApprovedAppsComponent } from '@gitroom/frontend/components/approved-apps/approved-apps.component';
+import { Button } from '@gitroom/react/form/button';
 export const SettingsPopup: FC<{
   getRef?: Ref<any>;
 }> = (props) => {
-  const { isGeneral } = useVariables();
+  const { isGeneral, billingEnabled } = useVariables();
   const { getRef } = props;
   const fetch = useFetch();
   const toast = useToaster();
@@ -106,10 +107,13 @@ export const SettingsPopup: FC<{
     if (user?.tier?.public_api && isGeneral && showLogout) {
       arr.push({ tab: 'api', label: t('developers', 'Developers') });
     }
+    if (isGeneral && billingEnabled && user?.tier.current !== 'FREE') {
+      arr.push({ tab: 'billing', label: t('billing', 'Billing') });
+    }
     arr.push({ tab: 'approved_apps', label: t('approved_apps', 'Approved Apps') });
 
     return arr;
-  }, [user, isGeneral, showLogout, t]);
+  }, [user, isGeneral, showLogout, billingEnabled, t]);
 
   useEffect(() => {
     loadProfile();
@@ -252,6 +256,31 @@ export const SettingsPopup: FC<{
                   </div>
                 )}
 
+              {tab === 'billing' && isGeneral && billingEnabled && user?.tier.current !== 'FREE' && (
+                <div className="flex flex-col gap-[20px]">
+                  <h3 className="text-[20px]">{t('billing', 'Billing')}</h3>
+                  <div className="bg-menuBg rounded-[12px] border border-tableBorder p-[20px]">
+                    <div className="flex items-center justify-between mb-[16px]">
+                      <div>
+                        <div className="text-[13px] text-newTextColor/60">{t('current_plan', 'Current Plan')}</div>
+                        <div className="text-[24px] font-bold text-newTextColor">{user?.tier?.current || 'FREE'}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[13px] text-newTextColor/60">{t('channels', 'Channels')}</div>
+                        <div className="text-[18px] font-semibold text-newTextColor">{user?.totalChannels || 0}</div>
+                      </div>
+                    </div>
+                    <Button onClick={() => { window.location.href = '/billing'; }}>
+                      {t('manage_subscription', 'Manage Subscription')}
+                    </Button>
+                  </div>
+                  <div className="text-[13px] text-newTextColor/60">
+                    <Link href="/billing" className="text-primary hover:text-primary/80">
+                      {t('view_billing_details', 'View billing details & invoices')} →
+                    </Link>
+                  </div>
+                </div>
+              )}
               {tab === 'approved_apps' && (
                 <div>
                   <ApprovedAppsComponent />

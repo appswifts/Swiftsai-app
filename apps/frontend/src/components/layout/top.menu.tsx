@@ -250,7 +250,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/billing',
-      role: ['ADMIN', 'SUPERADMIN'],
+      role: ['ADMIN', 'SUPERADMIN', 'USER'],
       requireBilling: true,
     },
     {
