@@ -285,4 +285,9 @@ export class AuthController {
       login: true,
     });
   }
+
+  @Post('/logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.header('logout', 'true');
+  }
 }
