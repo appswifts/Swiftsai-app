@@ -33,7 +33,7 @@ export const UserDropdown = () => {
     window.location.href = '/auth/login';
   }, [fetch]);
 
-  const showBilling = isGeneral && billingEnabled && user?.tier !== 'FREE';
+  const showBilling = isGeneral && billingEnabled && user?.tier?.current !== 'FREE';
 
   return (
     <div className="relative group" ref={ref}>
