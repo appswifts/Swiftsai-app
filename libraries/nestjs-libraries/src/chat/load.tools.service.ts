@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Agent } from '@mastra/core/agent';
-import { openai } from '@ai-sdk/openai';
 import { Memory } from '@mastra/memory';
 import { pStore } from '@gitroom/nestjs-libraries/chat/mastra.store';
 import { array, object, string } from 'zod';
 import { ModuleRef } from '@nestjs/core';
 import { toolList } from '@gitroom/nestjs-libraries/chat/tools/tool.list';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 import dayjs from 'dayjs';
 
 export const AgentState = object({
@@ -22,27 +22,9 @@ const renderArray = (list: string[], show: boolean) => {
 export class LoadToolsService {
   constructor(
     private _moduleRef: ModuleRef,
-    private _prisma: PrismaService
+    private _prisma: PrismaService,
+    private readonly _aiProvider: AIProviderService
   ) {}
-
-  /**
-   * Resolve the LLM model to use.
-   * Priority: PlatformSettings DB value > LLM_MODEL env var > 'gpt-4.1' default
-   */
-  private async resolveModel(): Promise<string> {
-    try {
-      const record = await this._prisma.platformSettings.findUnique({
-        where: { id: 'singleton' },
-      });
-      const settings = (record?.settings as any) || {};
-      if (settings.llmModel) {
-        return settings.llmModel;
-      }
-    } catch (e) {
-      // DB read failed, fall through to env/default
-    }
-    return process.env.LLM_MODEL || 'gpt-4.1';
-  }
 
   async loadTools() {
     return (
@@ -65,7 +47,8 @@ export class LoadToolsService {
 
   async agent() {
     const tools = await this.loadTools();
-    const modelName = await this.resolveModel();
+    const config = await this._aiProvider.getConfig();
+    const modelProvider = this._aiProvider.getAISDKProvider(config.provider, config.model);
     return new Agent({
       id: 'postiz',
       name: 'postiz',
@@ -110,7 +93,7 @@ export class LoadToolsService {
       )}
 `;
       },
-      model: openai(modelName),
+      model: modelProvider,
       tools,
       memory: new Memory({
         storage: pStore,

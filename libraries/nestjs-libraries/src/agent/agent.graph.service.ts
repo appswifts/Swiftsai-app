@@ -5,7 +5,7 @@ import {
   ToolMessage,
 } from '@langchain/core/messages';
 import { END, START, StateGraph } from '@langchain/langgraph';
-import { ChatOpenAI, DallEAPIWrapper } from '@langchain/openai';
+import { DallEAPIWrapper } from '@langchain/openai';
 import { TavilySearch } from '@langchain/tavily';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -15,17 +15,12 @@ import { z } from 'zod';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { GeneratorDto } from '@gitroom/nestjs-libraries/dtos/generator/generator.dto';
+import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 
 const tools = !process.env.TAVILY_API_KEY
   ? []
   : [new TavilySearch({ maxResults: 3 })];
 const toolNode = new ToolNode(tools);
-
-const model = new ChatOpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-proj-',
-  model: 'gpt-4.1',
-  temperature: 0.7,
-});
 
 const dalle = new DallEAPIWrapper({
   apiKey: process.env.OPENAI_API_KEY || 'sk-proj-',
@@ -106,8 +101,19 @@ export class AgentGraphService {
   private storage = UploadFactory.createStorage();
   constructor(
     private _postsService: PostsService,
-    private _mediaService: MediaService
+    private _mediaService: MediaService,
+    private readonly _aiProvider: AIProviderService
   ) {}
+
+  private _modelPromise: Promise<any> | null = null;
+  private async getModel() {
+    if (!this._modelPromise) {
+      this._modelPromise = this._aiProvider.getConfig().then((config) =>
+        this._aiProvider.getLangChainModel(config.provider, config.model, 0.7)
+      );
+    }
+    return this._modelPromise;
+  }
   static state = () =>
     new StateGraph<WorkflowChannelsState>({
       channels: {
@@ -132,7 +138,8 @@ export class AgentGraphService {
     });
 
   async startCall(state: WorkflowChannelsState) {
-    const runTools = model.bindTools(tools);
+    const m = await this.getModel();
+    const runTools = m.bindTools(tools);
     const response = await ChatPromptTemplate.fromTemplate(
       `
     Today is ${dayjs().format()}, You are an assistant that gets a social media post or requests for a social media post.
@@ -156,7 +163,7 @@ export class AgentGraphService {
 
   async findCategories(state: WorkflowChannelsState) {
     const allCategories = await this._postsService.findAllExistingCategories();
-    const structuredOutput = model.withStructuredOutput(category);
+    const structuredOutput = (await this.getModel()).withStructuredOutput(category);
     const { category: outputCategory } = await ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets a text that will be later summarized into a social media post
@@ -183,7 +190,7 @@ export class AgentGraphService {
       return { topic: null };
     }
 
-    const structuredOutput = model.withStructuredOutput(topic);
+    const structuredOutput = (await this.getModel()).withStructuredOutput(topic);
     const { topic: outputTopic } = await ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets a text that will be later summarized into a social media post
@@ -211,7 +218,7 @@ export class AgentGraphService {
   }
 
   async generateHook(state: WorkflowChannelsState) {
-    const structuredOutput = model.withStructuredOutput(hook);
+    const structuredOutput = (await this.getModel()).withStructuredOutput(hook);
     const { hook: outputHook } = await ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets content for a social media post, and generate only the hook.
@@ -253,7 +260,7 @@ export class AgentGraphService {
   }
 
   async generateContent(state: WorkflowChannelsState) {
-    const structuredOutput = model.withStructuredOutput(
+    const structuredOutput = (await this.getModel()).withStructuredOutput(
       contentZod(!!state.isPicture, state.format)
     );
     const { content: outputContent } = await ChatPromptTemplate.fromTemplate(

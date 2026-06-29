@@ -24,6 +24,8 @@ import { Request, Response } from 'express';
 import { RequestContext } from '@mastra/core/di';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
+import { AI_PROVIDER_PRESETS } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 
 export type ChannelsContext = {
   integrations: string;
@@ -36,45 +38,32 @@ export class CopilotController {
   constructor(
     private _subscriptionService: SubscriptionService,
     private _mastraService: MastraService,
-    private _prisma: PrismaService
+    private _prisma: PrismaService,
+    private readonly _aiProvider: AIProviderService
   ) {}
 
-  /**
-   * Resolve the LLM model to use.
-   * Priority: PlatformSettings DB value > LLM_MODEL env var > 'gpt-4.1' default
-   */
-  private async resolveModel(): Promise<string> {
-    try {
-      const record = await this._prisma.platformSettings.findUnique({
-        where: { id: 'singleton' },
-      });
-      const settings = (record?.settings as any) || {};
-      if (settings.llmModel) {
-        return settings.llmModel;
-      }
-    } catch (e) {
-      // DB read failed, fall through to env/default
+  private async getProviderConfig() {
+    const config = await this._aiProvider.getConfig();
+    const apiKey = this._aiProvider.getApiKey(config.provider);
+    if (!apiKey) {
+      Logger.warn(`${config.provider} API key not set, AI features will not work`);
     }
-    return process.env.LLM_MODEL || 'gpt-4o';
+    return config;
   }
+
   @Post('/chat')
   async chatAgent(@Req() req: Request, @Res() res: Response) {
-    if (
-      process.env.OPENAI_API_KEY === undefined ||
-      process.env.OPENAI_API_KEY === ''
-    ) {
-      Logger.warn('OpenAI API key not set, chat functionality will not work');
+    const config = await this.getProviderConfig();
+    if (!this._aiProvider.getApiKey(config.provider)) {
       return;
     }
 
-    const model = await this.resolveModel();
+    const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
 
     const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
       endpoint: '/copilot/chat',
       runtime: new CopilotRuntime(),
-      serviceAdapter: new OpenAIAdapter({
-        model,
-      }),
+      serviceAdapter: adapter,
     });
 
     return copilotRuntimeHandler(req, res);
@@ -87,13 +76,11 @@ export class CopilotController {
     @Res() res: Response,
     @GetOrgFromRequest() organization: Organization
   ) {
-    if (
-      process.env.OPENAI_API_KEY === undefined ||
-      process.env.OPENAI_API_KEY === ''
-    ) {
-      Logger.warn('OpenAI API key not set, chat functionality will not work');
+    const config = await this.getProviderConfig();
+    if (!this._aiProvider.getApiKey(config.provider)) {
       return;
     }
+
     const mastra = await this._mastraService.mastra();
     const requestContext = new RequestContext<ChannelsContext>();
     requestContext.set(
@@ -114,14 +101,12 @@ export class CopilotController {
       agents,
     });
 
-    const model = await this.resolveModel();
+    const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
 
     const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
       endpoint: '/copilot/agent',
       runtime,
-      serviceAdapter: new OpenAIAdapter({
-        model,
-      }),
+      serviceAdapter: adapter,
     });
 
     return copilotRuntimeHandler(req, res);
