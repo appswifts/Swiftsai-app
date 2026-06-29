@@ -65,12 +65,12 @@ export const AdminSettings = () => {
     }
   }, [settings, fetch, mutate, t]);
 
-  const providerPresets: Record<string, string[]> = {
+  const providerPresets = {
     openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'o3', 'o3-mini', 'o4-mini'],
     anthropic: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest', 'claude-3-opus-latest'],
     google: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-pro'],
     groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it', 'deepseek-r1-distill-llama-70b'],
-  };
+  } as const;
 
   const providerLabels: Record<string, string> = {
     openai: 'OpenAI',
@@ -79,11 +79,12 @@ export const AdminSettings = () => {
     groq: 'Groq (Free)',
   };
 
-  const provider = (settings as any).aiProvider || 'openai';
+  const provider = ((settings as any).aiProvider as string) || 'openai';
 
+  const modelItems = [...(providerPresets as any)[provider] || providerPresets.openai] as string[];
   const modelOptions = [
     { value: '', label: t('use_env_default', 'Use Environment Default') },
-    ...(providerPresets[provider] || providerPresets.openai).map((m) => ({ value: m, label: m })),
+    ...modelItems.map((m) => ({ value: m, label: m })),
   ];
 
   const [customModel, setCustomModel] = useState(false);
@@ -233,8 +234,8 @@ export const AdminSettings = () => {
                 value={provider}
                 onChange={(e) => setSettings({ ...settings, aiProvider: e.target.value, aiModel: '' })}
               >
-                {Object.keys(providerPresets).map((key) => (
-                  <option key={key} value={key}>{providerLabels[key]}</option>
+                {Object.keys(providerLabels).map((key) => (
+                  <option key={key} value={key}>{(providerLabels as any)[key]}</option>
                 ))}
               </select>
               <div className="text-[12px] text-newTextColor/40 mt-[2px]">
