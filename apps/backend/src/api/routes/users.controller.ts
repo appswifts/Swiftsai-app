@@ -74,7 +74,7 @@ export class UsersController {
     const impersonate = req.cookies.impersonate || req.headers.impersonate;
     const billingEnabled = !!process.env.POLAR_ACCESS_TOKEN;
     const settings = await this._adminService.getPlatformSettings() as Record<string, any>;
-    const trialTier = organization?.isTrailing ? (settings.trialTier || 'STANDARD') : null;
+    const trialTier = organization?.isTrailing ? (settings.trialTier || 'FREE') : null;
     // @ts-ignore
     return {
       ...user,
