@@ -68,7 +68,7 @@ export class PolarService {
   async cancelSubscription(organizationId: string, feedback?: string) {
     const subscription = await this._subscriptionService.getSubscription(organizationId);
     if (!subscription?.polarSubscriptionId) {
-      throw new Error('No Polar subscription found');
+      return { cancel_at: Date.now() };
     }
 
     const body: any = {
@@ -106,7 +106,7 @@ export class PolarService {
   async reactivateSubscription(organizationId: string) {
     const subscription = await this._subscriptionService.getSubscription(organizationId);
     if (!subscription?.polarSubscriptionId) {
-      throw new Error('No Polar subscription found');
+      return { cancel_at: null };
     }
 
     const response = await fetch(

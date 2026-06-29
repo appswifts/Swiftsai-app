@@ -91,7 +91,9 @@ export class BillingController {
     const subscription = await this._subscriptionService.getSubscription(org.id);
 
     if (subscription?.cancelAt) {
-      const result = await this._polarService.reactivateSubscription(org.id);
+      if (subscription?.polarSubscriptionId) {
+        await this._polarService.reactivateSubscription(org.id);
+      }
       await this._subscriptionService.setCancelAt(org.id, null);
       return { success: true, cancel_at: null };
     }
@@ -104,8 +106,16 @@ export class BillingController {
       'FREE'
     );
 
-    const result = await this._polarService.cancelSubscription(org.id, body.feedback);
-    await this._subscriptionService.setCancelAt(org.id, new Date(result.cancel_at));
+    let cancelAt: number | null = null;
+
+    if (subscription?.polarSubscriptionId) {
+      const result = await this._polarService.cancelSubscription(org.id, body.feedback);
+      cancelAt = result.cancel_at;
+      await this._subscriptionService.setCancelAt(org.id, new Date(cancelAt));
+    } else {
+      cancelAt = Date.now();
+      await this._subscriptionService.setCancelAt(org.id, new Date(cancelAt));
+    }
 
     await this._notificationService.sendEmail(
       process.env.EMAIL_FROM_ADDRESS,
@@ -114,7 +124,20 @@ export class BillingController {
       user.email
     );
 
-    return { success: true, cancel_at: result.cancel_at };
+    return { success: true, cancel_at: cancelAt };
+  }
+
+  @Post('/prorate')
+  async prorate(
+    @GetOrgFromRequest() org: Organization,
+    @Body() body: { period: string; billing: string }
+  ) {
+    return { price: 0 };
+  }
+
+  @Get('/check-discount')
+  async checkDiscount() {
+    return { offerCoupon: false };
   }
 
   @Post('/lifetime')
