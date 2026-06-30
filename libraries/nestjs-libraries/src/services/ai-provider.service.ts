@@ -3,9 +3,6 @@ import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.
 import { OpenAIAdapter, AnthropicAdapter, GoogleGenerativeAIAdapter, GroqAdapter } from '@copilotkit/runtime';
 import { openai } from '@ai-sdk/openai';
 import { ChatOpenAI } from '@langchain/openai';
-import { ChatAnthropic } from '@langchain/anthropic';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { ChatGroq } from '@langchain/groq';
 
 export type AIProvider = 'openai' | 'anthropic' | 'google' | 'groq';
 
@@ -66,12 +63,18 @@ export class AIProviderService {
   getLangChainModel(provider: AIProvider, model: string, temperature = 0.7) {
     const apiKey = this.getApiKey(provider);
     switch (provider) {
-      case 'anthropic':
+      case 'anthropic': {
+        const { ChatAnthropic } = require('@langchain/anthropic');
         return new ChatAnthropic({ apiKey, model, temperature });
-      case 'google':
+      }
+      case 'google': {
+        const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
         return new ChatGoogleGenerativeAI({ apiKey, model, temperature });
-      case 'groq':
+      }
+      case 'groq': {
+        const { ChatGroq } = require('@langchain/groq');
         return new ChatGroq({ apiKey, model, temperature });
+      }
       default:
         return new ChatOpenAI({ apiKey, model, temperature });
     }
