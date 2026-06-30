@@ -163,8 +163,9 @@ export class AgentGraphService {
 
   async findCategories(state: WorkflowChannelsState) {
     const allCategories = await this._postsService.findAllExistingCategories();
-    const structuredOutput = (await this.getModel()).withStructuredOutput(category);
-    const { category: outputCategory } = await ChatPromptTemplate.fromTemplate(
+    const m = await this.getModel() as any;
+    const structuredOutput = m.withStructuredOutput(category);
+    const { category: outputCategory } = await (ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets a text that will be later summarized into a social media post
         and classify it to one of the following categories: {categories}
@@ -175,7 +176,7 @@ export class AgentGraphService {
       .invoke({
         categories: allCategories.map((p) => p.category).join(', '),
         text: state.fresearch,
-      });
+      }) as any);
 
     return {
       category: outputCategory,
@@ -190,8 +191,9 @@ export class AgentGraphService {
       return { topic: null };
     }
 
-    const structuredOutput = (await this.getModel()).withStructuredOutput(topic);
-    const { topic: outputTopic } = await ChatPromptTemplate.fromTemplate(
+    const m = await this.getModel() as any;
+    const structuredOutput = m.withStructuredOutput(topic);
+    const { topic: outputTopic } = await (ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets a text that will be later summarized into a social media post
         and classify it to one of the following topics: {topics}
@@ -202,7 +204,7 @@ export class AgentGraphService {
       .invoke({
         topics: allTopics.map((p) => p.topic).join(', '),
         text: state.fresearch,
-      });
+      }) as any);
 
     return {
       topic: outputTopic,
@@ -218,8 +220,9 @@ export class AgentGraphService {
   }
 
   async generateHook(state: WorkflowChannelsState) {
-    const structuredOutput = (await this.getModel()).withStructuredOutput(hook);
-    const { hook: outputHook } = await ChatPromptTemplate.fromTemplate(
+    const m = await this.getModel() as any;
+    const structuredOutput = m.withStructuredOutput(hook);
+    const { hook: outputHook } = await (ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets content for a social media post, and generate only the hook.
         The hook is the 1-2 sentences of the post that will be used to grab the attention of the reader.
@@ -252,7 +255,7 @@ export class AgentGraphService {
         request: state.messages[0].content,
         hooks: state.popularPosts!.map((p) => p.hook).join('\n'),
         text: state.fresearch,
-      });
+      }) as any);
 
     return {
       hook: outputHook,
@@ -260,10 +263,11 @@ export class AgentGraphService {
   }
 
   async generateContent(state: WorkflowChannelsState) {
-    const structuredOutput = (await this.getModel()).withStructuredOutput(
+    const m = await this.getModel() as any;
+    const structuredOutput = m.withStructuredOutput(
       contentZod(!!state.isPicture, state.format)
     );
-    const { content: outputContent } = await ChatPromptTemplate.fromTemplate(
+    const { content: outputContent } = await (ChatPromptTemplate.fromTemplate(
       `
         You are an assistant that gets existing hook of a social media, content and generate only the content.
         - Don't add any hashtags
@@ -303,7 +307,7 @@ export class AgentGraphService {
         hook: state.hook,
         request: state.messages[0].content,
         information: state.fresearch,
-      });
+      }) as any);
 
     return {
       content: outputContent,

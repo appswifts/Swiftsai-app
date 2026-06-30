@@ -78,7 +78,7 @@ Here is the post:
       });
   }
 
-  findTopic(state: WorkflowChannelsState) {
+  async findTopic(state: WorkflowChannelsState) {
     const { messages } = state;
     const structuredOutput = (await this.getModel()).withStructuredOutput(topic);
     return ChatPromptTemplate.fromTemplate(
@@ -96,7 +96,7 @@ Here is the post:
       });
   }
 
-  findHook(state: WorkflowChannelsState) {
+  async findHook(state: WorkflowChannelsState) {
     const { messages } = state;
     const structuredOutput = (await this.getModel()).withStructuredOutput(hook);
     return ChatPromptTemplate.fromTemplate(
