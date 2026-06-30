@@ -2,16 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { pStore } from '@gitroom/nestjs-libraries/chat/mastra.store';
-import { array, object, string } from 'zod';
 import { ModuleRef } from '@nestjs/core';
 import { toolList } from '@gitroom/nestjs-libraries/chat/tools/tool.list';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 import dayjs from 'dayjs';
-
-export const AgentState = object({
-  proverbs: array(string()).default([]),
-});
 
 const renderArray = (list: string[], show: boolean) => {
   if (!show) return '';
@@ -99,10 +94,6 @@ export class LoadToolsService {
         storage: pStore,
         options: {
           generateTitle: true,
-          workingMemory: {
-            enabled: true,
-            schema: AgentState,
-          },
         },
       }),
     });
