@@ -45,12 +45,14 @@ export class AIProviderService {
 
   getCopilotKitAdapter(provider: AIProvider, model: string) {
     switch (provider) {
+      case 'groq': {
+        const OpenAI = require('openai');
+        return new OpenAIAdapter({ openai: new OpenAI({ apiKey: this.getApiKey(provider), baseURL: 'https://api.groq.com/openai/v1' }), model });
+      }
       case 'anthropic':
         return new AnthropicAdapter({ model });
       case 'google':
         return new GoogleGenerativeAIAdapter({ model, apiKey: this.getApiKey(provider) });
-      case 'groq':
-        return new GroqAdapter({ model });
       default:
         return new OpenAIAdapter({ model });
     }
