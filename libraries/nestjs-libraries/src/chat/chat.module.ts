@@ -2,11 +2,10 @@ import { Global, Module } from '@nestjs/common';
 import { LoadToolsService } from '@gitroom/nestjs-libraries/chat/load.tools.service';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 import { toolList } from '@gitroom/nestjs-libraries/chat/tools/tool.list';
-import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 
 @Global()
 @Module({
-  providers: [MastraService, LoadToolsService, AIProviderService, ...toolList],
+  providers: [MastraService, LoadToolsService, ...toolList],
   get exports() {
     return this.providers;
   },

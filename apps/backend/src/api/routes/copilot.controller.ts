@@ -7,7 +7,6 @@ import {
   Res,
   Query,
   Param,
-  HttpException,
 } from '@nestjs/common';
 import {
   CopilotRuntime,
@@ -20,13 +19,10 @@ import { Organization } from '@prisma/client';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { MastraAgent } from '@ag-ui/mastra';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
-import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Request, Response } from 'express';
 import { RequestContext } from '@mastra/core/di';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
-import { AIProviderService } from '@gitroom/nestjs-libraries/services/ai-provider.service';
-import { AI_PROVIDER_PRESETS } from '@gitroom/nestjs-libraries/services/ai-provider.service';
 
 export type ChannelsContext = {
   integrations: string;
@@ -36,47 +32,29 @@ export type ChannelsContext = {
 
 @Controller('/copilot')
 export class CopilotController {
-  private readonly logger = new Logger(CopilotController.name);
-
   constructor(
     private _subscriptionService: SubscriptionService,
-    private _mastraService: MastraService,
-    private _prisma: PrismaService,
-    private readonly _aiProvider: AIProviderService
+    private _mastraService: MastraService
   ) {}
-
-  private async getProviderConfig() {
-    const config = await this._aiProvider.getConfig();
-    const apiKey = this._aiProvider.getApiKey(config.provider);
-    if (!apiKey) {
-      this.logger.warn(`${config.provider} API key not set, AI features will not work`);
-    }
-    return config;
-  }
-
   @Post('/chat')
-  async chatAgent(@Req() req: Request, @Res() res: Response) {
-    try {
-      const validation = await this._aiProvider.validateConfig();
-      if (!validation.valid) {
-        this.logger.warn(validation.error);
-        return res.status(400).json({ error: validation.error });
-      }
-
-      const config = await this.getProviderConfig();
-      const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
-
-      const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
-        endpoint: '/copilot/chat',
-        runtime: new CopilotRuntime(),
-        serviceAdapter: adapter,
-      });
-
-      return copilotRuntimeHandler(req, res);
-    } catch (error) {
-      this.logger.error('Chat agent failed', error);
-      return res.status(500).json({ error: 'AI chat failed. Check server logs.' });
+  chatAgent(@Req() req: Request, @Res() res: Response) {
+    if (
+      process.env.OPENAI_API_KEY === undefined ||
+      process.env.OPENAI_API_KEY === ''
+    ) {
+      Logger.warn('OpenAI API key not set, chat functionality will not work');
+      return;
     }
+
+    const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
+      endpoint: '/copilot/chat',
+      runtime: new CopilotRuntime(),
+      serviceAdapter: new OpenAIAdapter({
+        model: 'gpt-4.1',
+      }),
+    });
+
+    return copilotRuntimeHandler(req, res);
   }
 
   @Post('/agent')
@@ -86,47 +64,43 @@ export class CopilotController {
     @Res() res: Response,
     @GetOrgFromRequest() organization: Organization
   ) {
-    try {
-      const validation = await this._aiProvider.validateConfig();
-      if (!validation.valid) {
-        this.logger.warn(validation.error);
-        return res.status(400).json({ error: validation.error });
-      }
-
-      const config = await this.getProviderConfig();
-      const mastra = await this._mastraService.mastra();
-      const requestContext = new RequestContext<ChannelsContext>();
-      requestContext.set(
-        'integrations',
-        req?.body?.variables?.properties?.integrations || []
-      );
-
-      requestContext.set('organization', JSON.stringify(organization));
-      requestContext.set('ui', 'true');
-
-      const agents = MastraAgent.getLocalAgents({
-        resourceId: organization.id,
-        mastra,
-        requestContext: requestContext as any,
-      });
-
-      const runtime = new CopilotRuntime({
-        agents,
-      });
-
-      const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
-
-      const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
-        endpoint: '/copilot/agent',
-        runtime,
-        serviceAdapter: adapter,
-      });
-
-      return copilotRuntimeHandler(req, res);
-    } catch (error) {
-      this.logger.error('Agent endpoint failed', error);
-      return res.status(500).json({ error: 'AI agent failed. Check server logs.' });
+    if (
+      process.env.OPENAI_API_KEY === undefined ||
+      process.env.OPENAI_API_KEY === ''
+    ) {
+      Logger.warn('OpenAI API key not set, chat functionality will not work');
+      return;
     }
+    const mastra = await this._mastraService.mastra();
+    const requestContext = new RequestContext<ChannelsContext>();
+    requestContext.set(
+      'integrations',
+      req?.body?.variables?.properties?.integrations || []
+    );
+
+    requestContext.set('organization', JSON.stringify(organization));
+    requestContext.set('ui', 'true');
+
+    const agents = MastraAgent.getLocalAgents({
+      resourceId: organization.id,
+      mastra,
+      requestContext: requestContext as any,
+    });
+
+    const runtime = new CopilotRuntime({
+      agents,
+    });
+
+    const copilotRuntimeHandler = copilotRuntimeNextJSAppRouterEndpoint({
+      endpoint: '/copilot/agent',
+      runtime,
+      // properties: req.body.variables.properties,
+      serviceAdapter: new OpenAIAdapter({
+        model: 'gpt-4.1',
+      }),
+    });
+
+    return copilotRuntimeHandler.handleRequest(req, res);
   }
 
   @Get('/credits')

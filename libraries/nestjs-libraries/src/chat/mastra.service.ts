@@ -24,12 +24,4 @@ export class MastraService {
 
     return MastraService.mastra;
   }
-
-  /**
-   * Invalidate the cached Mastra instance so it gets recreated
-   * with the latest settings (e.g. after model change from admin panel).
-   */
-  static reset() {
-    MastraService.mastra = undefined;
-  }
 }
