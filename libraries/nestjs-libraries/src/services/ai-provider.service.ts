@@ -2,9 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { OpenAIAdapter, AnthropicAdapter, GoogleGenerativeAIAdapter, GroqAdapter } from '@copilotkit/runtime';
 import { openai } from '@ai-sdk/openai';
-import { anthropic } from '@ai-sdk/anthropic';
-import { google } from '@ai-sdk/google';
-import { groq } from '@ai-sdk/groq';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
@@ -62,13 +59,8 @@ export class AIProviderService {
     }
   }
 
-  getAISDKProvider(provider: AIProvider, model: string) {
-    switch (provider) {
-      case 'anthropic': return anthropic(model);
-      case 'google': return google(model);
-      case 'groq': return groq(model);
-      default: return openai(model);
-    }
+  getAISDKProvider(provider: AIProvider, model: string): any {
+    return openai(model);
   }
 
   getLangChainModel(provider: AIProvider, model: string, temperature = 0.7) {
