@@ -23,6 +23,8 @@ export const AdminSettings = () => {
     maxChannelsFree: 3,
     llmModel: '',
     defaultPlanId: '',
+    aiProvider: 'openai',
+    aiModel: '',
   });
 
   const fetchPlans = useCallback(async () => {
