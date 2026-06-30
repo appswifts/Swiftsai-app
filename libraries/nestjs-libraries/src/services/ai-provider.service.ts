@@ -43,6 +43,21 @@ export class AIProviderService {
     }
   }
 
+  isApiKeySet(provider: AIProvider): boolean {
+    return !!this.getApiKey(provider);
+  }
+
+  async validateConfig(): Promise<{ valid: boolean; error?: string }> {
+    const { provider, model } = await this.getConfig();
+    if (!this.isApiKeySet(provider)) {
+      return { valid: false, error: `API key not configured for ${provider}. Set ${provider.toUpperCase()}_API_KEY environment variable.` };
+    }
+    if (!model) {
+      return { valid: false, error: 'No AI model configured. Select a model in admin settings.' };
+    }
+    return { valid: true };
+  }
+
   getCopilotKitAdapter(provider: AIProvider, model: string) {
     switch (provider) {
       case 'groq': {

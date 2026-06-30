@@ -7,6 +7,7 @@ import {
   Res,
   Query,
   Param,
+  HttpException,
 } from '@nestjs/common';
 import {
   CopilotRuntime,
@@ -35,6 +36,8 @@ export type ChannelsContext = {
 
 @Controller('/copilot')
 export class CopilotController {
+  private readonly logger = new Logger(CopilotController.name);
+
   constructor(
     private _subscriptionService: SubscriptionService,
     private _mastraService: MastraService,
@@ -46,27 +49,34 @@ export class CopilotController {
     const config = await this._aiProvider.getConfig();
     const apiKey = this._aiProvider.getApiKey(config.provider);
     if (!apiKey) {
-      Logger.warn(`${config.provider} API key not set, AI features will not work`);
+      this.logger.warn(`${config.provider} API key not set, AI features will not work`);
     }
     return config;
   }
 
   @Post('/chat')
   async chatAgent(@Req() req: Request, @Res() res: Response) {
-    const config = await this.getProviderConfig();
-    if (!this._aiProvider.getApiKey(config.provider)) {
-      return;
+    try {
+      const validation = await this._aiProvider.validateConfig();
+      if (!validation.valid) {
+        this.logger.warn(validation.error);
+        return res.status(400).json({ error: validation.error });
+      }
+
+      const config = await this.getProviderConfig();
+      const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
+
+      const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
+        endpoint: '/copilot/chat',
+        runtime: new CopilotRuntime(),
+        serviceAdapter: adapter,
+      });
+
+      return copilotRuntimeHandler(req, res);
+    } catch (error) {
+      this.logger.error('Chat agent failed', error);
+      return res.status(500).json({ error: 'AI chat failed. Check server logs.' });
     }
-
-    const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
-
-    const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
-      endpoint: '/copilot/chat',
-      runtime: new CopilotRuntime(),
-      serviceAdapter: adapter,
-    });
-
-    return copilotRuntimeHandler(req, res);
   }
 
   @Post('/agent')
@@ -76,40 +86,47 @@ export class CopilotController {
     @Res() res: Response,
     @GetOrgFromRequest() organization: Organization
   ) {
-    const config = await this.getProviderConfig();
-    if (!this._aiProvider.getApiKey(config.provider)) {
-      return;
+    try {
+      const validation = await this._aiProvider.validateConfig();
+      if (!validation.valid) {
+        this.logger.warn(validation.error);
+        return res.status(400).json({ error: validation.error });
+      }
+
+      const config = await this.getProviderConfig();
+      const mastra = await this._mastraService.mastra();
+      const requestContext = new RequestContext<ChannelsContext>();
+      requestContext.set(
+        'integrations',
+        req?.body?.variables?.properties?.integrations || []
+      );
+
+      requestContext.set('organization', JSON.stringify(organization));
+      requestContext.set('ui', 'true');
+
+      const agents = MastraAgent.getLocalAgents({
+        resourceId: organization.id,
+        mastra,
+        requestContext: requestContext as any,
+      });
+
+      const runtime = new CopilotRuntime({
+        agents,
+      });
+
+      const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
+
+      const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
+        endpoint: '/copilot/agent',
+        runtime,
+        serviceAdapter: adapter,
+      });
+
+      return copilotRuntimeHandler(req, res);
+    } catch (error) {
+      this.logger.error('Agent endpoint failed', error);
+      return res.status(500).json({ error: 'AI agent failed. Check server logs.' });
     }
-
-    const mastra = await this._mastraService.mastra();
-    const requestContext = new RequestContext<ChannelsContext>();
-    requestContext.set(
-      'integrations',
-      req?.body?.variables?.properties?.integrations || []
-    );
-
-    requestContext.set('organization', JSON.stringify(organization));
-    requestContext.set('ui', 'true');
-
-    const agents = MastraAgent.getLocalAgents({
-      resourceId: organization.id,
-      mastra,
-      requestContext: requestContext as any,
-    });
-
-    const runtime = new CopilotRuntime({
-      agents,
-    });
-
-    const adapter = this._aiProvider.getCopilotKitAdapter(config.provider, config.model);
-
-    const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({
-      endpoint: '/copilot/agent',
-      runtime,
-      serviceAdapter: adapter,
-    });
-
-    return copilotRuntimeHandler(req, res);
   }
 
   @Get('/credits')

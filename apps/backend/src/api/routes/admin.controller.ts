@@ -7,6 +7,7 @@ import { SystemSettingService } from '@gitroom/nestjs-libraries/database/prisma/
 import { PoliciesGuard } from '@gitroom/backend/services/auth/permissions/permissions.guard';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 
 @ApiTags('Admin')
 @Controller('/admin')
@@ -15,9 +16,10 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly systemSettingService: SystemSettingService,
+    private readonly _mastraService: MastraService
   ) {}
 
-  // ─── Dashboard Stats ─────────────────────────────────────────
+  // ─── Dashboard Stats ───────────────────────────────────────────
 
   @Get('/stats')
   @CheckPolicies([AuthorizationActions.Read, Sections.ADMIN])
@@ -45,7 +47,9 @@ export class AdminController {
     @GetUserFromRequest() user: User,
     @Body() body: Record<string, any>
   ) {
-    return this.adminService.updatePlatformSettings(user.id, body);
+    const result = await this.adminService.updatePlatformSettings(user.id, body);
+    MastraService.reset();
+    return result;
   }
 
   // ─── System Settings (Key-Value) ─────────────────────────────
