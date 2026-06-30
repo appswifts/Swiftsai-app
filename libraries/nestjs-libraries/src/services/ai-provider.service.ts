@@ -62,7 +62,44 @@ export class AIProviderService {
     switch (provider) {
       case 'groq': {
         const OpenAI = require('openai');
-        return new OpenAIAdapter({ openai: new OpenAI({ apiKey: this.getApiKey(provider), baseURL: 'https://api.groq.com/openai/v1' }), model });
+        const originalClient = new OpenAI({ apiKey: this.getApiKey(provider), baseURL: 'https://api.groq.com/openai/v1' });
+        
+        // Wrap the client to sanitize messages for Groq compatibility
+        const sanitizedClient = {
+          ...originalClient,
+          chat: {
+            ...originalClient.chat,
+            completions: {
+              ...originalClient.chat.completions,
+              create: async (params: any) => {
+                // Sanitize messages: ensure content is always a string or supported array
+                const sanitizedMessages = params.messages?.map((msg: any) => {
+                  if (typeof msg.content === 'string') return msg;
+                  if (Array.isArray(msg.content)) {
+                    // Filter to only text content (Groq doesn't support complex content arrays well)
+                    const textParts = msg.content.filter((part: any) => part.type === 'text');
+                    if (textParts.length > 0) {
+                      return { ...msg, content: textParts.map((p: any) => p.text).join('\n') };
+                    }
+                    return { ...msg, content: '' };
+                  }
+                  if (msg.content && typeof msg.content === 'object') {
+                    // Convert object content to string
+                    return { ...msg, content: JSON.stringify(msg.content) };
+                  }
+                  return { ...msg, content: '' };
+                });
+                
+                return originalClient.chat.completions.create({
+                  ...params,
+                  messages: sanitizedMessages,
+                });
+              },
+            },
+          },
+        };
+        
+        return new OpenAIAdapter({ openai: sanitizedClient as any, model });
       }
       case 'anthropic':
         return new AnthropicAdapter({ model });
