@@ -3,7 +3,6 @@ import { PrismaService } from '@gitroom/nestjs-libraries/database/prisma/prisma.
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 import { Organization, User, SubscriptionTier, Period } from '@prisma/client';
-import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 
 @Injectable()
 export class AdminService {
@@ -140,9 +139,6 @@ export class AdminService {
       update: { settings: body },
     });
     await this.logAction(adminId, 'settings.update', undefined, body);
-    if (body.llmModel !== undefined) {
-      MastraService.reset();
-    }
     return result.settings;
   }
 
