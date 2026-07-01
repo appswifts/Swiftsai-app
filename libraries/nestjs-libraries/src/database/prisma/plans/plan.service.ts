@@ -108,7 +108,7 @@ const SEED_PLANS: SeedPlan[] = [
     inbox: false,
     campaigns: false,
     leads: false,
-    isDefault: false,
+    isDefault: true,
     isActive: true,
   },
   {
@@ -134,7 +134,7 @@ const SEED_PLANS: SeedPlan[] = [
     inbox: true,
     campaigns: false,
     leads: true,
-    isDefault: true,
+    isDefault: false,
     isActive: true,
   },
   {
@@ -309,7 +309,15 @@ export class PlanService implements OnApplicationBootstrap {
 
   async seedDefaultPlans() {
     const existing = await this._planRepository.getPlans();
-    if (existing.length > 0) return;
+    if (existing.length > 0) {
+      for (const plan of SEED_PLANS) {
+        await this._prisma.plan.updateMany({
+          where: { name: plan.name, deletedAt: null },
+          data: { isDefault: plan.isDefault },
+        });
+      }
+      return;
+    }
 
     for (const plan of SEED_PLANS) {
       await this._planRepository.createPlan(plan);
