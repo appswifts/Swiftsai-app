@@ -39,7 +39,7 @@ export class Nowpayments {
     }
 
     const [org, make] = body.order_id.split('_');
-    await this._subscriptionService.lifeTime(org, make, 'PRO');
+    await this._subscriptionService.addSubscription(org, make, 'PRO');
     return body;
   }
 
