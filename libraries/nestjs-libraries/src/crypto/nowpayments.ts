@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
+import { PlanService } from '@gitroom/nestjs-libraries/database/prisma/plans/plan.service';
 
 export interface ProcessPayment {
   payment_id: number;
@@ -23,7 +24,10 @@ export interface ProcessPayment {
 
 @Injectable()
 export class Nowpayments {
-  constructor(private _subscriptionService: SubscriptionService) {}
+  constructor(
+    private _subscriptionService: SubscriptionService,
+    private _planService: PlanService
+  ) {}
 
   async processPayment(path: string, body: ProcessPayment) {
     const decrypt = AuthService.verifyJWT(path) as any;
@@ -38,8 +42,21 @@ export class Nowpayments {
       return;
     }
 
-    const [org, make] = body.order_id.split('_');
-    await this._subscriptionService.addSubscription(org, make, 'PRO');
+    const [org] = body.order_id.split('_');
+    const plan = await this._planService.getPlanByName('PRO');
+    if (plan) {
+      await this._subscriptionService.createOrUpdateSubscription(
+        false,
+        body.order_id,
+        body.order_id,
+        plan.maxChannels ?? 0,
+        'PRO',
+        'YEARLY',
+        null,
+        undefined,
+        org
+      );
+    }
     return body;
   }
 
