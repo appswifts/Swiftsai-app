@@ -7,6 +7,7 @@ import {
   Res,
   Query,
   Param,
+  HttpException,
 } from '@nestjs/common';
 import {
   CopilotRuntime,
@@ -37,13 +38,22 @@ export class CopilotController {
     private _mastraService: MastraService
   ) {}
   @Post('/chat')
-  chatAgent(@Req() req: Request, @Res() res: Response) {
+  async chatAgent(
+    @Req() req: Request,
+    @Res() res: Response,
+    @GetOrgFromRequest() organization: Organization
+  ) {
     if (
       process.env.OPENAI_API_KEY === undefined ||
       process.env.OPENAI_API_KEY === ''
     ) {
       Logger.warn('OpenAI API key not set, chat functionality will not work');
       return;
+    }
+
+    const credits = await this._subscriptionService.checkCredits(organization, 'ai_images');
+    if (credits.credits <= 0) {
+      throw new HttpException('No AI credits remaining. Please upgrade your plan.', 402);
     }
 
     const copilotRuntimeHandler = copilotRuntimeNodeHttpEndpoint({

@@ -266,21 +266,6 @@ export class SubscriptionService {
     };
   }
 
-  async lifeTime(orgId: string, identifier: string, subscription: any) {
-    const plan = await this._planService.getPlanByName(subscription);
-    return this.createOrUpdateSubscription(
-      false,
-      identifier,
-      identifier,
-      plan?.maxChannels ?? 0,
-      subscription,
-      'YEARLY',
-      null,
-      identifier,
-      orgId
-    );
-  }
-
   async addSubscription(orgId: string, userId: string, subscription: any) {
     const plan = await this._planService.getPlanByName(subscription);
     await this._subscriptionRepository.setCustomerId(orgId, userId);

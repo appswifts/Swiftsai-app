@@ -289,8 +289,8 @@ export class OrganizationRepository {
       data: {
         name: body.company,
         apiKey: AuthService.fixedEncryption(makeId(20)),
-        allowTrial: true,
-        isTrailing: true,
+      allowTrial: false,
+      isTrailing: false,
         users: {
           create: {
             role: Role.SUPERADMIN,
@@ -457,6 +457,7 @@ export class OrganizationRepository {
     if (existing) return existing;
 
     const tierMap: Record<string, any> = {
+      FREE: 'FREE',
       STANDARD: 'STANDARD',
       TEAM: 'TEAM',
       PRO: 'PRO',

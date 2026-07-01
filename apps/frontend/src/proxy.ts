@@ -87,7 +87,12 @@ export async function proxy(request: NextRequest) {
 
   const org = nextUrl.searchParams.get('org');
   const url = new URL(nextUrl).search;
+  const publicPaths = ['/', '/pricing', '/privacy-policy', '/terms-of-service'];
   if (!nextUrl.pathname.startsWith('/auth') && !authCookie) {
+    if (publicPaths.includes(nextUrl.pathname)) {
+      return topResponse;
+    }
+
     const providers = ['google', 'settings'];
     const findIndex = providers.find((p) => nextUrl.href.indexOf(p) > -1);
     const additional = !findIndex

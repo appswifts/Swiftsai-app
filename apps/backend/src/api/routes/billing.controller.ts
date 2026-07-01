@@ -132,24 +132,44 @@ export class BillingController {
     @GetOrgFromRequest() org: Organization,
     @Body() body: { period: string; billing: string }
   ) {
-    return { price: 0 };
+    const currentSub = await this._subscriptionService.getSubscription(org.id);
+    if (!currentSub) {
+      return { price: 0 };
+    }
+
+    const currentPlan = await this._prisma.plan.findFirst({
+      where: { name: currentSub.subscriptionTier },
+    });
+    const newPlan = await this._prisma.plan.findFirst({
+      where: { name: body.billing },
+    });
+    if (!currentPlan || !newPlan) {
+      return { price: 0 };
+    }
+
+    const isYearly = body.period === 'YEARLY';
+    const currentPrice = isYearly ? (currentPlan as any).yearPrice || 0 : (currentPlan as any).monthPrice || 0;
+    const newPrice = isYearly ? (newPlan as any).yearPrice || 0 : (newPlan as any).monthPrice || 0;
+
+    if (newPrice <= currentPrice) {
+      return { price: 0 };
+    }
+
+    const daysInPeriod = isYearly ? 365 : 30;
+    const createdAt = currentSub.createdAt || new Date();
+    const periodEnd = new Date(createdAt.getTime() + daysInPeriod * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const daysRemaining = Math.max(0, Math.ceil((periodEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
+
+    const priceDiff = newPrice - currentPrice;
+    const prorated = Math.round((priceDiff * daysRemaining) / daysInPeriod);
+
+    return { price: prorated };
   }
 
   @Get('/check-discount')
   async checkDiscount() {
     return { offerCoupon: false };
-  }
-
-  @Post('/lifetime')
-  async lifetime(
-    @GetOrgFromRequest() org: Organization,
-    @Body() body: { code: string }
-  ) {
-    const code = await this._subscriptionService.getCode(body.code);
-    if (!code) throw new HttpException('Invalid code', 404);
-    const subscription = code.code;
-    await this._subscriptionService.lifeTime(org.id, body.code, subscription);
-    return { success: true };
   }
 
   @Post('/cancel-subscription')
