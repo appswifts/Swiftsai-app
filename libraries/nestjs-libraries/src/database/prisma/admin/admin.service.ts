@@ -259,12 +259,20 @@ export class AdminService {
         isSuperAdmin: user.isSuperAdmin,
         activated: user.activated,
         lastOnline: user.lastOnline,
-        organizations: user.organizations.map((userOrg: any) => ({
-          id: userOrg.organization.id,
-          name: userOrg.organization.name,
-          subscriptionTier: userOrg.organization.subscription?.subscriptionTier || 'FREE',
-          integrationCount: userOrg.organization.Integration?.length || 0,
-        })),
+        organizations: user.organizations.map((userOrg: any) => {
+          const sub = userOrg.organization.subscription;
+          return {
+            id: userOrg.organization.id,
+            name: userOrg.organization.name,
+            subscriptionTier: sub?.subscriptionTier || 'FREE',
+            totalChannels: sub?.totalChannels || 0,
+            maxOrganizations: sub?.maxOrganizations || 1,
+            maxPlatforms: sub?.maxPlatforms || 0,
+            period: sub?.period || null,
+            isLifetime: sub?.isLifetime || false,
+            integrationCount: userOrg.organization.Integration?.length || 0,
+          };
+        }),
       })),
       total,
       page,
@@ -447,7 +455,7 @@ export class AdminService {
   async updateOrganizationSubscription(
     adminId: string,
     orgId: string,
-    body: { subscriptionTier: SubscriptionTier; period: Period; totalChannels: number; isLifetime?: boolean }
+    body: { subscriptionTier: SubscriptionTier; period: Period; totalChannels: number; maxOrganizations?: number; maxPlatforms?: number; isLifetime?: boolean }
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -466,6 +474,8 @@ export class AdminService {
           subscriptionTier: body.subscriptionTier,
           period: body.period,
           totalChannels: body.totalChannels,
+          maxOrganizations: body.maxOrganizations,
+          maxPlatforms: body.maxPlatforms,
           isLifetime: body.isLifetime || false,
           deletedAt: null,
           cancelAt: null,
@@ -478,6 +488,8 @@ export class AdminService {
           subscriptionTier: body.subscriptionTier,
           period: body.period,
           totalChannels: body.totalChannels,
+          maxOrganizations: body.maxOrganizations,
+          maxPlatforms: body.maxPlatforms,
           isLifetime: body.isLifetime || false,
           identifier: `admin_${Date.now()}`,
         },

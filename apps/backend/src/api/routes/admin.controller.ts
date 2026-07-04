@@ -260,6 +260,8 @@ export class AdminController {
       subscriptionTier: SubscriptionTier;
       period: Period;
       totalChannels: number;
+      maxOrganizations?: number;
+      maxPlatforms?: number;
       isLifetime?: boolean;
     }
   ) {

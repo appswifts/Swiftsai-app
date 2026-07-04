@@ -123,6 +123,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'Helvetica Neue', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
       animation: {
         fade: 'fadeOut 0.5s ease-in-out',
@@ -136,6 +137,11 @@ module.exports = {
         newMessages: 'newMessages 1s ease-in-out 4s forwards',
         marqueeUp: 'marquee-up 100s linear infinite',
         marqueeDown: 'marquee-down 100s linear infinite',
+        float: 'float 6s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.8s ease-out forwards',
+        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+        'pulse-slow': 'pulseSlow 4s ease-in-out infinite',
+        'spin-slow': 'spin 12s linear infinite',
       },
       boxShadow: {
         yellow: '0 0 60px 20px #6b6237',
@@ -151,8 +157,23 @@ module.exports = {
           '0 0 24px rgba(250,204,21,0.4)',
         ],
       },
-      // that is actual animation
       keyframes: (theme) => ({
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(30px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseSlow: {
+          '0%, 100%': { opacity: '0.4' },
+          '50%': { opacity: '0.8' },
+        },
         fadeOut: {
           '0%': {
             opacity: 0,

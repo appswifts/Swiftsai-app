@@ -102,9 +102,9 @@ export const ManageSubscription = ({ orgId, currentSub, mutate, onClose }: Props
           name="organizations"
           type="number"
           min={1}
-          value={5}
+          value={currentSub?.maxOrganizations || 1}
           onChange={() => {}}
-          placeholder="5"
+          placeholder="1"
           disableForm={true}
         />
 
@@ -113,9 +113,9 @@ export const ManageSubscription = ({ orgId, currentSub, mutate, onClose }: Props
           name="platforms"
           type="number"
           min={0}
-          value={10}
+          value={currentSub?.maxPlatforms || 0}
           onChange={() => {}}
-          placeholder="10"
+          placeholder="0"
           disableForm={true}
         />
       </div>

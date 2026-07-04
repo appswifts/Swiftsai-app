@@ -26,12 +26,12 @@ export class InstagramStandaloneProvider
   isBetweenSteps = false;
   refreshCron = true;
   scopes = [
-    'instagram_business_basic',
-    'instagram_business_content_publish',
-    'instagram_business_manage_comments',
-    'instagram_business_manage_insights',
+    'instagram_basic',
+    'instagram_content_publish',
+    'instagram_manage_comments',
+    'instagram_manage_insights',
   ];
-    override maxConcurrentJob = 200; // Instagram standalone has stricter limits
+  override maxConcurrentJob = 200; // Instagram standalone has stricter limits
   dto = InstagramDto;
 
   editor = 'normal' as const;
@@ -49,49 +49,32 @@ export class InstagramStandaloneProvider
   }
 
   async refreshToken(refresh_token: string): Promise<AuthTokenDetails> {
-    const { access_token } = await (
-      await fetch(
-        `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${refresh_token}`
-      )
-    ).json();
-
-    const {
-      user_id,
-      name,
-      username,
-      profile_picture_url = '',
-    } = await (
-      await fetch(
-        `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,profile_picture_url&access_token=${access_token}`
-      )
-    ).json();
-
     return {
-      id: user_id,
-      name,
-      accessToken: access_token,
-      refreshToken: access_token,
-      expiresIn: dayjs().add(58, 'days').unix() - dayjs().unix(),
-      picture: profile_picture_url || '',
-      username,
+      refreshToken: '',
+      expiresIn: 0,
+      accessToken: '',
+      id: '',
+      name: '',
+      picture: '',
+      username: '',
     };
   }
 
   async generateAuthUrl() {
     const state = makeId(6);
+    const redirectUri = `${
+      process?.env.FRONTEND_URL?.indexOf('https') == -1
+        ? `https://redirectmeto.com/${process?.env.FRONTEND_URL}`
+        : `${process?.env.FRONTEND_URL}`
+    }/integrations/social/instagram-standalone`;
+
     return {
       url:
-        `https://api.instagram.com/oauth/authorize?client_id=${
-          process.env.INSTAGRAM_APP_ID
-        }&redirect_uri=${encodeURIComponent(
-          `${
-            process?.env.FRONTEND_URL?.indexOf('https') == -1
-              ? `https://redirectmeto.com/${process?.env.FRONTEND_URL}`
-              : `${process?.env.FRONTEND_URL}`
-          }/integrations/social/instagram-standalone`
-        )}&response_type=code&scope=${encodeURIComponent(
-          this.scopes.join(',')
-        )}` + `&state=${state}`,
+        `https://www.facebook.com/v20.0/dialog/oauth` +
+        `?client_id=${process.env.FACEBOOK_APP_ID}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&state=${state}` +
+        `&scope=${encodeURIComponent(this.scopes.join(','))}`,
       codeVerifier: makeId(10),
       state,
     };
@@ -102,53 +85,88 @@ export class InstagramStandaloneProvider
     codeVerifier: string;
     refresh: string;
   }) {
-    const formData = new FormData();
-    formData.append('client_id', process.env.INSTAGRAM_APP_ID!);
-    formData.append('client_secret', process.env.INSTAGRAM_APP_SECRET!);
-    formData.append('grant_type', 'authorization_code');
-    formData.append(
-      'redirect_uri',
-      `${
-        process?.env.FRONTEND_URL?.indexOf('https') == -1
-          ? `https://redirectmeto.com/${process?.env.FRONTEND_URL}`
-          : `${process?.env.FRONTEND_URL}`
-      }/integrations/social/instagram-standalone`
-    );
-    formData.append('code', params.code);
+    const redirectUri = `${
+      process?.env.FRONTEND_URL?.indexOf('https') == -1
+        ? `https://redirectmeto.com/${process?.env.FRONTEND_URL}`
+        : `${process?.env.FRONTEND_URL}`
+    }/integrations/social/instagram-standalone${
+      params.refresh ? `?refresh=${params.refresh}` : ''
+    }`;
 
     const getAccessToken = await (
-      await fetch('https://api.instagram.com/oauth/access_token', {
-        method: 'POST',
-        body: formData,
-      })
-    ).json();
-
-    const { access_token, expires_in, ...all } = await (
       await fetch(
-        'https://graph.instagram.com/access_token' +
-          '?grant_type=ig_exchange_token' +
-          `&client_id=${process.env.INSTAGRAM_APP_ID}` +
-          `&client_secret=${process.env.INSTAGRAM_APP_SECRET}` +
-          `&access_token=${getAccessToken.access_token}`
+        'https://graph.facebook.com/v20.0/oauth/access_token' +
+          `?client_id=${process.env.FACEBOOK_APP_ID}` +
+          `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+          `&client_secret=${process.env.FACEBOOK_APP_SECRET}` +
+          `&code=${params.code}`
       )
     ).json();
 
-    this.checkScopes(this.scopes, getAccessToken.permissions);
+    if (!getAccessToken.access_token) {
+      throw new Error(
+        `Facebook token exchange failed: ${getAccessToken.error?.message || JSON.stringify(getAccessToken)}`
+      );
+    }
 
-    const { user_id, name, username, profile_picture_url } = await (
+    const { access_token } = await (
       await fetch(
-        `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,profile_picture_url&access_token=${access_token}`
+        'https://graph.facebook.com/v20.0/oauth/access_token' +
+          '?grant_type=fb_exchange_token' +
+          `&client_id=${process.env.FACEBOOK_APP_ID}` +
+          `&client_secret=${process.env.FACEBOOK_APP_SECRET}` +
+          `&fb_exchange_token=${getAccessToken.access_token}`
       )
     ).json();
+
+    if (!access_token) {
+      throw new Error('Failed to exchange for long-lived access token');
+    }
+
+    // Get the Instagram Business Account connected to this Facebook user
+    const meFields = await (
+      await fetch(
+        `https://graph.facebook.com/v20.0/me?fields=id,name,picture,instagram_business_account{id,username,name,profile_picture_url}&access_token=${access_token}`
+      )
+    ).json();
+
+    let igAccount = meFields?.instagram_business_account;
+
+    // Fallback: find Instagram account through connected Facebook pages
+    if (!igAccount?.id) {
+      try {
+        const pagesResponse = await (
+          await fetch(
+            `https://graph.facebook.com/v20.0/me/accounts?fields=instagram_business_account{id,username,name,profile_picture_url}&limit=100&access_token=${access_token}`
+          )
+        ).json();
+
+        const pageWithIg = pagesResponse?.data?.find(
+          (p: any) => p?.instagram_business_account?.id
+        );
+
+        if (pageWithIg?.instagram_business_account) {
+          igAccount = pageWithIg.instagram_business_account;
+        }
+      } catch {
+        // ignore fallback errors
+      }
+    }
+
+    if (!igAccount?.id) {
+      throw new Error(
+        'No Instagram Business Account found. Go to Accounts Center on Facebook to connect your Instagram Business or Creator account to your Facebook profile, then try again.'
+      );
+    }
 
     return {
-      id: user_id,
-      name,
+      id: igAccount.id,
+      name: igAccount.name || meFields.name,
       accessToken: access_token,
       refreshToken: access_token,
-      expiresIn: dayjs().add(58, 'days').unix() - dayjs().unix(),
-      picture: profile_picture_url,
-      username,
+      expiresIn: dayjs().add(59, 'days').unix() - dayjs().unix(),
+      picture: igAccount.profile_picture_url || meFields?.picture?.data?.url || '',
+      username: igAccount.username || '',
     };
   }
 
@@ -162,8 +180,7 @@ export class InstagramStandaloneProvider
       id,
       accessToken,
       postDetails,
-      integration,
-      'graph.instagram.com'
+      integration
     );
   }
 
@@ -181,8 +198,7 @@ export class InstagramStandaloneProvider
       lastCommentId,
       accessToken,
       postDetails,
-      integration,
-      'graph.instagram.com'
+      integration
     );
   }
 
@@ -190,8 +206,7 @@ export class InstagramStandaloneProvider
     return instagramProvider.analytics(
       id,
       accessToken,
-      date,
-      'graph.instagram.com'
+      date
     );
   }
 
@@ -205,8 +220,7 @@ export class InstagramStandaloneProvider
       integrationId,
       accessToken,
       postId,
-      date,
-      'graph.instagram.com'
+      date
     );
   }
 }
