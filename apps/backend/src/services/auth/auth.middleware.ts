@@ -66,6 +66,9 @@ export class AuthMiddleware implements NestMiddleware {
             user.isSuperAdmin = true;
             delete user.password;
 
+            // Keep request-scoped authorization and tenant context in sync.
+            // @ts-ignore
+            req.user = user;
             // @ts-ignore
             req.org = loadImpersonate.organization as any;
             // @ts-ignore
