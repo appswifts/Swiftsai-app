@@ -68,8 +68,21 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          script_stop: true
           script: |
+            set -eu
             cd ~/postiz-docker-compose
-            sudo docker compose pull
-            sudo docker compose down
-            sudo docker compose up -d
+            sudo docker compose pull postiz
+            sudo docker compose up -d --no-deps --force-recreate postiz
+
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent --show-error http://127.0.0.1:4007/ >/dev/null; then
+                exit 0
+              fi
+              sleep 5
+            done
+
+            echo "Application did not become healthy within 5 minutes" >&2
+            sudo docker compose logs --tail=200 postiz
+            exit 1
