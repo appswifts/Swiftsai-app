@@ -21,3 +21,19 @@ dist
 .git
 .github
 reports
+tmp
+.claude
+.opencode
+
+# Never bake local secrets into an image.
+.env
+.env.*
+!.env.example
+
+# Local build artifacts and archived copies are not Docker inputs.
+/Swiftsai-app
+*.tar.gz
+*.tsbuildinfo
+*build*out*.txt
+*build*output*.txt
+check-*.js

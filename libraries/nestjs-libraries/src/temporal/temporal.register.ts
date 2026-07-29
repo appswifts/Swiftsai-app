@@ -27,8 +27,11 @@ export class TemporalRegister implements OnModuleInit {
       await connection.operatorService.addSearchAttributes({
         namespace: process.env.TEMPORAL_NAMESPACE || 'default',
         searchAttributes: missingAttributes.reduce((all, current) => {
+          // IDs are exact-match values. Temporal type 2 is Keyword; using
+          // Text here consumes the namespace's limited full-text attributes
+          // and can prevent a fresh installation from starting.
           // @ts-ignore
-          all[current] = 1;
+          all[current] = 2;
           return all;
         }, {}),
       });
