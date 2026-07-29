@@ -64,25 +64,68 @@ jobs:
     steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.7
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_USERNAME: ${{ github.repository_owner }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 30m
+          envs: GHCR_PAT,GHCR_USERNAME
           script_stop: true
           script: |
             set -eu
             cd ~/postiz-docker-compose
-            sudo docker compose pull postiz
+
+            if [ -n "${GHCR_PAT:-}" ]; then
+              printf '%s' "$GHCR_PAT" |
+                sudo docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin
+            fi
+
+            max_pull_attempts=5
+            pull_attempt=1
+            pull_succeeded=false
+
+            while [ "$pull_attempt" -le "$max_pull_attempts" ]; do
+              echo "Pull attempt $pull_attempt/$max_pull_attempts"
+              if sudo docker compose pull postiz; then
+                pull_succeeded=true
+                break
+              fi
+
+              if [ "$pull_attempt" -lt "$max_pull_attempts" ]; then
+                sleep_seconds=$((pull_attempt * 10))
+                echo "Pull failed; retrying in ${sleep_seconds}s"
+                sleep "$sleep_seconds"
+              fi
+              pull_attempt=$((pull_attempt + 1))
+            done
+
+            if [ "$pull_succeeded" != "true" ]; then
+              echo "Image pull failed after $max_pull_attempts attempts" >&2
+              sudo docker compose images postiz || true
+              sudo docker system df || true
+              exit 1
+            fi
+
             sudo docker compose up -d --no-deps --force-recreate postiz
 
-            for attempt in $(seq 1 60); do
+            max_health_checks=120
+            for attempt in $(seq 1 "$max_health_checks"); do
               if curl --fail --silent --show-error http://127.0.0.1:4007/ >/dev/null; then
+                echo "Application became healthy"
+                sudo docker compose ps postiz
                 exit 0
               fi
               sleep 5
             done
 
-            echo "Application did not become healthy within 5 minutes" >&2
-            sudo docker compose logs --tail=200 postiz
+            echo "Application did not become healthy within 10 minutes" >&2
+            sudo docker compose ps postiz || true
+            sudo docker compose logs --tail=200 postiz || true
+            container_id=$(sudo docker compose ps -q postiz)
+            if [ -n "$container_id" ]; then
+              sudo docker inspect "$container_id" || true
+            fi
             exit 1
