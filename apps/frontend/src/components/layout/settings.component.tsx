@@ -42,6 +42,7 @@ export const SettingsPopup: FC<{
   const toast = useToaster();
   const swr = useSWRConfig();
   const user = useUser();
+  const t = useT();
   const resolver = useMemo(() => {
     return classValidatorResolver(UserDetailDto);
   }, []);
@@ -63,7 +64,12 @@ export const SettingsPopup: FC<{
   }, []);
   const openMedia = useCallback(() => {
     showMediaBox((values) => {
-      form.setValue('picture', values);
+      if (values?.id && values?.path) {
+        form.setValue('picture', values, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
     });
   }, []);
   const remove = useCallback(() => {
@@ -78,13 +84,13 @@ export const SettingsPopup: FC<{
     if (getRef) {
       return;
     }
+    await swr.mutate('/user/self');
     toast.show(t('profile_updated', 'Profile updated'));
     close();
-  }, []);
+  }, [close, fetch, getRef, swr, t]);
 
   const [tab, setTab] = useState('global_settings');
 
-  const t = useT();
   const list = useMemo(() => {
     const arr = [];
     arr.push({ tab: 'global_settings', label: t('global_settings', 'Global Settings') });
@@ -168,13 +174,19 @@ export const SettingsPopup: FC<{
                 <div className="flex flex-col gap-[20px]">
                   <h3 className="text-[20px]">{t('profile_settings', 'Profile Settings')}</h3>
                   <div className="flex flex-col gap-[20px] pb-[20px] border-b border-tableBorder">
-                    <div className="flex gap-[20px] items-start">
-                      <div className="flex flex-col items-center gap-[10px]">
+                    <div className="flex flex-col sm:flex-row gap-[20px] items-start">
+                      <div className="flex flex-col items-center gap-[10px] w-full sm:w-auto">
                         {picture?.path ? (
-                          <img src={picture.path} className="w-[100px] h-[100px] rounded-full object-cover border border-tableBorder" alt="Profile" />
+                          <div className="w-[112px] h-[112px] rounded-full overflow-hidden border-2 border-tableBorder bg-menuBg">
+                            <img
+                              src={picture.path}
+                              className="w-full h-full object-cover object-center"
+                              alt="Profile picture preview"
+                            />
+                          </div>
                         ) : (
-                          <div className="w-[100px] h-[100px] rounded-full border border-tableBorder bg-menuBg flex items-center justify-center">
-                            <span className="text-textColor/50">No Image</span>
+                          <div className="w-[112px] h-[112px] rounded-full border-2 border-tableBorder bg-menuBg flex items-center justify-center">
+                            <span className="text-textColor/50 text-[12px]">No image</span>
                           </div>
                         )}
                         <div className="flex gap-[8px]">
@@ -186,6 +198,9 @@ export const SettingsPopup: FC<{
                               Remove
                             </button>
                           )}
+                        </div>
+                        <div className="max-w-[180px] text-center text-[11px] text-newTextColor/50">
+                          Use a square image. It will be cropped to a circle.
                         </div>
                       </div>
 
@@ -270,15 +285,23 @@ export const SettingsPopup: FC<{
                         <div className="text-[18px] font-semibold text-newTextColor">{user?.totalChannels || 0}</div>
                       </div>
                     </div>
-                    <Button onClick={() => { window.location.href = '/billing'; }}>
-                      {t('manage_subscription', 'Manage Subscription')}
-                    </Button>
+                    {user?.isLifetime ? (
+                      <div className="rounded-[6px] border border-tableBorder bg-newBgColorInner px-[12px] py-[10px] text-[13px] text-newTextColor/70">
+                        Lifetime access is active. There is no recurring subscription to manage.
+                      </div>
+                    ) : (
+                      <Button onClick={() => { window.location.href = '/billing'; }}>
+                        {t('manage_subscription', 'Manage Subscription')}
+                      </Button>
+                    )}
                   </div>
-                  <div className="text-[13px] text-newTextColor/60">
-                    <Link href="/billing" className="text-primary hover:text-primary/80">
-                      {t('view_billing_details', 'View billing details & invoices')} →
-                    </Link>
-                  </div>
+                  {!user?.isLifetime && (
+                    <div className="text-[13px] text-newTextColor/60">
+                      <Link href="/billing" className="text-primary hover:text-primary/80">
+                        {t('view_billing_details', 'View billing details & invoices')} →
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
               {tab === 'approved_apps' && (

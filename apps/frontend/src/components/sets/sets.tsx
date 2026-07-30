@@ -169,7 +169,29 @@ export const Sets: FC = () => {
     <div className="flex flex-col">
       <h3 className="text-[20px]">Sets ({data?.length || 0})</h3>
       <div className="text-customColor18 mt-[4px]">
-        Manage your content sets for easy reuse across posts.
+        Save a complete post template—including text, media, selected social
+        channels, and provider settings—then load it again when creating a post.
+      </div>
+      <div className="mt-[16px] grid grid-cols-1 md:grid-cols-3 gap-[10px]">
+        {[
+          ['1. Create', 'Choose “Add a set” and prepare the reusable post.'],
+          ['2. Save', 'Give it a clear name such as “Weekly product update”.'],
+          ['3. Reuse', 'Select the saved set from the post composer or calendar.'],
+        ].map(([title, description]) => (
+          <div
+            key={title}
+            className="rounded-[8px] border border-fifth bg-sixth p-[12px]"
+          >
+            <div className="text-[13px] font-semibold">{title}</div>
+            <div className="mt-[4px] text-[12px] text-customColor18">
+              {description}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-[10px] text-[12px] text-customColor18">
+        Sets belong only to the currently selected organization, so templates
+        and connected social channels never cross tenant boundaries.
       </div>
       <div className="my-[16px] mt-[16px] bg-sixth border-fifth items-center border rounded-[4px] p-[24px] flex gap-[24px]">
         <div className="flex flex-col w-full">

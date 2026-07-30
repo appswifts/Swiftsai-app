@@ -21,13 +21,20 @@ const CreateOrgForm: FC<{ onClose: () => void; onCreated: () => void }> = ({ onC
     setLoading(true);
     setError('');
     try {
-      await fetch('/user/create-org', {
+      const created = await (await fetch('/user/create-org', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
-      });
+      })).json();
       onCreated();
       onClose();
+      if (created?.id) {
+        await fetch('/user/change-org', {
+          method: 'POST',
+          body: JSON.stringify({ id: created.id }),
+        });
+        window.location.reload();
+      }
     } catch (e: any) {
       setError(e.message || 'Failed to create organization');
     } finally {
@@ -70,6 +77,7 @@ export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
   const fetch = useFetch();
   const { mutate } = useSWRConfig();
   const user = useUser();
+  const [open, setOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const load = useCallback(async () => {
     return await (await fetch('/user/organizations')).json();
@@ -84,9 +92,6 @@ export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
   const current = useMemo(() => {
     return data?.find((d: any) => d.id === user?.orgId);
   }, [data]);
-  const withoutCurrent = useMemo(() => {
-    return data?.filter((d: any) => d.id !== user?.orgId);
-  }, [current, data]);
   const changeOrg = useCallback(
     (org: { name: string; id: string }) => async () => {
       await fetch('/user/change-org', {
@@ -99,18 +104,30 @@ export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
     },
     []
   );
-  if (isLoading || (!isLoading && data?.length === 1)) {
+  if (isLoading || !data?.length) {
     return null;
   }
   return (
     <>
       <div className="hover:text-newTextColor">
-        <div className="group text-[12px] relative">
+        <div className="text-[12px] relative">
           {asOpenSelect && (
-            <div className="bg-btnPrimary !flex !relative max-w-[500px] mx-auto py-[12px] px-[12px]">Select Organization</div>
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="bg-btnPrimary flex relative w-full max-w-[500px] mx-auto py-[12px] px-[12px] rounded-[6px] items-center justify-between"
+            >
+              <span>{current?.name || 'Select organization'}</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
           )}
           {!asOpenSelect && (
-            <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              aria-label={`Current organization: ${current?.name || 'Unknown'}. Open organization menu`}
+              className="flex items-center gap-[8px] rounded-[6px] px-[8px] py-[6px] hover:bg-boxHover"
+            >
               <svg
                 className={user?.tier.current === 'FREE' ? 'animate-bounce drop-shadow-glow': ''}
                 width="24"
@@ -124,26 +141,43 @@ export const OrganizationSelector: FC<{ asOpenSelect?: boolean }> = ({
                   fill="currentColor"
                 />
               </svg>
-            </div>
+              <span className="hidden xl:block max-w-[150px] truncate">
+                {current?.name}
+              </span>
+              <span aria-hidden="true">⌄</span>
+            </button>
           )}
-          {data?.length > 1 && (
+          {open && (
             <div
               className={clsx(
-                'hidden py-[12px] px-[12px] group-hover:flex absolute top-[100%] end-0 bg-third border-tableBorder border gap-[12px] cursor-pointer flex-col',
+                'z-[100] min-w-[240px] py-[8px] absolute top-[calc(100%+8px)] end-0 bg-third border-tableBorder border rounded-[8px] flex flex-col',
                 asOpenSelect ? '!flex !relative max-w-[500px] mx-auto mb-[10px]' : '',
               )}
             >
               {data?.map((org: { name: string; id: string }) => (
-                <div key={org.id} onClick={changeOrg(org)}>
-                  {org.name}
-                </div>
+                <button
+                  type="button"
+                  key={org.id}
+                  onClick={changeOrg(org)}
+                  disabled={org.id === user?.orgId}
+                  className={clsx(
+                    'text-left px-[12px] py-[9px] rounded-[6px] hover:bg-boxHover disabled:cursor-default',
+                    org.id === user?.orgId && 'text-primary bg-boxHover'
+                  )}
+                >
+                  <div className="font-medium">{org.name}</div>
+                  <div className="text-[10px] text-newTextColor/50">
+                    {org.id === user?.orgId ? 'Currently managing' : 'Switch organization'}
+                  </div>
+                </button>
               ))}
-              <div
+              <button
+                type="button"
                 onClick={() => setShowCreate(!showCreate)}
-                className="text-primary text-[13px] cursor-pointer hover:opacity-80"
+                className="mt-[4px] border-t border-tableBorder px-[12px] pt-[10px] text-left text-primary text-[13px] cursor-pointer hover:opacity-80"
               >
                 + Create Organization
-              </div>
+              </button>
               {showCreate && (
                 <CreateOrgForm
                   onClose={() => setShowCreate(false)}

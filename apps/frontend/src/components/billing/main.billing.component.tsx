@@ -258,8 +258,15 @@ export const MainBillingComponent: FC<{
   }, [sub]);
   const updatePayment = useCallback(async () => {
     const { portal } = await (await fetch('/billing/portal')).json();
-    window.location.href = portal;
-  }, []);
+    if (!portal) {
+      toast.show(
+        'No billing portal is available for this organization. Contact support if you believe this is an error.',
+        'warning'
+      );
+      return;
+    }
+    window.location.assign(portal);
+  }, [fetch, toast]);
   const currentPackage = useMemo(() => {
     if (!subscription) {
       return 'FREE';
