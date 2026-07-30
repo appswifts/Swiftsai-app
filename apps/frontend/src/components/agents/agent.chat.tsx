@@ -8,7 +8,6 @@ import {
   useConfigureSuggestions,
   useHumanInTheLoop,
 } from '@copilotkit/react-core/v2';
-import { Bot, ShieldCheck } from 'lucide-react';
 import { z } from 'zod';
 import { PropertiesContext } from '@gitroom/frontend/components/agents/agent';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
@@ -62,26 +61,6 @@ export const AgentChat: FC = () => {
       <CopilotWorkspaceContext />
       <PublishingApproval />
       <div className="agent-v2 flex min-h-0 min-w-0 flex-1 flex-col bg-newBgColorInner">
-        <header className="hidden h-16 shrink-0 items-center justify-between border-b border-newBgLineColor px-5 lg:flex">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-btnPrimary/15 text-btnPrimary">
-              <Bot className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-sm font-semibold">
-                {t('swiftsai_copilot', 'SwiftsAI Copilot')}
-              </h1>
-              <div className="flex items-center gap-1.5 text-xs text-newTextColor/55">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                {t('ready_to_help', 'Ready to help')}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-newBgLineColor px-3 py-1.5 text-xs text-newTextColor/60">
-            <ShieldCheck className="h-3.5 w-3.5 text-green-500" />
-            {t('organization_scoped', 'Organization scoped')}
-          </div>
-        </header>
         <div className="min-h-0 min-w-0 flex-1">
           <CopilotChat
             agentId="postiz"

@@ -818,20 +818,101 @@ html[dir='rtl'] [dir='ltr'] {
     }
   }
 }
+
+/* CopilotKit v2 uses semantic design tokens. Keep these scoped to the agent
+   workspace so its native UI follows SwiftsAI light/dark themes without
+   changing the rest of the application. */
+.agent-v2 {
+  min-height: 0;
+  isolation: isolate;
+
+  [data-copilotkit] {
+    --background: var(--new-bgColorInner);
+    --foreground: rgb(var(--new-textColor));
+    --card: var(--new-bgColorInner);
+    --card-foreground: rgb(var(--new-textColor));
+    --popover: var(--new-bgColorInner);
+    --popover-foreground: rgb(var(--new-textColor));
+    --primary: var(--new-btn-primary);
+    --primary-foreground: #ffffff;
+    --secondary: var(--new-btn-simple);
+    --secondary-foreground: rgb(var(--new-textColor));
+    --muted: var(--new-bgColor);
+    --muted-foreground: var(--new-textItemBlur);
+    --accent: var(--new-box-hover);
+    --accent-foreground: rgb(var(--new-textColor));
+    --destructive: #c94040;
+    --border: var(--new-bgLineColor);
+    --input: var(--new-bgLineColor);
+    --ring: var(--new-btn-primary);
+    --radius: 0.625rem;
+  }
+
+  [data-testid='copilot-chat'] {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(
+        circle at 50% 0%,
+        color-mix(in srgb, var(--new-btn-primary) 7%, transparent),
+        transparent 34%
+      ),
+      var(--new-bgColorInner);
+  }
+
+  [data-testid='copilot-scroll-content'] {
+    padding-top: 1.5rem;
+  }
+
+  [data-testid='copilot-welcome-screen'] {
+    width: min(100%, 52rem);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  [data-testid='copilot-input-overlay'] {
+    background: linear-gradient(
+      to top,
+      var(--new-bgColorInner) 70%,
+      transparent
+    );
+  }
+
+  [data-testid='copilot-chat-input'] {
+    width: min(calc(100% - 1.5rem), 48rem);
+    margin-inline: auto;
+    border-color: var(--new-bgLineColor);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  }
+
+  [data-testid='copilot-chat-input']:focus-within {
+    border-color: var(--new-btn-primary);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--new-btn-primary) 18%, transparent);
+  }
+
+  [data-testid='copilot-user-message'],
+  [data-testid='copilot-assistant-message'] {
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 639px) {
+    [data-testid='copilot-scroll-content'] {
+      padding-top: 0.75rem;
+    }
+
+    [data-testid='copilot-chat-input'] {
+      width: calc(100% - 1rem);
+    }
+  }
+}
 .rm-bg .b2 {
   padding-top: 0 !important;
 }
 .rm-bg .b1 {
   background: transparent !important;
   gap: 0 !important;
-}
-
-.copilotKitMessage img {
-  width: 200px;
-}
-
-.copilotKitMessage a {
-  color: var(--new-btn-text) !important;
 }
 
 .agent-message-container {

@@ -9,11 +9,9 @@ import React, {
   ReactNode,
 } from 'react';
 import clsx from 'clsx';
-import useCookie from 'react-use-cookie';
 import useSWR from 'swr';
 import { useSWRConfig } from 'swr';
 import { orderBy } from 'lodash';
-import { SVGLine } from '@gitroom/frontend/components/launches/launches.component';
 import ImageWithFallback from '@gitroom/react/helpers/image.with.fallback';
 import SafeImage from '@gitroom/react/helpers/safe.image';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
@@ -22,6 +20,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import {
+  Bot,
   Check,
   History,
   Menu,
@@ -44,8 +43,6 @@ export const AgentList: FC<{
   const load = useCallback(async () => {
     return (await (await fetch('/integrations/list')).json()).integrations;
   }, []);
-
-  const [collapseMenu, setCollapseMenu] = useCookie('collapseMenu', '0');
 
   const { data } = useSWR('integrations', load, {
     revalidateOnFocus: false,
@@ -81,60 +78,50 @@ export const AgentList: FC<{
   return (
     <div
       className={clsx(
-        'trz fixed inset-y-0 start-0 z-[70] flex w-[300px] max-w-[88vw] flex-col gap-[15px] border-e border-newBgLineColor bg-newBgColorInner transition-transform duration-200 lg:relative lg:inset-auto lg:z-auto lg:max-w-none lg:translate-x-0',
-        open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
-        collapseMenu === '1'
-          ? 'lg:group lg:sidebar lg:w-[100px]'
-          : 'lg:w-[260px]'
+        'trz fixed inset-y-0 start-0 z-[70] flex w-[300px] max-w-[88vw] flex-col border-e border-newBgLineColor bg-newBgColorInner shadow-sm transition-transform duration-200 xl:relative xl:inset-auto xl:z-auto xl:w-[248px] xl:max-w-none xl:translate-x-0 xl:shadow-none',
+        open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
       )}
     >
-      <div className="absolute top-0 start-0 w-full h-full p-[20px] overflow-auto scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
-        <div className="flex items-center">
-          <h2 className="group-[.sidebar]:hidden flex-1 text-[20px] font-[500] mb-[15px]">
-            {t('select_channels', 'Select Channels')}
-          </h2>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex h-16 shrink-0 items-center border-b border-newBgLineColor px-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">
+              {t('select_channels', 'Social channels')}
+            </h2>
+            <p className="truncate text-xs text-newTextColor/55">
+              {selected.length
+                ? `${selected.length} ${t('selected', 'selected')}`
+                : t('choose_channels_for_chat', 'Choose channels for this chat')}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="mb-[15px] flex h-9 w-9 items-center justify-center rounded-md border border-newBgLineColor text-newTextColor lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-newBgLineColor text-newTextColor xl:hidden"
             aria-label={t('close', 'Close')}
           >
             <X className="h-4 w-4" />
           </button>
-          <div
-            onClick={() => setCollapseMenu(collapseMenu === '1' ? '0' : '1')}
-            className="-mt-3 hidden group-[.sidebar]:rotate-[180deg] group-[.sidebar]:mx-auto text-btnText bg-btnSimple rounded-[6px] w-[24px] h-[24px] items-center justify-center cursor-pointer select-none lg:flex"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="7"
-              height="13"
-              viewBox="0 0 7 13"
-              fill="none"
-            >
-              <path
-                d="M6 11.5L1 6.5L6 1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
         </div>
-        <div className={clsx('flex flex-col gap-[15px]')}>
-          {sortedIntegrations.map((integration, index) => (
-            <div
+        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3 scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
+          {sortedIntegrations.map((integration) => {
+            const isSelected = selected.some((p) => p.id === integration.id);
+            return (
+            <button
+              type="button"
+              aria-pressed={isSelected}
               onClick={setIntegration(integration)}
               key={integration.id}
               className={clsx(
-                'flex gap-[12px] items-center group/profile justify-center hover:bg-boxHover rounded-e-[8px] hover:opacity-100 cursor-pointer',
-                !selected.some((p) => p.id === integration.id) && 'opacity-20'
+                'group flex w-full min-w-0 items-center gap-3 rounded-lg border px-2.5 py-2 text-start transition-colors',
+                isSelected
+                  ? 'border-btnPrimary/35 bg-btnPrimary/10'
+                  : 'border-transparent hover:border-newBgLineColor hover:bg-boxHover'
               )}
             >
               <div
                 className={clsx(
-                  'relative rounded-full flex justify-center items-center gap-[6px]',
+                  'relative flex shrink-0 items-center justify-center rounded-lg',
                   integration.disabled && 'opacity-50'
                 )}
               >
@@ -146,9 +133,6 @@ export const AgentList: FC<{
                     <div className="bg-primary/60 w-[39px] h-[46px] start-0 top-0 absolute rounded-full z-[199]" />
                   </div>
                 )}
-                <div className="h-full w-[4px] -ms-[12px] rounded-s-[3px] opacity-0 group-hover/profile:opacity-100 transition-opacity">
-                  <SVGLine />
-                </div>
                 <ImageWithFallback
                   fallbackSrc={`/icons/platforms/${integration.identifier}.png`}
                   src={integration.picture}
@@ -167,14 +151,29 @@ export const AgentList: FC<{
               </div>
               <div
                 className={clsx(
-                  'flex-1 whitespace-nowrap text-ellipsis overflow-hidden group-[.sidebar]:hidden',
+                  'min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm',
                   integration.disabled && 'opacity-50'
                 )}
               >
                 {integration.name}
               </div>
+              <span
+                className={clsx(
+                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                  isSelected
+                    ? 'border-btnPrimary bg-btnPrimary text-white'
+                    : 'border-newBgLineColor text-transparent'
+                )}
+              >
+                <Check className="h-3 w-3" />
+              </span>
+            </button>
+          )})}
+          {!sortedIntegrations.length && (
+            <div className="rounded-lg border border-dashed border-newBgLineColor p-4 text-center text-sm text-newTextColor/55">
+              {t('no_social_channels', 'Connect a social channel to begin.')}
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
@@ -190,7 +189,7 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <PropertiesContext.Provider value={{ properties }}>
-      <div className="relative flex h-[calc(100dvh-112px)] min-h-[560px] w-full min-w-0 overflow-hidden rounded-xl border border-newBgLineColor bg-newBgColorInner shadow-sm">
+      <div className="relative flex h-[calc(100dvh-96px)] min-h-0 w-full min-w-0 overflow-hidden rounded-xl border border-newBgLineColor bg-newBgColorInner shadow-sm">
         {(channelsOpen || threadsOpen) && (
           <button
             type="button"
@@ -199,7 +198,7 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
               setChannelsOpen(false);
               setThreadsOpen(false);
             }}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px] lg:hidden"
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px]"
           />
         )}
         <AgentList
@@ -207,30 +206,46 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
           open={channelsOpen}
           onClose={() => setChannelsOpen(false)}
         />
-        <div className="flex min-w-0 flex-1 flex-col bg-newBgColorInner">
-          <div className="flex h-[54px] shrink-0 items-center justify-between border-b border-newBgLineColor px-3 lg:hidden">
+        <main className="flex min-w-0 flex-1 flex-col bg-newBgColorInner">
+          <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-newBgLineColor px-3 sm:px-4">
             <button
               type="button"
               onClick={() => setChannelsOpen(true)}
-              className="flex h-9 items-center gap-2 rounded-md border border-newBgLineColor px-3 text-sm"
+              className="flex h-9 shrink-0 items-center gap-2 rounded-md border border-newBgLineColor px-3 text-sm hover:bg-boxHover xl:hidden"
             >
               <Menu className="h-4 w-4" />
-              {t('channels', 'Channels')}
+              <span className="hidden sm:inline">{t('channels', 'Channels')}</span>
             </button>
-            <span className="text-sm font-semibold">
-              {t('swiftsai_copilot', 'SwiftsAI Copilot')}
-            </span>
+            <div className="flex min-w-0 flex-1 items-center gap-3 xl:flex-none">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-btnPrimary/15 text-btnPrimary">
+                <Bot className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-semibold">
+                  {t('swiftsai_copilot', 'SwiftsAI Copilot')}
+                </h1>
+                <p className="truncate text-xs text-newTextColor/55">
+                  {properties.length
+                    ? `${properties.length} ${t('channels_selected', 'channels selected')}`
+                    : t('organization_scoped', 'Organization workspace')}
+                </p>
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => setThreadsOpen(true)}
-              className="flex h-9 items-center gap-2 rounded-md border border-newBgLineColor px-3 text-sm"
+              className="flex h-9 shrink-0 items-center gap-2 rounded-md border border-newBgLineColor px-3 text-sm hover:bg-boxHover"
             >
               <History className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('sessions', 'Sessions')}</span>
+              <span className="hidden sm:inline">
+                {t('conversations', 'Conversations')}
+              </span>
             </button>
           </div>
-          <div className="flex min-h-0 min-w-0 flex-1">{children}</div>
-        </div>
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+            {children}
+          </div>
+        </main>
         <Threads open={threadsOpen} onClose={() => setThreadsOpen(false)} />
       </div>
     </PropertiesContext.Provider>
@@ -289,14 +304,14 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
   return (
     <aside
       className={clsx(
-        'trz fixed inset-y-0 end-0 z-[70] flex w-[320px] max-w-[90vw] flex-col border-s border-newBgLineColor bg-newBgColorInner transition-transform duration-200 xl:relative xl:inset-auto xl:z-auto xl:w-[280px] xl:max-w-none xl:translate-x-0',
+        'trz fixed inset-y-0 end-0 z-[70] flex w-[360px] max-w-[92vw] flex-col border-s border-newBgLineColor bg-newBgColorInner shadow-sm transition-transform duration-200',
         open ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full'
       )}
     >
-      <div className="absolute top-0 start-0 w-full h-full p-[16px] overflow-auto scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
-        <div className="mb-[16px] flex items-center justify-between">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-newBgLineColor px-4">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-sm font-semibold">
               {t('conversations', 'Conversations')}
             </h2>
             <p className="text-xs text-newTextColor/55">
@@ -306,23 +321,23 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-md border border-newBgLineColor xl:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-newBgLineColor hover:bg-boxHover"
             aria-label={t('close', 'Close')}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="mb-[15px] flex justify-center">
+        <div className="p-3 pb-0">
           <Link
             href={`/agents`}
             onClick={onClose}
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-btnPrimary px-4 text-white outline-none"
+            className="flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-btnPrimary px-4 text-sm text-white outline-none"
           >
             <MessageSquarePlus className="h-4 w-4" />
             <span>{t('start_a_new_chat', 'Start a new chat')}</span>
           </Link>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3 scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
           {data?.threads?.map((p: any) => (
             <div
               className={clsx(
