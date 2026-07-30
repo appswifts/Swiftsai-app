@@ -1,68 +1,68 @@
 'use client';
 
-import React, {
-  FC,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { CopilotChat, CopilotKitCSSProperties } from '@copilotkit/react-ui';
-
+import React, { FC, useCallback, useContext, useEffect } from 'react';
 import {
-  InputProps,
-} from '@copilotkit/react-ui';
-import { Bot, ShieldCheck } from 'lucide-react';
-import { Input } from '@gitroom/frontend/components/agents/agent.input';
-import { useModals } from '@gitroom/frontend/components/layout/new-modal';
-import {
+  CopilotChat,
   CopilotKit,
-  useCopilotAction,
-  useCopilotMessagesContext,
-} from '@copilotkit/react-core';
-import {
-  MediaPortal,
-  PropertiesContext,
-} from '@gitroom/frontend/components/agents/agent';
+  useAgentContext,
+  useConfigureSuggestions,
+  useHumanInTheLoop,
+} from '@copilotkit/react-core/v2';
+import { Bot, ShieldCheck } from 'lucide-react';
+import { z } from 'zod';
+import { PropertiesContext } from '@gitroom/frontend/components/agents/agent';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
 import { useParams } from 'next/navigation';
-import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { TextMessage } from '@copilotkit/runtime-client-gql';
+import { useModals } from '@gitroom/frontend/components/layout/new-modal';
 import { AddEditModal } from '@gitroom/frontend/components/new-launch/add.edit.modal';
 import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { ExistingDataContextProvider } from '@gitroom/frontend/components/launches/helpers/use.existing.data';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 
+const manualPostingSchema = z.object({
+  list: z.array(
+    z.object({
+      integrationId: z.string().describe('The selected social channel ID'),
+      date: z.string().describe('UTC date for the scheduled post'),
+      settings: z.record(z.any()).optional(),
+      posts: z.array(
+        z.object({
+          content: z.string(),
+          attachments: z.array(
+            z.object({
+              id: z.string(),
+              path: z.string(),
+            })
+          ),
+        })
+      ),
+    })
+  ),
+});
+
+type ManualPostingArgs = z.infer<typeof manualPostingSchema>;
+
 export const AgentChat: FC = () => {
   const { backendUrl } = useVariables();
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ id?: string }>();
   const { properties } = useContext(PropertiesContext);
   const t = useT();
+  const threadId = params.id && params.id !== 'new' ? params.id : undefined;
 
   return (
     <CopilotKit
-      {...(params.id === 'new' ? {} : { threadId: params.id })}
       credentials="include"
       runtimeUrl={backendUrl + '/copilot/agent'}
-      showDevConsole={false}
       agent="postiz"
-      properties={{
-        integrations: properties,
-      }}
+      properties={{ integrations: properties }}
+      enableInspector={false}
+      showDevConsole={false}
     >
-      <Hooks />
-      <LoadMessages id={params.id} />
-      <div
-        style={
-          {
-            '--copilot-kit-primary-color': 'var(--new-btn-text)',
-            '--copilot-kit-background-color': 'var(--new-bg-color)',
-          } as CopilotKitCSSProperties
-        }
-        className="agent flex min-h-0 min-w-0 flex-1 flex-col bg-newBgColorInner"
-      >
-        <header className="hidden h-[64px] shrink-0 items-center justify-between border-b border-newBgLineColor px-5 lg:flex">
+      <CopilotWorkspaceContext />
+      <PublishingApproval />
+      <div className="agent-v2 flex min-h-0 min-w-0 flex-1 flex-col bg-newBgColorInner">
+        <header className="hidden h-16 shrink-0 items-center justify-between border-b border-newBgLineColor px-5 lg:flex">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-btnPrimary/15 text-btnPrimary">
               <Bot className="h-5 w-5" />
@@ -84,19 +84,24 @@ export const AgentChat: FC = () => {
         </header>
         <div className="min-h-0 min-w-0 flex-1">
           <CopilotChat
+            agentId="postiz"
+            threadId={threadId}
             className="h-full w-full"
             labels={{
-              title: t('swiftsai_copilot', 'SwiftsAI Copilot'),
-              initial: t(
-                'agent_welcome_message',
-                'Welcome to your content workspace. I can help you plan campaigns, create platform-ready posts, improve drafts, and prepare schedules for the channels you select.'
-              ),
-              placeholder: t(
+              chatInputPlaceholder: t(
                 'agent_input_placeholder',
-                'Ask SwiftsAI to create, improve, or plan content…'
+                'Ask SwiftsAI to create, improve, or schedule content…'
+              ),
+              chatDisclaimerText: t(
+                'agent_disclaimer',
+                'Review generated content before publishing.'
+              ),
+              welcomeMessageText: t(
+                'agent_welcome_message',
+                'Plan campaigns, create platform-ready posts, improve drafts, and prepare schedules for your selected channels.'
               ),
             }}
-            Input={NewInput}
+            attachments={{ enabled: true }}
           />
         </div>
       </div>
@@ -104,158 +109,104 @@ export const AgentChat: FC = () => {
   );
 };
 
-const LoadMessages: FC<{ id: string }> = ({ id }) => {
-  const { setMessages } = useCopilotMessagesContext();
-  const fetch = useFetch();
+const CopilotWorkspaceContext: FC = () => {
+  const { properties } = useContext(PropertiesContext);
 
-  const loadMessages = useCallback(async (idToSet: string) => {
-    const data = await (await fetch(`/copilot/${idToSet}/list`)).json();
-    setMessages(
-      data.uiMessages.map((p: any) => {
-        return new TextMessage({
-          content: p.content,
-          role: p.role,
-        });
-      })
-    );
-  }, []);
+  useAgentContext({
+    description:
+      'Social channels selected by the signed-in user for this organization',
+    value: properties.map((integration: any) => ({
+      id: integration.id,
+      name: integration.name,
+      identifier: integration.identifier,
+      disabled: Boolean(integration.disabled),
+    })),
+  });
 
-  useEffect(() => {
-    if (id === 'new') {
-      setMessages([]);
-      return;
-    }
-    loadMessages(id);
-  }, [id]);
+  useConfigureSuggestions({
+    suggestions: [
+      {
+        title: 'Create a campaign',
+        message:
+          'Create a complete social media campaign for my selected channels. Ask me for any essential missing details.',
+      },
+      {
+        title: 'Plan this week',
+        message:
+          'Build a practical content plan for this week for my selected channels.',
+      },
+      {
+        title: 'Improve a draft',
+        message:
+          'Help me improve a draft for each selected social platform. Ask me to paste the draft.',
+      },
+      {
+        title: 'Schedule content',
+        message:
+          'Help me create and schedule platform-ready posts for my selected channels.',
+      },
+    ],
+    available: 'always',
+  });
 
   return null;
 };
 
-const NewInput: FC<InputProps> = (props) => {
-  const [media, setMedia] = useState([] as { path: string; id: string }[]);
-  const [value, setValue] = useState('');
-  return (
-    <>
-      <MediaPortal
-        value={value}
-        media={media}
-        setMedia={(e) => setMedia(e.target.value)}
-      />
-      <Input
-        {...props}
-        onChange={setValue}
-        onSend={(text) => {
-          const send = props.onSend(
-            text +
-              (media.length > 0
-                ? '\n[--Media--]' +
-                  media
-                    .map((m) =>
-                      m.path.indexOf('mp4') > -1
-                        ? `Video: ${m.path}`
-                        : `Image: ${m.path}`
-                    )
-                    .join('\n') +
-                  '\n[--Media--]'
-                : '')
-          );
-          setValue('');
-          setMedia([]);
-          return send;
-        }}
-      />
-    </>
-  );
-};
-
-export const Hooks: FC = () => {
-  const modals = useModals();
-
-  useCopilotAction({
+const PublishingApproval: FC = () => {
+  useHumanInTheLoop({
+    agentId: 'postiz',
     name: 'manualPosting',
     description:
-      'This tool should be triggered when the user wants to manually add the generated post',
-    parameters: [
-      {
-        name: 'list',
-        type: 'object[]',
-        description:
-          'list of posts to schedule to different social media (integration ids)',
-        attributes: [
-          {
-            name: 'integrationId',
-            type: 'string',
-            description: 'The integration id',
-          },
-          {
-            name: 'date',
-            type: 'string',
-            description: 'UTC date of the scheduled post',
-          },
-          {
-            name: 'settings',
-            type: 'object',
-            description: 'Settings for the integration [input:settings]',
-          },
-          {
-            name: 'posts',
-            type: 'object[]',
-            description: 'list of posts / comments (one under another)',
-            attributes: [
-              {
-                name: 'content',
-                type: 'string',
-                description: 'the content of the post',
-              },
-              {
-                name: 'attachments',
-                type: 'object[]',
-                description: 'list of attachments',
-                attributes: [
-                  {
-                    name: 'id',
-                    type: 'string',
-                    description: 'id of the attachment',
-                  },
-                  {
-                    name: 'path',
-                    type: 'string',
-                    description: 'url of the attachment',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    renderAndWaitForResponse: ({ args, status, respond }) => {
-      if (status === 'executing') {
-        return <OpenModal args={args} respond={respond} />;
+      'Open the publishing review workflow when the user wants to schedule or publish generated social posts.',
+    parameters: manualPostingSchema,
+    render: ({ args, status, respond }) => {
+      if (status === 'executing' && respond) {
+        return (
+          <OpenModal
+            args={args as ManualPostingArgs}
+            respond={(value) => respond(value)}
+          />
+        );
+      }
+
+      if (status === 'inProgress') {
+        return (
+          <div className="rounded-lg border border-newBgLineColor bg-newBgColorInner p-3 text-sm text-newTextColor/60">
+            Preparing your publishing review…
+          </div>
+        );
       }
 
       return null;
     },
   });
+
   return null;
 };
 
 const OpenModal: FC<{
-  respond: (value: any) => void;
-  args: {
-    list: {
-      integrationId: string;
-      date: string;
-      settings?: Record<string, any>;
-      posts: { content: string; attachments: { id: string; path: string }[] }[];
-    }[];
-  };
+  respond: (value: { approved: boolean; message: string }) => void;
+  args: ManualPostingArgs;
 }> = ({ args, respond }) => {
   const modals = useModals();
   const { properties } = useContext(PropertiesContext);
+
   const startModal = useCallback(async () => {
-    for (const integration of args.list) {
-      await new Promise((res) => {
+    for (const integration of args.list || []) {
+      const selectedIntegration = properties.find(
+        (item: any) => item.id === integration.integrationId
+      );
+
+      if (!selectedIntegration) {
+        respond({
+          approved: false,
+          message:
+            'A requested social channel is not selected for this organization.',
+        });
+        return;
+      }
+
+      await new Promise<void>((resolve) => {
         const group = makeId(10);
         modals.openModal({
           id: 'add-edit-modal',
@@ -265,7 +216,7 @@ const OpenModal: FC<{
           withCloseButton: false,
           askClose: true,
           size: '80%',
-          title: ``,
+          title: '',
           classNames: {
             modal: 'w-[100%] max-w-[1400px] text-textColor',
           },
@@ -274,26 +225,22 @@ const OpenModal: FC<{
               value={{
                 group,
                 integration: integration.integrationId,
-                integrationPicture:
-                  properties.find((p) => p.id === integration.integrationId)
-                    .picture || '',
+                integrationPicture: selectedIntegration.picture || '',
                 settings: integration.settings || {},
-                posts: integration.posts.map((p) => ({
+                posts: integration.posts.map((post) => ({
                   approvedSubmitForOrder: 'NO',
-                  content: p.content,
+                  content: post.content,
                   createdAt: new Date().toISOString(),
                   state: 'DRAFT',
                   id: makeId(10),
                   settings: JSON.stringify(integration.settings || {}),
                   group,
                   integrationId: integration.integrationId,
-                  integration: properties.find(
-                    (p) => p.id === integration.integrationId
-                  ),
+                  integration: selectedIntegration,
                   publishDate: dayjs.utc(integration.date).toISOString(),
-                  image: p.attachments.map((a) => ({
-                    id: a.id,
-                    path: a.path,
+                  image: post.attachments.map((attachment) => ({
+                    id: attachment.id,
+                    path: attachment.path,
                   })),
                 })),
               }}
@@ -301,20 +248,18 @@ const OpenModal: FC<{
               <AddEditModal
                 date={dayjs.utc(integration.date)}
                 allIntegrations={properties}
-                integrations={properties.filter(
-                  (p) => p.id === integration.integrationId
-                )}
-                onlyValues={integration.posts.map((p) => ({
-                  content: p.content,
+                integrations={[selectedIntegration]}
+                onlyValues={integration.posts.map((post) => ({
+                  content: post.content,
                   id: makeId(10),
                   settings: integration.settings || {},
-                  image: p.attachments.map((a) => ({
-                    id: a.id,
-                    path: a.path,
+                  image: post.attachments.map((attachment) => ({
+                    id: attachment.id,
+                    path: attachment.path,
                   })),
                 }))}
                 reopenModal={() => {}}
-                mutate={() => res(true)}
+                mutate={() => resolve()}
               />
             </ExistingDataContextProvider>
           ),
@@ -322,15 +267,19 @@ const OpenModal: FC<{
       });
     }
 
-    respond('User scheduled all the posts');
-  }, [args, respond, properties]);
+    respond({
+      approved: true,
+      message: 'The user reviewed and scheduled all posts.',
+    });
+  }, [args, modals, properties, respond]);
 
   useEffect(() => {
     startModal();
-  }, []);
+  }, [startModal]);
+
   return (
-    <div onClick={() => respond('continue')}>
-      Opening manually ${JSON.stringify(args)}
+    <div className="rounded-lg border border-newBgLineColor bg-newBgColorInner p-3 text-sm">
+      Opening the secure publishing review…
     </div>
   );
 };

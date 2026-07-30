@@ -17,8 +17,6 @@ import { SVGLine } from '@gitroom/frontend/components/launches/launches.componen
 import ImageWithFallback from '@gitroom/react/helpers/image.with.fallback';
 import SafeImage from '@gitroom/react/helpers/safe.image';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { useWaitForClass } from '@gitroom/helpers/utils/use.wait.for.class';
-import { MultiMediaComponent } from '@gitroom/frontend/components/media/media.component';
 import { Integration } from '@prisma/client';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -33,43 +31,6 @@ import {
   X,
 } from 'lucide-react';
 import { deleteDialog } from '@gitroom/react/helpers/delete.dialog';
-
-export const MediaPortal: FC<{
-  media: { path: string; id: string }[];
-  value: string;
-  setMedia: (event: {
-    target: {
-      name: string;
-      value?: {
-        id: string;
-        path: string;
-        alt?: string;
-        thumbnail?: string;
-        thumbnailTimestamp?: number;
-      }[];
-    };
-  }) => void;
-}> = ({ media, setMedia, value }) => {
-  const waitForClass = useWaitForClass('copilotKitMessages');
-  const t = useT();
-  if (!waitForClass) return null;
-  return (
-    <div className="pl-[14px] pr-[24px] whitespace-nowrap editor rm-bg">
-      <MultiMediaComponent
-        allData={[{ content: value }]}
-        text={value}
-        label={t('attachments', 'Attachments')}
-        description=""
-        value={media}
-        dummy={false}
-        name="image"
-        onChange={setMedia}
-        onOpen={() => {}}
-        onClose={() => {}}
-      />
-    </div>
-  );
-};
 
 export const AgentList: FC<{
   onChange: (arr: any[]) => void;

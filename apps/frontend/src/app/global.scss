@@ -1,5 +1,6 @@
 @use './colors.scss';
 @use './polonto.css';
+@use '@copilotkit/react-core/v2/styles.css' as copilotkitV2;
 @use '@uppy/core/dist/style.css' as uppyCore;
 @use '@uppy/dashboard/dist/style.css' as uppyDashboard;
 
