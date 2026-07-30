@@ -149,7 +149,9 @@ describe('AuthMiddleware tenant isolation', () => {
 
     expect(request.user.id).toBe('impersonated-user');
     expect(request.user.password).toBeUndefined();
-    expect(request.user.isSuperAdmin).toBe(true);
+    expect(request.user.isSuperAdmin).toBe(false);
+    expect(request.impersonator.isSuperAdmin).toBe(true);
+    expect(organizationService.getUserOrg).toHaveBeenCalledWith('membership-id');
     expect(request.org.id).toBe(orgB.id);
     expect(request.org.users[0].role).toBe('ADMIN');
     expect(contextOrganizationId).toBe(orgB.id);

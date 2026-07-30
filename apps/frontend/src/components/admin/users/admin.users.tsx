@@ -17,6 +17,8 @@ interface User {
   activated: boolean;
   organizations: Array<{
     id: string;
+    membershipId: string;
+    disabled: boolean;
     name: string;
     subscriptionStatus: string | null;
     integrationCount: number;
@@ -107,7 +109,7 @@ export const AdminUsers = () => {
     }
   }, [page, limit, search]);
 
-  const handleImpersonate = useCallback(async (userId: string) => {
+  const handleImpersonate = useCallback(async (membershipId: string) => {
     if (!await deleteDialog(
       t('impersonate_user_confirm', 'Impersonate this user? You will be logged in as them.'),
       t('impersonate', 'Impersonate'),
@@ -120,9 +122,9 @@ export const AdminUsers = () => {
     try {
       await fetch('/user/impersonate', {
         method: 'POST',
-        body: JSON.stringify({ id: userId }),
+        body: JSON.stringify({ id: membershipId }),
       });
-      window.location.reload();
+      window.location.assign('/home');
     } catch (error) {
       console.error('Failed to impersonate user:', error);
     }
@@ -247,7 +249,20 @@ export const AdminUsers = () => {
                   <td className="p-[16px]">
                     <div className="flex gap-[8px]">
                       <Button
-                        onClick={() => handleImpersonate(user.id)}
+                        onClick={() => {
+                          const membership = user.organizations.find(
+                            (organization) => !organization.disabled
+                          );
+                          if (membership) {
+                            handleImpersonate(membership.membershipId);
+                          }
+                        }}
+                        disabled={
+                          !user.activated ||
+                          !user.organizations.some(
+                            (organization) => !organization.disabled
+                          )
+                        }
                         className="!bg-blue-500 hover:!bg-blue-600"
                       >
                         {t('impersonate', 'Impersonate')}

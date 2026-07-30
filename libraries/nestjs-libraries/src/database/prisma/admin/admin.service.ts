@@ -263,6 +263,8 @@ export class AdminService {
           const sub = userOrg.organization.subscription;
           return {
             id: userOrg.organization.id,
+            membershipId: userOrg.id,
+            disabled: userOrg.disabled,
             name: userOrg.organization.name,
             subscriptionTier: sub?.subscriptionTier || 'FREE',
             totalChannels: sub?.totalChannels || 0,

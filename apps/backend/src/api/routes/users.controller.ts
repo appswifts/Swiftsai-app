@@ -118,12 +118,18 @@ export class UsersController {
   async setImpersonate(
     @GetUserFromRequest() user: User,
     @Body('id') id: string,
-    @Res({ passthrough: true }) response: Response
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request
   ) {
-    if (!user.isSuperAdmin) {
+    const impersonator = (request as Request & { impersonator?: User })
+      .impersonator;
+    if (!user.isSuperAdmin && !impersonator?.isSuperAdmin) {
       throw new HttpException('Unauthorized', 400);
     }
 
+    const expires = id
+      ? new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+      : new Date(0);
     response.cookie('impersonate', id, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
@@ -133,7 +139,7 @@ export class UsersController {
           sameSite: 'none',
         }
         : {}),
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+      expires,
     });
 
     if (process.env.NOT_SECURED) {

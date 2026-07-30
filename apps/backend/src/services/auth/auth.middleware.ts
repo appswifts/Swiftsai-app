@@ -57,16 +57,18 @@ export class AuthMiddleware implements NestMiddleware {
       const impersonate = req.cookies.impersonate || req.headers.impersonate;
       if (user?.isSuperAdmin && impersonate) {
         try {
+          const impersonator = user;
           const loadImpersonate = await this._organizationService.getUserOrg(
             impersonate
           );
 
           if (loadImpersonate) {
             user = loadImpersonate.user;
-            user.isSuperAdmin = true;
             delete user.password;
 
             // Keep request-scoped authorization and tenant context in sync.
+            // @ts-ignore
+            req.impersonator = impersonator;
             // @ts-ignore
             req.user = user;
             // @ts-ignore
