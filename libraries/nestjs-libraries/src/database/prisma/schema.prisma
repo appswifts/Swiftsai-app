@@ -9,47 +9,58 @@ datasource db {
 }
 
 model Organization {
-  id                  String               @id @default(uuid())
-  name                String
-  description         String?
-  apiKey              String?
-  paymentId           String?
-  polarCustomerId     String?
-  streakSince         DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  allowTrial          Boolean              @default(false)
-  isTrailing          Boolean              @default(false)
-  shortlink           ShortLinkPreference  @default(ASK)
-  autoPost            AutoPost[]
-  Comments            Comments[]
-  credits             Credits[]
-  customers           Customer[]
-  errors              Errors[]
-  github              GitHub[]
-  Integration         Integration[]
-  media               Media[]
-  buyerOrganization   MessagesGroup[]
-  notifications       Notifications[]
-  plugs               Plugs[]
-  post                Post[]               @relation("organization")
-  submittedPost       Post[]               @relation("submittedForOrg")
-  sets                Sets[]
-  signatures          Signatures[]
-  subscription        Subscription?
-  tags                Tags[]
-  thirdParty          ThirdParty[]
-  usedCodes           UsedCodes[]
-  users               UserOrganization[]
-  webhooks            Webhooks[]
-  oauthApp            OAuthApp[]
-  oauthAuthorizations OAuthAuthorization[]
-  campaigns           Campaign[]
-  leads               Lead[]
+  id                   String               @id @default(uuid())
+  name                 String
+  description          String?
+  hermesEnabled        Boolean              @default(false)
+  hermesBrandVoice     String?
+  hermesGoals          String?
+  hermesApprovalMode   HermesApprovalMode   @default(REQUIRE_APPROVAL)
+  hermesDailyPostLimit Int                  @default(3)
+  apiKey               String?
+  paymentId            String?
+  polarCustomerId      String?
+  streakSince          DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  allowTrial           Boolean              @default(false)
+  isTrailing           Boolean              @default(false)
+  shortlink            ShortLinkPreference  @default(ASK)
+  autoPost             AutoPost[]
+  Comments             Comments[]
+  credits              Credits[]
+  customers            Customer[]
+  errors               Errors[]
+  github               GitHub[]
+  Integration          Integration[]
+  media                Media[]
+  buyerOrganization    MessagesGroup[]
+  notifications        Notifications[]
+  plugs                Plugs[]
+  post                 Post[]               @relation("organization")
+  submittedPost        Post[]               @relation("submittedForOrg")
+  sets                 Sets[]
+  signatures           Signatures[]
+  subscription         Subscription?
+  tags                 Tags[]
+  thirdParty           ThirdParty[]
+  usedCodes            UsedCodes[]
+  users                UserOrganization[]
+  webhooks             Webhooks[]
+  oauthApp             OAuthApp[]
+  oauthAuthorizations  OAuthAuthorization[]
+  campaigns            Campaign[]
+  leads                Lead[]
 
   @@index([apiKey])
   @@index([streakSince])
   @@index([paymentId])
+}
+
+enum HermesApprovalMode {
+  DRAFT_ONLY
+  REQUIRE_APPROVAL
+  AUTO_SCHEDULE
 }
 
 model Tags {
@@ -285,59 +296,59 @@ model Credits {
 }
 
 model Plan {
-  id                      String         @id @default(cuid())
-  name                    String         @unique
-  description             String?
-  monthPrice              Int            @default(0)
-  yearPrice               Int            @default(0)
-  maxChannels             Int            @default(0)
-  maxOrganizations        Int            @default(1)
-  maxPlatforms            Int            @default(0)
-  postsPerMonth           Int            @default(0)
-  teamMembers             Boolean        @default(false)
-  communityFeatures       Boolean        @default(false)
-  featuredByAppswifts     Boolean        @default(false)
-  ai                      Boolean        @default(false)
-  importFromChannels      Boolean        @default(false)
-  imageGenerator          Boolean        @default(false)
-  imageGenerationCount    Int            @default(0)
-  generateVideos          Int            @default(0)
-  publicApi               Boolean        @default(false)
-  webhooks                Int            @default(0)
-  autoPost                Boolean        @default(false)
-  inbox                   Boolean        @default(false)
-  campaigns               Boolean        @default(false)
-  leads                   Boolean        @default(false)
-  isDefault               Boolean        @default(false)
-  isActive                Boolean        @default(true)
-  polarProductMonthlyId   String?
-  polarProductYearlyId    String?
-  createdAt               DateTime       @default(now())
-  updatedAt               DateTime       @updatedAt
-  deletedAt               DateTime?
-  subscriptions           Subscription[]
+  id                    String         @id @default(cuid())
+  name                  String         @unique
+  description           String?
+  monthPrice            Int            @default(0)
+  yearPrice             Int            @default(0)
+  maxChannels           Int            @default(0)
+  maxOrganizations      Int            @default(1)
+  maxPlatforms          Int            @default(0)
+  postsPerMonth         Int            @default(0)
+  teamMembers           Boolean        @default(false)
+  communityFeatures     Boolean        @default(false)
+  featuredByAppswifts   Boolean        @default(false)
+  ai                    Boolean        @default(false)
+  importFromChannels    Boolean        @default(false)
+  imageGenerator        Boolean        @default(false)
+  imageGenerationCount  Int            @default(0)
+  generateVideos        Int            @default(0)
+  publicApi             Boolean        @default(false)
+  webhooks              Int            @default(0)
+  autoPost              Boolean        @default(false)
+  inbox                 Boolean        @default(false)
+  campaigns             Boolean        @default(false)
+  leads                 Boolean        @default(false)
+  isDefault             Boolean        @default(false)
+  isActive              Boolean        @default(true)
+  polarProductMonthlyId String?
+  polarProductYearlyId  String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  deletedAt             DateTime?
+  subscriptions         Subscription[]
 
   @@index([deletedAt])
 }
 
 model Subscription {
-  id               String           @id @default(cuid())
-  organizationId   String           @unique
-  planId           String?
-  subscriptionTier SubscriptionTier
-  identifier       String?
+  id                  String           @id @default(cuid())
+  organizationId      String           @unique
+  planId              String?
+  subscriptionTier    SubscriptionTier
+  identifier          String?
   polarSubscriptionId String?
-  cancelAt         DateTime?
-  period           Period
-  totalChannels    Int
-  maxOrganizations Int              @default(1)
-  maxPlatforms     Int              @default(0)
-  isLifetime       Boolean          @default(false)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  deletedAt        DateTime?
-  organization     Organization     @relation(fields: [organizationId], references: [id])
-  plan             Plan?            @relation(fields: [planId], references: [id])
+  cancelAt            DateTime?
+  period              Period
+  totalChannels       Int
+  maxOrganizations    Int              @default(1)
+  maxPlatforms        Int              @default(0)
+  isLifetime          Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  deletedAt           DateTime?
+  organization        Organization     @relation(fields: [organizationId], references: [id])
+  plan                Plan?            @relation(fields: [planId], references: [id])
 
   @@index([organizationId])
   @@index([deletedAt])
@@ -1035,7 +1046,7 @@ model Lead {
   phone          String?
   status         LeadStatus     @default(NEW)
   ownerUserId    String?
-  source         String?        // e.g., "facebook", "instagram", "whatsapp", "manual"
+  source         String? // e.g., "facebook", "instagram", "whatsapp", "manual"
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
@@ -1052,12 +1063,12 @@ model LeadIdentity {
   id             String        @id @default(uuid())
   leadId         String
   organizationId String
-  channel        String        // "facebook", "instagram", "whatsapp"
-  externalId     String        // Platform-specific user/thread ID
+  channel        String // "facebook", "instagram", "whatsapp"
+  externalId     String // Platform-specific user/thread ID
   username       String?
   displayName    String?
   avatarUrl      String?
-  integrationId  String?       // Links to the Integration used for this channel
+  integrationId  String? // Links to the Integration used for this channel
   lastSeenAt     DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -1075,9 +1086,9 @@ model LeadMessage {
   leadId            String
   leadIdentityId    String
   direction         MessageDirection
-  providerMessageId String?          // External message ID for dedup/tracking
+  providerMessageId String? // External message ID for dedup/tracking
   content           String?
-  attachmentsJson   String?          // JSON array of attachment URLs/metadata
+  attachmentsJson   String? // JSON array of attachment URLs/metadata
   status            MessageStatus    @default(QUEUED)
   sentAt            DateTime?
   deliveredAt       DateTime?
@@ -1106,24 +1117,24 @@ enum CampaignStatus {
 }
 
 model Campaign {
-  id               String           @id @default(uuid())
+  id               String          @id @default(uuid())
   organizationId   String
   name             String
-  platform         String           // "meta", "whatsapp", etc.
-  type             String           // "awareness", "traffic", "conversions", "broadcast"
-  status           CampaignStatus   @default(DRAFT)
+  platform         String // "meta", "whatsapp", etc.
+  type             String // "awareness", "traffic", "conversions", "broadcast"
+  status           CampaignStatus  @default(DRAFT)
   budget           Float?
   dailyBudgetCap   Float?
   monthlyBudgetCap Float?
-  config           String?          // JSON: platform-specific validated config
-  creative         String?          // JSON: ad creatives / template content
-  targeting        String?          // JSON: audience targeting rules
-  metrics          String?          // JSON: latest metrics snapshot
-  externalId       String?          // External campaign ID on provider platform
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  config           String? // JSON: platform-specific validated config
+  creative         String? // JSON: ad creatives / template content
+  targeting        String? // JSON: audience targeting rules
+  metrics          String? // JSON: latest metrics snapshot
+  externalId       String? // External campaign ID on provider platform
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   deletedAt        DateTime?
-  organization     Organization     @relation(fields: [organizationId], references: [id])
+  organization     Organization    @relation(fields: [organizationId], references: [id])
   auditLogs        CampaignAudit[]
 
   @@index([organizationId])
@@ -1135,10 +1146,10 @@ model Campaign {
 model CampaignAudit {
   id         String   @id @default(uuid())
   campaignId String
-  userId     String?  // Who made the change
-  action     String   // "status_change", "budget_update", "targeting_update", etc.
-  oldValue   String?  // JSON of previous state
-  newValue   String?  // JSON of new state
+  userId     String? // Who made the change
+  action     String // "status_change", "budget_update", "targeting_update", etc.
+  oldValue   String? // JSON of previous state
+  newValue   String? // JSON of new state
   createdAt  DateTime @default(now())
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
@@ -1149,9 +1160,9 @@ model CampaignAudit {
 
 model ProcessedWebhook {
   id        String   @id @default(uuid())
-  provider  String   // "polar", "stripe", "meta", etc.
-  eventId   String   // The provider's unique event ID
-  eventType String?  // e.g., "subscription.created"
+  provider  String // "polar", "stripe", "meta", etc.
+  eventId   String // The provider's unique event ID
+  eventType String? // e.g., "subscription.created"
   createdAt DateTime @default(now())
 
   @@unique([provider, eventId])
@@ -1164,7 +1175,7 @@ model SystemSetting {
   id        String   @id @default(uuid())
   key       String   @unique
   value     String   @default("")
-  type      String   @default("string")  // string, boolean, integer, json, encrypted_json
+  type      String   @default("string") // string, boolean, integer, json, encrypted_json
   group     String   @default("general")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1186,7 +1197,7 @@ model PlatformSettings {
 model AdminAuditLog {
   id        String   @id @default(cuid())
   adminId   String
-  action    String   // e.g. "user.suspend", "subscription.create", "plan.update"
+  action    String // e.g. "user.suspend", "subscription.create", "plan.update"
   targetId  String?
   details   Json?
   createdAt DateTime @default(now())

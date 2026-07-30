@@ -13,7 +13,7 @@ export const LogoTextComponent = ({
   return (
     <span className={clsx('inline-flex items-center gap-2.5', className)}>
       <img
-        src="/logo.svg"
+        src="/swiftai.png"
         alt=""
         width={40}
         height={40}

@@ -149,7 +149,7 @@ export default function LandingPage() {
                 </div>
                 <div className="grid grid-cols-12 gap-px bg-white/[0.04]">
                   <div className="col-span-3 p-4 border-r border-white/[0.04] space-y-3">
-                    <img src="/logo.svg" alt="S" className="h-8 w-auto" />
+                    <img src="/swiftai.png" alt="SwiftsAI" className="h-8 w-auto" />
                     <div className="space-y-2">
                       {['Calendar', 'Posts', 'Analytics', 'Media'].map((item) => (
                         <div key={item} className="h-7 rounded-md bg-white/[0.04] flex items-center px-3">

@@ -3,7 +3,7 @@
 export const Logo = () => {
   return (
     <img
-      src="/logo.svg"
+      src="/swiftai.png"
       alt="Swifts AI"
       width={60}
       height={60}

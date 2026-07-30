@@ -33,6 +33,7 @@ import { SVGLine } from '@gitroom/frontend/components/launches/launches.componen
 import { GlobalSettings } from '@gitroom/frontend/components/settings/global.settings';
 import { ApprovedAppsComponent } from '@gitroom/frontend/components/approved-apps/approved-apps.component';
 import { Button } from '@gitroom/react/form/button';
+import { HermesWorkerSettings } from '@gitroom/frontend/components/agents/hermes-worker-settings';
 export const SettingsPopup: FC<{
   getRef?: Ref<any>;
 }> = (props) => {
@@ -106,6 +107,9 @@ export const SettingsPopup: FC<{
     }
     if (user?.tier.current !== 'FREE') {
       arr.push({ tab: 'sets', label: t('sets', 'Sets') });
+    }
+    if (user?.tier.current !== 'FREE') {
+      arr.push({ tab: 'ai_worker', label: 'AI Worker' });
     }
     if (user?.tier.current !== 'FREE') {
       arr.push({ tab: 'signatures', label: t('signatures', 'Signatures') });
@@ -253,6 +257,18 @@ export const SettingsPopup: FC<{
               {tab === 'sets' && user?.tier.current !== 'FREE' && (
                 <div>
                   <Sets />
+                </div>
+              )}
+              {tab === 'ai_worker' && user?.tier.current !== 'FREE' && (
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <h3 className="text-[20px]">AI Worker</h3>
+                    <p className="mt-1 text-sm text-textItemBlur">
+                      Configure your organization&apos;s private 24/7 Hermes
+                      content worker.
+                    </p>
+                  </div>
+                  <HermesWorkerSettings />
                 </div>
               )}
 

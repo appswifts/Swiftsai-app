@@ -51,6 +51,8 @@ import { LeadsController } from '@gitroom/backend/api/routes/leads.controller';
 import { MetaWebhooksController } from '@gitroom/backend/api/routes/meta-webhooks.controller';
 import { AdminController } from '@gitroom/backend/api/routes/admin.controller';
 import { CommentsController } from '@gitroom/backend/api/routes/comments.controller';
+import { HermesController } from '@gitroom/backend/api/routes/hermes.controller';
+import { HermesService } from '@gitroom/backend/services/hermes/hermes.service';
 
 const authenticatedController = [
   UsersController,
@@ -76,6 +78,7 @@ const authenticatedController = [
   CampaignsController,
   LeadsController,
   AdminController,
+  HermesController,
 ];
 @Module({
   imports: [UploadModule],
@@ -111,6 +114,7 @@ const authenticatedController = [
     FarcasterProvider,
     WalletProvider,
     OauthProvider,
+    HermesService,
   ],
   get exports() {
     return [...this.imports, ...this.providers];
