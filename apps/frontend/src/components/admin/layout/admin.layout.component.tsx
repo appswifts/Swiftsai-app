@@ -13,7 +13,6 @@ const ModeComponent = dynamic(
 
 import clsx from 'clsx';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import { useVariables } from '@gitroom/react/helpers/variable.context';
 import useSWR from 'swr';
 import { Toaster } from '@gitroom/react/toaster/toaster';
 import { MantineWrapper } from '@gitroom/react/helpers/mantine.wrapper';
@@ -27,7 +26,6 @@ const jakartaSans = { className: 'font-sans' };
 
 export const AdminLayoutComponent = ({ children }: { children: ReactNode }) => {
   const fetch = useFetch();
-  const { backendUrl } = useVariables();
   const router = useRouter();
 
   const load = useCallback(async (path: string) => {
@@ -55,28 +53,28 @@ export const AdminLayoutComponent = ({ children }: { children: ReactNode }) => {
       <Toaster />
       <div
         className={clsx(
-          'flex flex-col min-h-screen min-w-screen text-newTextColor p-[12px]',
+          'flex min-h-screen w-full min-w-0 max-w-full flex-col overflow-x-hidden p-[8px] text-newTextColor sm:p-[12px]',
           jakartaSans.className
         )}
       >
-        <div className="flex">
-          <div className="w-[250px] bg-menuBg h-screen rounded-[8px] p-[20px] flex flex-col gap-[30px] fixed left-[12px] top-[12px]">
+        <div className="flex min-w-0 flex-col gap-[12px] lg:flex-row lg:gap-0">
+          <aside className="relative flex h-auto w-full flex-col gap-[16px] rounded-[8px] bg-menuBg p-[14px] lg:fixed lg:left-[12px] lg:top-[12px] lg:h-[calc(100vh-24px)] lg:w-[250px] lg:gap-[30px] lg:overflow-y-auto lg:p-[20px]">
             <Logo />
             <div className="flex flex-col flex-1 gap-[16px]">
               <AdminTopMenu />
             </div>
-            <div className="flex gap-[10px]">
+            <div className="flex flex-wrap gap-[10px]">
               <ModeComponent />
               <LanguageComponent />
               <ChromeExtensionComponent />
             </div>
-          </div>
-          <div className="flex-1 ml-[262px] p-[20px]">
+          </aside>
+          <main className="w-full min-w-0 flex-1 px-[4px] py-[12px] sm:p-[20px] lg:ml-[262px]">
             <Title />
-            <div className="mt-[30px]">
+            <div className="mt-[20px] min-w-0 sm:mt-[30px]">
               {children}
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </MantineWrapper>

@@ -141,10 +141,10 @@ export const AdminUsers = () => {
   }
 
   return (
-    <div className="space-y-[30px]">
+    <div className="min-w-0 max-w-full space-y-[20px] sm:space-y-[30px]">
       {/* Header */}
       <div>
-        <h1 className="text-[24px] font-bold text-newTextColor">
+        <h1 className="text-xl font-bold text-newTextColor sm:text-[24px]">
           {t('user_management', 'User Management')}
         </h1>
         <p className="text-newTextColor/60 mt-[8px]">
@@ -175,9 +175,9 @@ export const AdminUsers = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-menuBg rounded-[12px] border border-tableBorder overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="max-w-full overflow-hidden rounded-[12px] border border-tableBorder bg-menuBg">
+        <div className="w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[780px]">
             <thead>
               <tr className="border-b border-tableBorder">
                 <th className="text-left p-[16px] text-newTextColor/60 font-medium text-[14px]">
@@ -247,7 +247,7 @@ export const AdminUsers = () => {
                     </div>
                   </td>
                   <td className="p-[16px]">
-                    <div className="flex gap-[8px]">
+                    <div className="flex flex-wrap gap-[8px]">
                       <Button
                         onClick={() => {
                           const membership = user.organizations.find(
@@ -293,11 +293,11 @@ export const AdminUsers = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-[12px] sm:flex-row sm:items-center sm:justify-between">
           <div className="text-newTextColor/60 text-[14px]">
             {t('showing_x_of_y_users', `Showing ${usersData?.users.length || 0} of ${usersData?.total || 0} users`)}
           </div>
-          <div className="flex gap-[8px]">
+          <div className="flex max-w-full flex-wrap gap-[8px]">
             <Button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
@@ -305,7 +305,7 @@ export const AdminUsers = () => {
             >
               {t('previous', 'Previous')}
             </Button>
-            <div className="flex items-center gap-[4px]">
+            <div className="flex flex-wrap items-center gap-[4px]">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {

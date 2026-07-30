@@ -322,8 +322,16 @@ export const BillingFeatures: FC<{ tier: string }> = ({ tier }) => {
   const { plans } = usePlans();
   const features = useMemo(() => {
     const currentPricing = (plans || {})[tier];
-    const channelsOr = currentPricing.channel;
     const list: FeatureItem[] = [];
+
+    // An impersonated user can belong to a legacy, deleted, or temporarily
+    // unavailable plan. Billing is supplemental UI and must never crash the
+    // user's dashboard while plans are loading or when that plan is missing.
+    if (!currentPricing) {
+      return list;
+    }
+
+    const channelsOr = currentPricing.channel ?? 0;
 
     list.push({
       key: channelsOr === 1 ? 'billing_channel' : 'billing_channels',
