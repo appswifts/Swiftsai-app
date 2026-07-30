@@ -715,20 +715,77 @@ html[dir='rtl'] [dir='ltr'] {
 }
 
 .agent {
+  .copilotKitChat {
+    height: 100%;
+    min-height: 0;
+    background: var(--new-bgColorInner) !important;
+  }
+
+  .copilotKitHeader {
+    display: none !important;
+  }
+
+  .copilotKitMessages {
+    min-height: 0;
+    background:
+      radial-gradient(
+        circle at 50% 0%,
+        color-mix(in srgb, var(--new-btn-primary) 6%, transparent),
+        transparent 32%
+      ),
+      var(--new-bgColorInner) !important;
+  }
+
+  .copilotKitMessagesContainer {
+    width: min(100%, 900px);
+    margin: 0 auto;
+    padding: 28px 32px 12px !important;
+  }
+
+  .copilotKitMessagesFooter {
+    width: min(100%, 900px);
+    margin-inline: auto;
+  }
+
+  .copilotKitMessage {
+    max-width: min(82%, 720px);
+    border-radius: 12px !important;
+    font-size: 0.925rem !important;
+    line-height: 1.65 !important;
+  }
+
+  .copilotKitMessage.copilotKitUserMessage {
+    padding: 11px 15px !important;
+    background: var(--new-btn-primary) !important;
+    color: white !important;
+  }
+
+  .copilotKitMessage.copilotKitAssistantMessage {
+    padding: 12px 0 20px !important;
+    color: rgb(var(--new-textColor)) !important;
+  }
+
   .copilotKitInputContainer {
-    @apply px-6 pb-6 pt-2 !important;
+    @apply px-6 pb-5 pt-2 !important;
+    border-top: 1px solid var(--new-bgLineColor);
+    background: color-mix(
+      in srgb,
+      var(--new-bgColorInner) 96%,
+      var(--new-bgLineColor)
+    ) !important;
   }
 
   .copilotKitInput {
-    @apply rounded-2xl border transition-all duration-200 !important;
-    width: 100% !important;
+    @apply rounded-xl border transition-all duration-200 !important;
+    width: min(100%, 860px) !important;
     background: var(--new-bgColorInner) !important;
     border-color: var(--new-bgLineColor) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
     
     &:focus-within {
       border-color: var(--new-btn-primary) !important;
-      box-shadow: 0 10px 40px rgba(98, 136, 48, 0.15);
+      box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--new-btn-primary) 18%, transparent);
     }
   }
   
@@ -742,6 +799,21 @@ html[dir='rtl'] [dir='ltr'] {
     
     &:disabled {
       @apply opacity-30 !important;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .copilotKitMessagesContainer {
+      padding: 18px 14px 8px !important;
+    }
+
+    .copilotKitMessage {
+      max-width: 90%;
+      font-size: 0.875rem !important;
+    }
+
+    .copilotKitInputContainer {
+      padding: 8px 12px 12px !important;
     }
   }
 }

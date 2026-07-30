@@ -5,70 +5,14 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 import { CopilotChat, CopilotKitCSSProperties } from '@copilotkit/react-ui';
 
-/**
- * Lightweight Markdown-to-HTML converter for agent chat messages.
- * Handles: headings, bold, italic, code blocks, inline code, unordered/ordered lists, links, and line breaks.
- */
-function simpleMarkdownToHtml(md: string): string {
-  let html = md;
-
-  // Fenced code blocks (```lang ... ```)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
-    const escaped = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<pre class="agent-code-block"><code class="language-${lang}">${escaped}</code></pre>`;
-  });
-
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code class="agent-inline-code">$1</code>');
-
-  // Headings (### before ## before #)
-  html = html.replace(/^### (.+)$/gm, '<h4 class="agent-md-h4">$1</h4>');
-  html = html.replace(/^## (.+)$/gm, '<h3 class="agent-md-h3">$1</h3>');
-  html = html.replace(/^# (.+)$/gm, '<h2 class="agent-md-h2">$1</h2>');
-
-  // Bold + Italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Italic
-  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-
-  // Unordered list items (- or *)
-  html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<li class="agent-md-li">$1</li>');
-  html = html.replace(/((?:<li class="agent-md-li">.*<\/li>\n?)+)/g, '<ul class="agent-md-ul">$1</ul>');
-
-  // Ordered list items
-  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li class="agent-md-oli">$1</li>');
-  html = html.replace(/((?:<li class="agent-md-oli">.*<\/li>\n?)+)/g, '<ol class="agent-md-ol">$1</ol>');
-
-  // Links [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="agent-md-link">$1</a>');
-
-  // Horizontal rules
-  html = html.replace(/^---$/gm, '<hr class="agent-md-hr" />');
-
-  // Line breaks: convert double newlines to paragraph breaks, single newlines to <br>
-  html = html.replace(/\n{2,}/g, '</p><p class="agent-md-p">');
-  html = html.replace(/\n/g, '<br/>');
-  html = `<p class="agent-md-p">${html}</p>`;
-
-  // Clean up empty paragraphs
-  html = html.replace(/<p class="agent-md-p">\s*<\/p>/g, '');
-
-  return html;
-}
-import clsx from 'clsx';
 import {
   InputProps,
-  UserMessageProps,
-  AssistantMessageProps,
 } from '@copilotkit/react-ui';
-import { Loader2, Zap, CheckCircle2, Search, Video, Image as ImageIcon } from 'lucide-react';
+import { Bot, ShieldCheck } from 'lucide-react';
 import { Input } from '@gitroom/frontend/components/agents/agent.input';
 import { useModals } from '@gitroom/frontend/components/layout/new-modal';
 import {
@@ -116,26 +60,42 @@ export const AgentChat: FC = () => {
             '--copilot-kit-background-color': 'var(--new-bg-color)',
           } as CopilotKitCSSProperties
         }
-        className="trz agent bg-newBgColorInner flex flex-col gap-[15px] transition-all flex-1 items-center relative"
+        className="agent flex min-h-0 min-w-0 flex-1 flex-col bg-newBgColorInner"
       >
-        <div className="absolute left-0 w-full h-full pb-[20px]">
+        <header className="hidden h-[64px] shrink-0 items-center justify-between border-b border-newBgLineColor px-5 lg:flex">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-btnPrimary/15 text-btnPrimary">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-semibold">
+                {t('swiftsai_copilot', 'SwiftsAI Copilot')}
+              </h1>
+              <div className="flex items-center gap-1.5 text-xs text-newTextColor/55">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                {t('ready_to_help', 'Ready to help')}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-newBgLineColor px-3 py-1.5 text-xs text-newTextColor/60">
+            <ShieldCheck className="h-3.5 w-3.5 text-green-500" />
+            {t('organization_scoped', 'Organization scoped')}
+          </div>
+        </header>
+        <div className="min-h-0 min-w-0 flex-1">
           <CopilotChat
-            className="w-full h-full"
+            className="h-full w-full"
             labels={{
-              title: t('your_assistant', 'Your Assistant'),
-              initial: t('agent_welcome_message', `Hello, I am your SwiftsAI agent 🙌🏻.
-              
-I can schedule a post or multiple posts to multiple channels and generate pictures and videos.
-
-You can select the channels you want to use from the left menu.
-
-You can see your previous conversations from the right menu.
-
-You can also use me as an MCP Server, check Settings >> Public API
-`),
+              title: t('swiftsai_copilot', 'SwiftsAI Copilot'),
+              initial: t(
+                'agent_welcome_message',
+                'Welcome to your content workspace. I can help you plan campaigns, create platform-ready posts, improve drafts, and prepare schedules for the channels you select.'
+              ),
+              placeholder: t(
+                'agent_input_placeholder',
+                'Ask SwiftsAI to create, improve, or plan content…'
+              ),
             }}
-            UserMessage={Message}
-            AssistantMessage={AssistantMessage}
             Input={NewInput}
           />
         </div>
@@ -171,111 +131,9 @@ const LoadMessages: FC<{ id: string }> = ({ id }) => {
   return null;
 };
 
-const Message: FC<UserMessageProps> = (props) => {
-  const convertContentToImagesAndVideo = useMemo(() => {
-    return (props.message?.content || '')
-      .replace(/Video: (http.*mp4\n)/g, (match, p1) => {
-        return `<video controls class="h-[150px] w-[150px] rounded-[8px] mb-[10px]"><source src="${p1.trim()}" type="video/mp4">Your browser does not support the video tag.</video>`;
-      })
-      .replace(/Image: (http.*\n)/g, (match, p1) => {
-        return `<img src="${p1.trim()}" class="h-[150px] w-[150px] max-w-full border border-newBgColorInner" />`;
-      })
-      .replace(/\[\-\-Media\-\-\](.*)\[\-\-Media\-\-\]/g, (match, p1) => {
-        return `<div class="flex justify-center mt-[20px]">${p1}</div>`;
-      })
-      .replace(
-        /(\[--integrations--\][\s\S]*?\[--integrations--\])/g,
-        (match, p1) => {
-          return ``;
-        }
-      );
-  }, [props.message?.content]);
-  return (
-    <div className="agent-message-container">
-      <div
-        className="agent-bubble agent-bubble-user"
-        dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
-      />
-    </div>
-  );
-};
-
-const AssistantMessage: FC<AssistantMessageProps> = (props) => {
-  const t = useT();
-  const convertContentToImagesAndVideo = useMemo(() => {
-    let content = props.message?.content || '';
-
-    // Extract media first (before markdown conversion)
-    content = content
-      .replace(/Video: (http.*mp4\n)/g, (_match, p1) => {
-        return `<video controls class="h-[150px] w-[150px] rounded-[8px] mb-[10px]"><source src="${p1.trim()}" type="video/mp4">Your browser does not support the video tag.</video>`;
-      })
-      .replace(/Image: (http.*\n)/g, (_match, p1) => {
-        return `<img src="${p1.trim()}" class="h-[150px] w-[150px] max-w-full border border-newBgColorInner" />`;
-      })
-      .replace(/\[\-\-Media\-\-\](.*)\[\-\-Media\-\-\]/g, (_match, p1) => {
-        return `<div class="flex justify-center mt-[20px]">${p1}</div>`;
-      });
-
-    // Convert markdown to HTML for proper formatting
-    content = simpleMarkdownToHtml(content);
-
-    return content;
-  }, [props.message?.content]);
-
-  const actions: Array<{ name: string; description?: string; status: string }> = (props.message as any)?.actions || [];
-
-  return (
-    <div className="agent-message-container">
-      {actions.map((action, i) => (
-        <div 
-          key={i} 
-          className={clsx(
-            "agent-action-indicator",
-            action.status === 'executing' && "executing"
-          )}
-        >
-          {action.status === 'executing' ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <CheckCircle2 className="w-3 h-3 text-new-btn-primary" />
-          )}
-          <span>
-            {action.description || action.name}
-            {action.status === 'executing' && (
-              <span className="thinking-dots ml-1 inline-flex">
-                <span className="thinking-dot" />
-                <span className="thinking-dot" />
-                <span className="thinking-dot" />
-              </span>
-            )}
-          </span>
-        </div>
-      ))}
-      
-      {props.message?.content && (
-        <div
-          className="agent-bubble agent-bubble-assistant agent-md-content"
-          dangerouslySetInnerHTML={{ __html: convertContentToImagesAndVideo }}
-        />
-      )}
-      
-      {props.isLoading && !props.message?.content && actions.length === 0 && (
-        <div className="agent-bubble agent-bubble-assistant opacity-70">
-          <div className="thinking-dots">
-            <span className="thinking-dot" />
-            <span className="thinking-dot" />
-            <span className="thinking-dot" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 const NewInput: FC<InputProps> = (props) => {
   const [media, setMedia] = useState([] as { path: string; id: string }[]);
   const [value, setValue] = useState('');
-  const { properties } = useContext(PropertiesContext);
   return (
     <>
       <MediaPortal
@@ -299,22 +157,7 @@ const NewInput: FC<InputProps> = (props) => {
                     )
                     .join('\n') +
                   '\n[--Media--]'
-                : '') +
-              `
-${
-  properties.length
-    ? `[--integrations--]
-Use the following social media platforms: ${JSON.stringify(
-        properties.map((p) => ({
-          id: p.id,
-          platform: p.identifier,
-          profilePicture: p.picture,
-          additionalSettings: p.additionalSettings,
-        }))
-      )}
-[--integrations--]`
-    : ``
-}`
+                : '')
           );
           setValue('');
           setMedia([]);

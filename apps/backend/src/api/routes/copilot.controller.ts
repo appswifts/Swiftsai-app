@@ -8,6 +8,11 @@ import {
   Query,
   Param,
   HttpException,
+  Body,
+  Patch,
+  Delete,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   CopilotRuntime,
@@ -24,6 +29,7 @@ import { Request, Response } from 'express';
 import { RequestContext } from '@mastra/core/di';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 
 export type ChannelsContext = {
   integrations: string;
@@ -35,7 +41,8 @@ export type ChannelsContext = {
 export class CopilotController {
   constructor(
     private _subscriptionService: SubscriptionService,
-    private _mastraService: MastraService
+    private _mastraService: MastraService,
+    private _prisma: PrismaRepository<'mastra_threads' | 'mastra_messages'>
   ) {}
   @Post('/chat')
   async chatAgent(
@@ -158,7 +165,67 @@ export class CopilotController {
       threads: list.threads.map((p) => ({
         id: p.id,
         title: p.title,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
       })),
     };
+  }
+
+  @Patch('/:thread')
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
+  async renameThread(
+    @GetOrgFromRequest() organization: Organization,
+    @Param('thread') threadId: string,
+    @Body() body: { title?: string }
+  ) {
+    const title = body.title?.trim();
+    if (!title || title.length > 80) {
+      throw new BadRequestException('Title must be between 1 and 80 characters.');
+    }
+
+    const result = await this._prisma.model.mastra_threads.updateMany({
+      where: {
+        id: threadId,
+        resourceId: organization.id,
+      },
+      data: {
+        title,
+        updatedAt: new Date(),
+      },
+    });
+
+    if (!result.count) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    return { id: threadId, title };
+  }
+
+  @Delete('/:thread')
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
+  async deleteThread(
+    @GetOrgFromRequest() organization: Organization,
+    @Param('thread') threadId: string
+  ) {
+    const thread = await this._prisma.model.mastra_threads.findFirst({
+      where: {
+        id: threadId,
+        resourceId: organization.id,
+      },
+      select: { id: true },
+    });
+
+    if (!thread) {
+      throw new NotFoundException('Conversation not found.');
+    }
+
+    await this._prisma.model.mastra_messages.deleteMany({
+      where: { thread_id: threadId },
+    });
+    await this._prisma.model.mastra_threads.delete({
+      where: { id: threadId },
+    });
+
+    return { deleted: true };
   }
 }
