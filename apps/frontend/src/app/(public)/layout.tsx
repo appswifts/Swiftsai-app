@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { LogoTextComponent } from '@gitroom/frontend/components/ui/logo-text.component';
+import { ChunkLoadRecovery } from '@gitroom/frontend/components/layout/chunk-load-recovery';
 
 import '../global.scss';
 
@@ -14,30 +16,33 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
       </head>
       <body className="dark bg-[#0a0a0a] text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <ChunkLoadRecovery />
         <div className="min-h-screen flex flex-col">
           {/* Header */}
           <header className="fixed top-0 left-0 right-0 z-50">
             <div className="absolute inset-0 backdrop-blur-xl bg-[#0a0a0a]/80" />
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2.5 group">
-                <img src="/logo.svg" alt="SwiftsAI" className="h-8 w-auto group-hover:scale-105 transition-transform" />
-                <span className="text-lg font-bold tracking-tight">SwiftsAI</span>
+                <LogoTextComponent
+                  iconClassName="h-8 w-8 group-hover:scale-105 transition-transform"
+                  labelClassName="text-lg"
+                />
               </Link>
               <nav className="hidden md:flex items-center gap-8 text-sm text-white/50">
                 <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
                 <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
                 <Link href="/terms-of-service" className="hover:text-white transition-colors">Terms</Link>
               </nav>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 sm:gap-3">
                 <Link
                   href="/auth/login"
-                  className="text-sm text-white/60 hover:text-white transition-colors px-4 py-2"
+                  className="hidden xs:inline-flex text-sm text-white/60 hover:text-white transition-colors px-2 sm:px-4 py-2"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/auth"
-                  className="text-sm font-semibold bg-[#628830] text-white px-5 py-2 rounded-lg hover:bg-[#7aaf38] transition-all duration-300"
+                  className="text-xs sm:text-sm font-semibold bg-[#628830] text-white px-3 sm:px-5 py-2 rounded-lg hover:bg-[#7aaf38] transition-all duration-300 whitespace-nowrap"
                 >
                   Get Started Free
                 </Link>
@@ -57,8 +62,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                 {/* Brand */}
                 <div className="col-span-2 md:col-span-1">
                   <Link href="/" className="flex items-center gap-2.5 mb-4">
-                    <img src="/logo.svg" alt="SwiftsAI" className="h-8 w-auto" />
-                    <span className="text-lg font-bold tracking-tight">SwiftsAI</span>
+                    <LogoTextComponent iconClassName="h-8 w-8" labelClassName="text-lg" />
                   </Link>
                   <p className="text-sm text-white/30 leading-relaxed pr-8">
                     The agentic social media scheduling platform. Schedule, analyze, and engage with your audience across 30+ channels.

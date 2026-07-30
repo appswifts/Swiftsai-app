@@ -127,20 +127,20 @@ export const SettingsPopup: FC<{
 
   return (
     <>
-      <div className="bg-newBgColorInner p-[20px] flex flex-col transition-all w-[260px]">
-        <div className="flex flex-1 flex-col gap-[15px]">
+      <div className="bg-newBgColorInner p-[12px] lg:p-[20px] flex flex-none flex-col transition-all w-full lg:w-[260px] border-b lg:border-b-0 lg:border-e border-newBgLineColor">
+        <div className="flex flex-1 flex-row lg:flex-col gap-[8px] lg:gap-[15px] overflow-x-auto pb-[4px] lg:pb-0">
           {list.map(({ tab: tabKey, label }) => (
             <div
               key={tabKey}
               className={clsx(
-                'cursor-pointer flex items-center gap-[12px] group/profile hover:bg-boxHover rounded-e-[8px]',
+                'cursor-pointer flex flex-none items-center gap-[8px] lg:gap-[12px] group/profile hover:bg-boxHover rounded-[8px] lg:rounded-e-[8px] px-[10px] lg:px-0 py-[8px] lg:py-0 whitespace-nowrap',
                 tabKey === tab && 'bg-boxHover'
               )}
               onClick={() => setTab(tabKey)}
             >
               <div
                 className={clsx(
-                  'h-full w-[4px] rounded-s-[3px] opacity-0 group-hover/profile:opacity-100 transition-opacity',
+                  'hidden lg:block h-full w-[4px] rounded-s-[3px] opacity-0 group-hover/profile:opacity-100 transition-opacity',
                   tabKey === tab && 'opacity-100'
                 )}
               >
@@ -150,7 +150,7 @@ export const SettingsPopup: FC<{
             </div>
           ))}
         </div>
-        <div>
+        <div className="hidden lg:block">
           {showLogout && (
             <div className="mt-4">
               <LogoutComponent />
@@ -158,7 +158,7 @@ export const SettingsPopup: FC<{
           )}
         </div>
       </div>
-      <div className="bg-newBgColorInner flex-1 flex-col flex p-[20px] gap-[12px]">
+      <div className="bg-newBgColorInner min-w-0 flex-1 flex-col flex p-[12px] sm:p-[20px] gap-[12px] overflow-x-auto">
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(submit)}>
             {!!getRef && (
@@ -204,7 +204,7 @@ export const SettingsPopup: FC<{
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-[12px] flex-1">
+                      <div className="flex flex-col gap-[12px] flex-1 min-w-0 w-full">
                         <div className="flex flex-col gap-[6px]">
                           <label className="text-[13px] text-textColor font-medium">Full Name</label>
                           <input
@@ -225,8 +225,8 @@ export const SettingsPopup: FC<{
                     </div>
                   </div>
                   <GlobalSettings />
-                  <div className="flex justify-end pt-[20px]">
-                    <button type="submit" className="px-[20px] py-[10px] bg-primary text-white rounded font-medium hover:bg-primary/90 transition-colors">
+                  <div className="flex justify-stretch sm:justify-end pt-[20px]">
+                    <button type="submit" className="w-full sm:w-auto px-[20px] py-[10px] bg-primary text-white rounded font-medium hover:bg-primary/90 transition-colors">
                       Save All Settings
                     </button>
                   </div>

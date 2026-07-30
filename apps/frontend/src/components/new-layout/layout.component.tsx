@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { Logo } from '@gitroom/frontend/components/new-layout/logo';
 
 const ModeComponent = dynamic(
@@ -46,6 +46,7 @@ import { FirstBillingComponent } from '@gitroom/frontend/components/billing/firs
 const jakartaSans = { className: 'font-sans' };
 
 export const LayoutComponent = ({ children }: { children: ReactNode }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fetch = useFetch();
 
   const { backendUrl, billingEnabled, isGeneral } = useVariables();
@@ -85,7 +86,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
             <ContinueProvider />
             <div
               className={clsx(
-                'flex flex-col min-h-screen min-w-screen text-newTextColor p-[12px]',
+                'flex flex-col min-h-screen w-full max-w-full min-w-0 overflow-x-hidden text-newTextColor p-0 sm:p-[12px]',
                 jakartaSans.className
               )}
             >
@@ -95,9 +96,9 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
               ) : (
                 <>
                   <AnnouncementBanner />
-                  <div className="flex-1 flex gap-[8px]">
+                  <div className="flex-1 flex min-w-0 gap-[8px]">
                     <Support />
-                    <div className="flex flex-col bg-newBgColorInner w-[80px] rounded-[12px]">
+                    <div className="hidden lg:flex flex-col bg-newBgColorInner w-[80px] rounded-[12px]">
                       <div
                         id="left-menu"
                         className={clsx(
@@ -111,29 +112,62 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex-1 bg-newBgLineColor rounded-[12px] overflow-hidden flex flex-col gap-[1px] blurMe">
-                      <div className="flex bg-newBgColorInner h-[80px] px-[20px] items-center">
-                        <div className="text-[24px] font-[600] flex flex-1">
+                    {mobileMenuOpen && (
+                      <div className="fixed inset-0 z-[9998] lg:hidden">
+                        <button
+                          type="button"
+                          aria-label="Close navigation"
+                          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                          onClick={() => setMobileMenuOpen(false)}
+                        />
+                        <aside className="absolute inset-y-0 start-0 z-[1] flex w-[min(84vw,320px)] flex-col gap-[24px] overflow-y-auto bg-newBgColorInner p-[16px] shadow-2xl">
+                          <div className="flex items-center justify-between">
+                            <Logo />
+                            <button
+                              type="button"
+                              aria-label="Close navigation"
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-newBgLineColor text-[24px]"
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <TopMenu />
+                        </aside>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 bg-newBgLineColor sm:rounded-[12px] overflow-hidden flex flex-col gap-[1px] blurMe">
+                      <div className="flex bg-newBgColorInner min-h-[64px] sm:min-h-[80px] px-[12px] sm:px-[20px] py-[8px] items-center gap-[10px]">
+                        <button
+                          type="button"
+                          aria-label="Open navigation"
+                          aria-expanded={mobileMenuOpen}
+                          onClick={() => setMobileMenuOpen(true)}
+                          className="lg:hidden flex h-11 w-11 flex-none items-center justify-center rounded-[10px] bg-newBgLineColor"
+                        >
+                          <span className="material-symbols-outlined">menu</span>
+                        </button>
+                        <div className="text-[18px] sm:text-[24px] font-[600] flex flex-1 min-w-0 truncate">
                           <Title />
                         </div>
-                        <div className="flex gap-[20px] text-textItemBlur">
-                          <StreakComponent />
-                          <div className="w-[1px] h-[20px] bg-blockSeparator" />
+                        <div className="flex min-w-0 items-center gap-[8px] sm:gap-[12px] xl:gap-[20px] text-textItemBlur">
+                          <div className="hidden xl:block"><StreakComponent /></div>
+                          <div className="hidden xl:block w-[1px] h-[20px] bg-blockSeparator" />
                           <OrganizationSelector />
-                          <div className="hover:text-newTextColor">
+                          <div className="hidden md:block hover:text-newTextColor">
                             <ModeComponent />
                           </div>
-                          <div className="w-[1px] h-[20px] bg-blockSeparator" />
-                          <LanguageComponent />
-                          <ChromeExtensionComponent />
-                          <div className="w-[1px] h-[20px] bg-blockSeparator" />
-                          <AttachToFeedbackIcon />
-                          <div className="w-[1px] h-[20px] bg-blockSeparator" />
+                          <div className="hidden xl:block w-[1px] h-[20px] bg-blockSeparator" />
+                          <div className="hidden xl:block"><LanguageComponent /></div>
+                          <div className="hidden xl:block"><ChromeExtensionComponent /></div>
+                          <div className="hidden xl:block w-[1px] h-[20px] bg-blockSeparator" />
+                          <div className="hidden xl:block"><AttachToFeedbackIcon /></div>
+                          <div className="hidden xl:block w-[1px] h-[20px] bg-blockSeparator" />
                           <UserDropdown />
-                          <NotificationComponent />
+                          <div className="hidden sm:block"><NotificationComponent /></div>
                         </div>
                       </div>
-                      <div className="flex flex-1 gap-[1px]">{children}</div>
+                      <div className="flex flex-1 min-w-0 flex-col lg:flex-row gap-[1px] overflow-auto">{children}</div>
                     </div>
                   </div>
                 </>

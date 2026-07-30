@@ -23,6 +23,7 @@ import {
 import { HtmlComponent } from '@gitroom/frontend/components/layout/html.component';
 import Script from 'next/script';
 import { ChangeDirClient } from '@gitroom/frontend/components/new-layout/change.dir.client';
+import { ChunkLoadRecovery } from '@gitroom/frontend/components/layout/chunk-load-recovery';
 
 
 const jakartaSans = { className: 'font-sans' };
@@ -54,6 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         suppressHydrationWarning
         className={clsx(jakartaSans.className, 'dark text-primary !bg-primary')}
       >
+        <ChunkLoadRecovery />
         <VariableContextComponent
           storageProvider={
             process.env.STORAGE_PROVIDER! as 'local' | 'cloudflare'

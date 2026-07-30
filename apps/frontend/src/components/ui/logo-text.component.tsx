@@ -1,13 +1,32 @@
 import React from 'react';
+import clsx from 'clsx';
 
-export const LogoTextComponent = () => {
+export const LogoTextComponent = ({
+  className,
+  iconClassName,
+  labelClassName,
+}: {
+  className?: string;
+  iconClassName?: string;
+  labelClassName?: string;
+}) => {
   return (
-    <img
-      src="/logo.svg"
-      alt="Swifts AI"
-      width={120}
-      height={40}
-      style={{ objectFit: 'contain' }}
-    />
+    <span className={clsx('inline-flex items-center gap-2.5', className)}>
+      <img
+        src="/logo.svg"
+        alt=""
+        width={40}
+        height={40}
+        className={clsx('h-10 w-10 shrink-0 object-contain', iconClassName)}
+      />
+      <span
+        className={clsx(
+          'whitespace-nowrap text-xl font-bold tracking-tight',
+          labelClassName
+        )}
+      >
+        SwiftsAI
+      </span>
+    </span>
   );
 };

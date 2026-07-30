@@ -87,18 +87,18 @@ export default function LandingPage() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] mb-8 animate-fade-in" style={{ opacity: 0, animationDelay: '0.3s', animationFillMode: 'forwards' }}>
+          <div className="inline-flex max-w-full items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] mb-8 animate-fade-in" style={{ opacity: 0, animationDelay: '0.3s', animationFillMode: 'forwards' }}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7aaf38] opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7aaf38]" />
             </span>
-            <span className="text-sm text-white/60">
+            <span className="text-xs sm:text-sm text-white/60 truncate">
               <span className="bg-gradient-to-r from-[#628830] to-[#7aaf38] bg-clip-text text-transparent font-semibold">New</span>
               <span className="text-white/40 ml-1">— AI-Powered Scheduling</span>
             </span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6 animate-fade-in-up" style={{ opacity: 0, animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+          <h1 className="text-[2.25rem] sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6 animate-fade-in-up break-words" style={{ opacity: 0, animationDelay: '0.5s', animationFillMode: 'forwards' }}>
             Plan, generate, and{' '}
             <span className="bg-gradient-to-r from-[#628830] via-[#7aaf38] to-[#a8d468] bg-clip-text text-transparent">
               schedule posts
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-8 rounded-2xl border border-white/[0.06] bg-[#0a0a0a]/90 backdrop-blur-xl px-8 py-4 shadow-2xl">
+            <div className="relative mt-3 sm:mt-0 sm:absolute sm:-bottom-6 sm:left-1/2 sm:-translate-x-1/2 flex flex-wrap sm:flex-nowrap justify-center items-center gap-3 sm:gap-8 rounded-2xl border border-white/[0.06] bg-[#0a0a0a]/90 backdrop-blur-xl px-4 sm:px-8 py-4 shadow-2xl">
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0a0a0a] bg-[#628830]/60" />
@@ -197,7 +197,7 @@ export default function LandingPage() {
                 <div className="text-xs text-white/40">Active users</div>
                 <div className="text-sm font-semibold">2,847+</div>
               </div>
-              <div className="w-px h-8 bg-white/[0.06]" />
+              <div className="hidden sm:block w-px h-8 bg-white/[0.06]" />
               <div className="text-left">
                 <div className="text-xs text-white/40">Posts scheduled</div>
                 <div className="text-sm font-semibold">142K+</div>
