@@ -77,8 +77,8 @@ export const AgentChat: FC = () => {
                 'Review generated content before publishing.'
               ),
               welcomeMessageText: t(
-                'agent_welcome_message',
-                'Plan campaigns, create platform-ready posts, improve drafts, and prepare schedules for your selected channels.'
+                'agent_workspace_welcome',
+                'What would you like to create or schedule today?'
               ),
             }}
             attachments={{ enabled: true }}
