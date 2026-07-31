@@ -53,6 +53,7 @@ export const AgentChat: FC = () => {
     <CopilotKit
       credentials="include"
       runtimeUrl={backendUrl + '/copilot/agent'}
+      useSingleEndpoint
       agent="postiz"
       properties={{ integrations: properties }}
       enableInspector={false}

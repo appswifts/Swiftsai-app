@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import dynamic from 'next/dynamic';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import { CheckPayment } from '@gitroom/frontend/components/layout/check.payment';
 import { ToolTip } from '@gitroom/frontend/components/layout/top.tip';
@@ -45,6 +45,33 @@ import { FirstBillingComponent } from '@gitroom/frontend/components/billing/firs
 
 const jakartaSans = { className: 'font-sans' };
 
+const CopilotRuntimeBoundary = ({
+  children,
+  runtimeUrl,
+}: {
+  children: ReactNode;
+  runtimeUrl: string;
+}) => {
+  const pathname = usePathname();
+
+  // The agent workspace owns its v2 CopilotKit provider. Keeping the legacy
+  // dashboard provider outside that subtree prevents two runtimes from
+  // connecting and issuing requests to different endpoints at the same time.
+  if (pathname.startsWith('/agents')) {
+    return <>{children}</>;
+  }
+
+  return (
+    <CopilotKit
+      credentials="include"
+      runtimeUrl={runtimeUrl}
+      showDevConsole={false}
+    >
+      {children}
+    </CopilotKit>
+  );
+};
+
 export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const fetch = useFetch();
@@ -68,11 +95,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
 
   return (
     <ContextWrapper user={user}>
-      <CopilotKit
-        credentials="include"
-        runtimeUrl={backendUrl + '/copilot/chat'}
-        showDevConsole={false}
-      >
+      <CopilotRuntimeBoundary runtimeUrl={backendUrl + '/copilot/chat'}>
         <MantineWrapper>
           <ToolTip />
           <Toaster />
@@ -175,7 +198,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
             </div>
           </CheckPayment>
         </MantineWrapper>
-      </CopilotKit>
+      </CopilotRuntimeBoundary>
     </ContextWrapper>
   );
 };
