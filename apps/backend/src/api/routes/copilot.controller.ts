@@ -17,9 +17,10 @@ import {
 import {
   CopilotRuntime,
   OpenAIAdapter,
-  copilotRuntimeNestEndpoint,
   copilotRuntimeNodeHttpEndpoint,
 } from '@copilotkit/runtime';
+import { CopilotRuntime as CopilotRuntimeV2 } from '@copilotkit/runtime/v2';
+import { createCopilotExpressHandler } from '@copilotkit/runtime/v2/express';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization } from '@prisma/client';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
@@ -104,20 +105,26 @@ export class CopilotController {
       requestContext: requestContext as any,
     });
 
-    const runtime = new CopilotRuntime({
+    const runtime = new CopilotRuntimeV2({
       agents,
     });
 
-    const copilotRuntimeHandler = copilotRuntimeNestEndpoint({
-      endpoint: '/copilot/agent',
+    const copilotRuntimeHandler = createCopilotExpressHandler({
+      basePath: req.originalUrl.split('?')[0],
       runtime,
-      // properties: req.body.variables.properties,
-      serviceAdapter: new OpenAIAdapter({
-        model: 'gpt-4.1',
-      }),
+      mode: 'single-route',
+      cors: false,
     });
 
-    return copilotRuntimeHandler(req, res);
+    await new Promise<void>((resolve, reject) => {
+      const finish = () => resolve();
+      res.once('finish', finish);
+      res.once('close', finish);
+      copilotRuntimeHandler(req, res, (error?: unknown) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
   }
 
   @Get('/credits')
