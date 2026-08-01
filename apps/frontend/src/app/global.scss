@@ -856,9 +856,9 @@ html[dir='rtl'] [dir='ltr'] {
     overflow: hidden;
     background:
       radial-gradient(
-        circle at 50% 0%,
-        color-mix(in srgb, var(--new-btn-primary) 7%, transparent),
-        transparent 34%
+        circle at 50% -10%,
+        color-mix(in srgb, var(--new-btn-primary) 8%, transparent),
+        transparent 38%
       ),
       var(--new-bgColorInner);
   }
@@ -866,18 +866,18 @@ html[dir='rtl'] [dir='ltr'] {
   [data-testid='copilot-welcome-screen'] {
     min-height: 0;
     overflow-y: auto;
-    padding: clamp(1rem, 4vh, 2.5rem) 1rem;
+    padding: clamp(1.5rem, 7vh, 4.5rem) 1rem 1.5rem;
   }
 
   [data-testid='copilot-welcome-screen'] > div {
-    max-width: 46rem;
+    max-width: 42rem;
   }
 
   [data-testid='copilot-welcome-screen'] h1 {
-    max-width: 38rem;
+    max-width: 34rem;
     margin-inline: auto;
     color: rgb(var(--new-textColor));
-    font-size: clamp(1.35rem, 2.25vw, 2rem);
+    font-size: clamp(1.4rem, 2vw, 1.85rem);
     font-weight: 600;
     line-height: 1.25;
     letter-spacing: -0.025em;
@@ -885,24 +885,26 @@ html[dir='rtl'] [dir='ltr'] {
   }
 
   [data-testid='copilot-scroll-content'] {
-    padding-top: 1.5rem;
+    padding: 1.5rem clamp(0.75rem, 3vw, 2rem) 1rem;
   }
 
   [data-testid='copilot-input-overlay'] {
     background: linear-gradient(
       to top,
-      var(--new-bgColorInner) 70%,
+      var(--new-bgColorInner) 74%,
       transparent
     );
+    padding-inline: clamp(0.75rem, 3vw, 2rem);
   }
 
   [data-testid='copilot-chat-input'] {
-    width: min(100%, 46rem);
+    width: min(100%, 48rem);
     margin-inline: auto;
     border: 1px solid var(--new-bgLineColor);
-    background: var(--new-bgColor);
+    background: color-mix(in srgb, var(--new-bgColor) 88%, transparent);
     border-radius: 0.875rem;
     box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+    backdrop-filter: blur(10px);
   }
 
   [data-testid='copilot-chat-input']:focus-within {
@@ -929,7 +931,7 @@ html[dir='rtl'] [dir='ltr'] {
   [data-testid='copilot-suggestions'] {
     justify-content: center;
     gap: 0.5rem;
-    margin: 1rem 0 0;
+    margin: 1.25rem 0 0;
     padding-inline: 0;
   }
 
@@ -938,6 +940,8 @@ html[dir='rtl'] [dir='ltr'] {
     border-color: var(--new-bgLineColor);
     background: var(--new-bgColor);
     padding-inline: 0.875rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
   }
 
   [data-testid='copilot-suggestion']:hover {
@@ -951,9 +955,52 @@ html[dir='rtl'] [dir='ltr'] {
 
   [data-testid='copilot-user-message'],
   [data-testid='copilot-assistant-message'] {
-    width: min(100%, 46rem);
+    width: min(100%, 48rem);
     margin-inline: auto;
     overflow-wrap: anywhere;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  [data-testid='copilot-user-message'] {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  [data-testid='copilot-user-message'] > div {
+    width: fit-content;
+    max-width: min(82%, 36rem);
+    border: 1px solid color-mix(in srgb, var(--new-btn-primary) 55%, transparent);
+    border-radius: 0.75rem 0.75rem 0.25rem 0.75rem;
+    background: var(--new-btn-primary) !important;
+    color: #fff !important;
+    padding: 0.65rem 0.9rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  }
+
+  [data-testid='copilot-user-message'] > div * {
+    color: inherit !important;
+  }
+
+  [data-testid='copilot-assistant-message'] > div {
+    width: fit-content;
+    max-width: min(88%, 42rem);
+    border: 1px solid var(--new-bgLineColor);
+    border-radius: 0.75rem 0.75rem 0.75rem 0.25rem;
+    background: color-mix(in srgb, var(--new-bgColor) 78%, transparent);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  }
+
+  [data-testid='copilot-assistant-message'] p,
+  [data-testid='copilot-assistant-message'] li {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  [data-testid='copilot-assistant-message'] pre {
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   @media (max-width: 639px) {
@@ -968,11 +1015,20 @@ html[dir='rtl'] [dir='ltr'] {
     }
 
     [data-testid='copilot-scroll-content'] {
-      padding-top: 0.75rem;
+      padding: 0.75rem 0.75rem 0.5rem;
     }
 
     [data-testid='copilot-chat-input'] {
       width: 100%;
+    }
+
+    [data-testid='copilot-input-overlay'] {
+      padding-inline: 0.75rem;
+    }
+
+    [data-testid='copilot-user-message'] > div,
+    [data-testid='copilot-assistant-message'] > div {
+      max-width: 92%;
     }
 
     [data-testid='copilot-suggestions'] {

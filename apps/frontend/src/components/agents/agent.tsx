@@ -78,13 +78,16 @@ export const AgentList: FC<{
   return (
     <div
       className={clsx(
-        'trz fixed inset-y-0 start-0 z-[70] flex w-[300px] max-w-[88vw] flex-col border-e border-newBgLineColor bg-newBgColorInner shadow-sm transition-transform duration-200 xl:relative xl:inset-auto xl:z-auto xl:w-[248px] xl:max-w-none xl:translate-x-0 xl:shadow-none',
+        'trz fixed inset-y-0 start-0 z-[70] flex w-[296px] max-w-[88vw] flex-col border-e border-newBgLineColor bg-newBgColorInner shadow-sm transition-transform duration-200 xl:relative xl:inset-auto xl:z-auto xl:w-[272px] xl:max-w-none xl:translate-x-0 xl:shadow-none',
         open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex h-16 shrink-0 items-center border-b border-newBgLineColor px-4">
+        <div className="flex h-[72px] shrink-0 items-center border-b border-newBgLineColor px-4">
           <div className="min-w-0 flex-1">
+            <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-newTextColor/45">
+              {t('agent_context', 'Agent context')}
+            </p>
             <h2 className="text-sm font-semibold">
               {t('select_channels', 'Social channels')}
             </h2>
@@ -103,7 +106,7 @@ export const AgentList: FC<{
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3 scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
+        <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3 scrollbar scrollbar-thumb-fifth scrollbar-track-newBgColor">
           {sortedIntegrations.map((integration) => {
             const isSelected = selected.some((p) => p.id === integration.id);
             return (
@@ -113,7 +116,7 @@ export const AgentList: FC<{
               onClick={setIntegration(integration)}
               key={integration.id}
               className={clsx(
-                'group flex w-full min-w-0 items-center gap-3 rounded-lg border px-2.5 py-2 text-start transition-colors',
+                'group flex w-full min-w-0 items-center gap-3 rounded-lg border px-2.5 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary/50',
                 isSelected
                   ? 'border-btnPrimary/35 bg-btnPrimary/10'
                   : 'border-transparent hover:border-newBgLineColor hover:bg-boxHover'
@@ -189,8 +192,8 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     <PropertiesContext.Provider value={{ properties }}>
-      <div className="relative flex h-[calc(100dvh-96px)] min-h-0 w-full min-w-0 overflow-hidden rounded-xl border border-newBgLineColor bg-newBgColorInner shadow-sm">
-        {(channelsOpen || threadsOpen) && (
+      <div className="agent-workspace relative flex h-[calc(100dvh-96px)] min-h-[560px] w-full min-w-0 overflow-hidden rounded-xl border border-newBgLineColor bg-newBgColorInner shadow-sm">
+        {channelsOpen && (
           <button
             type="button"
             aria-label={t('close_panels', 'Close panels')}
@@ -198,7 +201,15 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
               setChannelsOpen(false);
               setThreadsOpen(false);
             }}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px] xl:hidden"
+          />
+        )}
+        {threadsOpen && (
+          <button
+            type="button"
+            aria-label={t('close_conversations', 'Close conversations')}
+            onClick={() => setThreadsOpen(false)}
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px] 2xl:hidden"
           />
         )}
         <AgentList
@@ -207,7 +218,7 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
           onClose={() => setChannelsOpen(false)}
         />
         <main className="flex min-w-0 flex-1 flex-col bg-newBgColorInner">
-          <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-newBgLineColor px-3 sm:px-4">
+          <div className="flex h-[72px] shrink-0 items-center justify-between gap-3 border-b border-newBgLineColor px-3 sm:px-5">
             <button
               type="button"
               onClick={() => setChannelsOpen(true)}
@@ -217,8 +228,9 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
               <span className="hidden sm:inline">{t('channels', 'Channels')}</span>
             </button>
             <div className="flex min-w-0 flex-1 items-center gap-3 xl:flex-none">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-btnPrimary/15 text-btnPrimary">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-btnPrimary/25 bg-btnPrimary/10 text-btnPrimary">
                 <Bot className="h-5 w-5" />
+                <span className="absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-newBgColorInner bg-green-500" />
               </div>
               <div className="min-w-0">
                 <h1 className="truncate text-sm font-semibold">
@@ -227,14 +239,19 @@ export const Agent: FC<{ children: ReactNode }> = ({ children }) => {
                 <p className="truncate text-xs text-newTextColor/55">
                   {properties.length
                     ? `${properties.length} ${t('channels_selected', 'channels selected')}`
-                    : t('organization_scoped', 'Organization workspace')}
+                    : t('agent_ready', 'Online · Ready to help')}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setThreadsOpen(true)}
-              className="flex h-9 shrink-0 items-center gap-2 rounded-md border border-newBgLineColor px-3 text-sm hover:bg-boxHover"
+              className={clsx(
+                'flex h-9 shrink-0 items-center gap-2 rounded-md border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary/50',
+                threadsOpen
+                  ? 'border-btnPrimary/40 bg-btnPrimary/10 text-btnPrimary'
+                  : 'border-newBgLineColor hover:bg-boxHover'
+              )}
             >
               <History className="h-4 w-4" />
               <span className="hidden sm:inline">
@@ -304,12 +321,14 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
   return (
     <aside
       className={clsx(
-        'trz fixed inset-y-0 end-0 z-[70] flex w-[360px] max-w-[92vw] flex-col border-s border-newBgLineColor bg-newBgColorInner shadow-sm transition-transform duration-200',
-        open ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full'
+        'trz fixed inset-y-0 end-0 z-[70] flex w-[340px] max-w-[92vw] flex-col border-s border-newBgLineColor bg-newBgColorInner shadow-sm transition-all duration-200 2xl:relative 2xl:inset-auto 2xl:z-auto 2xl:max-w-none 2xl:translate-x-0 2xl:shadow-none',
+        open
+          ? 'translate-x-0 2xl:w-[320px] 2xl:opacity-100'
+          : 'translate-x-full rtl:-translate-x-full 2xl:w-0 2xl:translate-x-0 2xl:overflow-hidden 2xl:border-s-0 2xl:opacity-0 2xl:pointer-events-none'
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-newBgLineColor px-4">
+        <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-newBgLineColor px-4">
           <div>
             <h2 className="text-sm font-semibold">
               {t('conversations', 'Conversations')}
@@ -331,7 +350,7 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
           <Link
             href={`/agents`}
             onClick={onClose}
-            className="flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-btnPrimary px-4 text-sm text-white outline-none"
+            className="flex min-h-10 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-btnPrimary px-4 text-sm font-medium text-white outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-btnPrimary/50"
           >
             <MessageSquarePlus className="h-4 w-4" />
             <span>{t('start_a_new_chat', 'Start a new chat')}</span>
@@ -341,8 +360,8 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
           {data?.threads?.map((p: any) => (
             <div
               className={clsx(
-                'group flex min-w-0 items-center gap-1 rounded-lg border border-transparent px-2 py-1.5 hover:border-newBgLineColor hover:bg-newBgColor',
-                p.id === id && 'bg-newBgColor'
+                'group flex min-w-0 items-center gap-1 rounded-lg border border-transparent px-2 py-2 hover:border-newBgLineColor hover:bg-newBgColor',
+                p.id === id && 'border-btnPrimary/20 bg-btnPrimary/10'
               )}
               key={p.id}
             >
@@ -383,7 +402,7 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
                       setEditingId(p.id);
                       setTitle(p.title || '');
                     }}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-60 hover:bg-boxHover hover:opacity-100"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-boxHover group-hover:opacity-60 focus-visible:opacity-100"
                     aria-label={t('rename', 'Rename')}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -391,7 +410,7 @@ const Threads: FC<{ open: boolean; onClose: () => void }> = ({
                   <button
                     type="button"
                     onClick={() => removeThread(p.id)}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-60 hover:bg-red-500/10 hover:text-red-500 hover:opacity-100"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-60 focus-visible:opacity-100"
                     aria-label={t('delete', 'Delete')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
