@@ -19,8 +19,14 @@ import {
   OpenAIAdapter,
   copilotRuntimeNodeHttpEndpoint,
 } from '@copilotkit/runtime';
-import { CopilotRuntime as CopilotRuntimeV2 } from '@copilotkit/runtime/v2';
-import { createCopilotExpressHandler } from '@copilotkit/runtime/v2/express';
+// CopilotKit publishes its v2 declarations as .d.mts without a `types`
+// condition in the package export map. This backend intentionally compiles as
+// CommonJS, so use the package's supported `require` exports instead of
+// changing module resolution for the entire Nest application.
+const { CopilotRuntime: CopilotRuntimeV2 } = require('@copilotkit/runtime/v2');
+const { createCopilotExpressHandler } = require(
+  '@copilotkit/runtime/v2/express'
+);
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization } from '@prisma/client';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
